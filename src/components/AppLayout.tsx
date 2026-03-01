@@ -1,20 +1,27 @@
 import { Outlet } from 'react-router-dom';
 import { NavItem } from '@/components/NavItem';
-import { BarChart3, Activity, Target, LineChart, Eye } from 'lucide-react';
+import { ModeToggle } from '@/components/ModeToggle';
+import { Target, LineChart, BarChart3, Eye } from 'lucide-react';
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-background stars-bg flex flex-col">
+    <div className="min-h-screen nebula-bg stars-bg flex flex-col">
       {/* Top bar */}
-      <header className="glass-strong border-b border-border/50 sticky top-0 z-50">
+      <header className="glass-strong border-b border-chrome/10 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Eye className="w-4.5 h-4.5 text-primary" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, hsla(43, 96%, 56%, 0.15), hsla(190, 100%, 50%, 0.1))',
+                border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                boxShadow: '0 0 16px -4px hsla(43, 96%, 56%, 0.2)',
+              }}
+            >
+              <Eye className="w-4 h-4 text-gold-solid" />
             </div>
             <span className="font-display font-bold text-lg tracking-tight">
-              <span className="text-primary">AETH</span>
-              <span className="text-muted-foreground ml-1.5 font-normal text-sm">Observatory</span>
+              <span className="text-gold">AETH</span>
+              <span className="text-chrome ml-1.5 font-normal text-sm">Observatory</span>
             </span>
           </div>
 
@@ -25,9 +32,7 @@ export default function AppLayout() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-muted-foreground px-2.5 py-1 rounded-md bg-muted/50 border border-border/50">
-              ANALYST MODE
-            </span>
+            <ModeToggle />
           </div>
         </div>
       </header>

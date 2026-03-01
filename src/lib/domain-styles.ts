@@ -25,15 +25,15 @@ export const domainGlowClass: Record<Domain, string> = {
 };
 
 export const statusColorClass: Record<Status, string> = {
-  accomplished: 'text-green-400',
-  evidence_emerging: 'text-amber-400',
-  projected: 'text-cyan-400',
+  accomplished: 'text-gold-solid',
+  evidence_emerging: 'text-gold-solid',
+  projected: 'text-primary',
   falsified: 'text-red-400',
 };
 
 export const statusBgClass: Record<Status, string> = {
-  accomplished: 'bg-green-400/15 text-green-400 border-green-400/30',
-  evidence_emerging: 'bg-amber-400/15 text-amber-400 border-amber-400/30',
-  projected: 'bg-cyan-400/15 text-cyan-400 border-cyan-400/30',
-  falsified: 'bg-red-400/15 text-red-400 border-red-400/30',
+  accomplished: 'bg-green-400/10 text-green-400 border-green-400/20',
+  evidence_emerging: 'bg-gold/10 text-gold-solid border-gold/20',
+  projected: 'bg-primary/10 text-primary border-primary/20',
+  falsified: 'bg-red-400/10 text-red-400 border-red-400/20',
 };
