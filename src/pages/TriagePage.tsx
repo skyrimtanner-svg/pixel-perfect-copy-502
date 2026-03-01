@@ -4,7 +4,7 @@ import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import type { Milestone } from '@/data/milestones';
 import { ChevronDown, FileText, Filter } from 'lucide-react';
 
@@ -37,55 +37,52 @@ export default function TriagePage() {
   const hasMore = visibleCount < filtered.length;
 
   return (
-    <div>
+    <motion.div
+      key={isWonder ? 'wonder' : 'analyst'}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Triage Strip */}
       <TriageStrip />
 
       {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className={`font-display text-2xl font-bold ${isWonder ? 'text-gold' : 'text-foreground'}`}>
+          <motion.h1
+            className={`font-display font-bold ${isWonder ? 'text-gold text-2xl' : 'text-foreground text-xl'}`}
+            layout
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          >
             {isWonder ? '✦ Triage Queue' : 'Triage Queue'}
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
+          </motion.h1>
+          <p className={`text-muted-foreground mt-1 ${isWonder ? 'text-xs' : 'text-[10px] font-mono'}`}>
             {isWonder
               ? 'The most urgent milestones shaping humanity\'s future — ranked by what matters most.'
-              : 'Milestones ranked by urgency, proximity, and magnitude'}
+              : 'Ranked by urgency × proximity × magnitude | sorted: triageScore DESC'}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold"
-            style={{
-              background: 'linear-gradient(135deg, hsl(38, 88%, 36%), hsl(43, 96%, 50%), hsl(48, 100%, 68%), hsl(43, 96%, 50%), hsl(38, 88%, 36%))',
-              backgroundSize: '200% 100%',
-              color: 'hsl(232, 30%, 2%)',
-              boxShadow: [
-                '0 2px 12px -2px hsla(43, 96%, 56%, 0.35)',
-                'inset 0 1px 0 hsla(48, 100%, 85%, 0.4)',
-                'inset 0 -1px 0 hsla(38, 88%, 28%, 0.5)',
-                '0 1px 2px hsla(38, 88%, 28%, 0.3)',
-              ].join(', '),
-              textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.3)',
-            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold btn-gold"
           >
             <FileText className="w-3.5 h-3.5" />
             Export LP Memo
           </button>
-          <div className="font-mono text-xs text-gold-num">
-            {filtered.length} milestones
+          <div className="font-mono text-[10px] text-chrome tabular-nums">
+            {filtered.length} items
           </div>
         </div>
       </div>
 
-      {/* Domain pills with metallic rims */}
+      {/* Domain pills */}
       <div className="flex items-center gap-2 mb-4">
         <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1" />
         {domains.map(d => {
           const isActive = selectedDomain === d;
           const colors = domainPillColors[d];
           return (
-            <button
+            <motion.button
               key={d}
               onClick={() => { setSelectedDomain(d); setVisibleCount(INITIAL_COUNT); }}
               className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
@@ -97,43 +94,49 @@ export default function TriagePage() {
                   ? `0 0 16px -6px ${colors.glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.05)`
                   : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03)',
               }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
             >
               {d === 'all' ? 'All Domains' : domainLabels[d]}
-            </button>
+            </motion.button>
           );
         })}
       </div>
 
-      {/* Column headers */}
-      <div
-        className="flex items-center gap-3.5 px-3 py-2 mb-1 rounded-lg text-[9px] uppercase tracking-[0.12em] text-muted-foreground font-semibold"
-        style={{
-          background: 'hsla(232, 26%, 5%, 0.4)',
-          borderBottom: '1px solid hsla(220, 12%, 70%, 0.06)',
-        }}
-      >
-        <div className="w-6 text-center">#</div>
-        <div className={isWonder ? 'w-[60px]' : 'w-[42px]'}>P(x)</div>
-        <div className="flex-1">Milestone</div>
-        <div className="w-16 text-right">Target</div>
-        <div className="w-14 text-right">Mag</div>
-        <div className="w-20 text-right">Δ Log-Odds</div>
-        <div className="w-14 text-right">Triage</div>
-      </div>
+      {/* Column headers — Analyst mode only */}
+      {!isWonder && (
+        <div
+          className="flex items-center gap-2.5 px-2.5 py-1.5 mb-0.5 rounded-md text-[8px] uppercase tracking-[0.14em] text-chrome font-mono font-semibold"
+          style={{
+            background: 'hsla(232, 26%, 4%, 0.5)',
+            borderBottom: '1px solid hsla(220, 12%, 70%, 0.06)',
+          }}
+        >
+          <div className="w-5 text-center">#</div>
+          <div className="w-[30px]">P(x)</div>
+          <div className="flex-1">MILESTONE</div>
+          <div className="w-8 text-right">YR</div>
+          <div className="w-7 text-right">MAG</div>
+          <div className="w-14 text-right">Δ LO</div>
+          <div className="w-8 text-right">TRI</div>
+        </div>
+      )}
 
       {/* Milestone list */}
-      <div className={`${isWonder ? 'space-y-2.5' : 'space-y-1'}`}>
-        <AnimatePresence mode="popLayout">
-          {visible.map((m, i) => (
-            <TriageCard
-              key={m.id}
-              milestone={m}
-              index={i}
-              onClick={() => setSelectedMilestone(m)}
-            />
-          ))}
-        </AnimatePresence>
-      </div>
+      <LayoutGroup>
+        <div className={isWonder ? 'space-y-3' : 'space-y-px'}>
+          <AnimatePresence mode="popLayout">
+            {visible.map((m, i) => (
+              <TriageCard
+                key={m.id}
+                milestone={m}
+                index={i}
+                onClick={() => setSelectedMilestone(m)}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      </LayoutGroup>
 
       {/* Load More */}
       {hasMore && (
@@ -144,17 +147,11 @@ export default function TriagePage() {
         >
           <button
             onClick={() => setVisibleCount(v => v + LOAD_MORE_COUNT)}
-            className="rounded-xl px-6 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-all flex items-center gap-2 group"
-            style={{
-              background: 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.78), hsla(232, 22%, 5%, 0.68))',
-              border: '1px solid hsla(220, 12%, 70%, 0.1)',
-              backdropFilter: 'blur(24px)',
-              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
-            }}
+            className="rounded-xl px-6 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-all flex items-center gap-2 group glass-chrome"
           >
             <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
             Load {Math.min(LOAD_MORE_COUNT, filtered.length - visibleCount)} more
-            <span className="font-mono text-[10px] text-muted-foreground ml-1">
+            <span className="font-mono text-[10px] text-muted-foreground ml-1 tabular-nums">
               ({visibleCount}/{filtered.length})
             </span>
           </button>
@@ -166,6 +163,6 @@ export default function TriagePage() {
         open={!!selectedMilestone}
         onClose={() => setSelectedMilestone(null)}
       />
-    </div>
+    </motion.div>
   );
 }

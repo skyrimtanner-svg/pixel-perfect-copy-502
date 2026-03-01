@@ -43,13 +43,20 @@ export default function TracesPage() {
   const data = trajectoryData.filter(p => p.year >= timeRange);
 
   return (
-    <div>
+    <motion.div
+      key={isWonder ? 'wonder' : 'analyst'}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="mb-5">
-        <h1 className={`font-display text-2xl font-bold ${isWonder ? 'text-gold' : 'text-foreground'}`}>
+        <h1 className={`font-display font-bold ${isWonder ? 'text-gold text-2xl' : 'text-foreground text-xl'}`}>
           {isWonder ? '✦ Traces' : 'Traces'}
         </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Composite capability index (evidence-weighted, synthetic) — not a physical measurement.
+        <p className={`mt-1 ${isWonder ? 'text-xs text-muted-foreground' : 'text-[10px] font-mono text-chrome'}`}>
+          {isWonder
+            ? 'Watch how different technologies grow and evolve over time — each line is a domain of human capability!'
+            : 'Composite capability index (evidence-weighted, synthetic) | not physical measurement'}
         </p>
       </div>
 
@@ -60,7 +67,7 @@ export default function TracesPage() {
             const color = domainColors[d];
             const glow = domainGlows[d];
             return (
-              <button
+              <motion.button
                 key={d}
                 onClick={() => toggleDomain(d)}
                 className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all relative overflow-hidden"
@@ -73,9 +80,11 @@ export default function TracesPage() {
                     ? `0 0 14px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.05)`
                     : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03)',
                 }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
               >
                 {domainLabels[d]}
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -89,7 +98,7 @@ export default function TracesPage() {
           }}
         >
           {timeRanges.map(r => (
-            <button
+            <motion.button
               key={r.label}
               onClick={() => setTimeRange(r.start)}
               className="px-3 py-1 rounded-md text-xs font-mono transition-all"
@@ -98,9 +107,11 @@ export default function TracesPage() {
                 color: timeRange === r.start ? 'hsl(43, 96%, 56%)' : 'hsl(218, 15%, 46%)',
                 boxShadow: timeRange === r.start ? 'inset 0 1px 0 hsla(43, 96%, 56%, 0.08)' : 'none',
               }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {r.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -126,27 +137,27 @@ export default function TracesPage() {
           background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
         }} />
 
-        <ResponsiveContainer width="100%" height={480}>
+        <ResponsiveContainer width="100%" height={isWonder ? 520 : 440}>
           <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
             <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="hsla(232, 20%, 18%, 0.25)"
+              strokeDasharray={isWonder ? '4 6' : '2 4'}
+              stroke="hsla(220, 12%, 70%, 0.06)"
               vertical={false}
             />
             <XAxis
               dataKey="year"
-              stroke="hsl(220, 12%, 38%)"
+              stroke="hsl(220, 12%, 45%)"
               fontSize={10}
               fontFamily="Space Mono"
               tickLine={false}
-              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.12)' }}
+              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)', strokeWidth: 1 }}
             />
             <YAxis
-              stroke="hsl(220, 12%, 38%)"
+              stroke="hsl(220, 12%, 45%)"
               fontSize={10}
               fontFamily="Space Mono"
               tickLine={false}
-              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.12)' }}
+              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)', strokeWidth: 1 }}
               domain={[0, 1.3]}
             />
             <Tooltip
@@ -180,14 +191,14 @@ export default function TracesPage() {
                   type="monotone"
                   dataKey={d}
                   stroke={domainColors[d]}
-                  strokeWidth={2.5}
-                  dot={{ r: 2, fill: domainColors[d], strokeWidth: 0 }}
+                  strokeWidth={isWonder ? 3 : 2}
+                  dot={{ r: isWonder ? 2.5 : 1.5, fill: domainColors[d], strokeWidth: 0 }}
                   activeDot={{
-                    r: 5,
+                    r: 6,
                     stroke: domainColors[d],
                     strokeWidth: 2,
                     fill: 'hsl(232, 30%, 2%)',
-                    style: { filter: `drop-shadow(0 0 6px ${domainGlows[d]})` },
+                    style: { filter: `drop-shadow(0 0 8px ${domainGlows[d]})` },
                   }}
                   name={domainLabels[d]}
                   style={{ filter: `drop-shadow(0 0 4px ${domainGlows[d]})` }}
@@ -210,6 +221,6 @@ export default function TracesPage() {
           ))}
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
