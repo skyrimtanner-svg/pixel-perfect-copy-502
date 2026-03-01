@@ -19,8 +19,13 @@ export default function AppLayout() {
             >
               <Eye className="w-4 h-4 text-gold-solid" />
             </div>
-            <span className="font-display font-bold text-lg tracking-tight">
-              <span className="text-gold">AETH</span>
+            <span className="font-display font-bold text-lg tracking-tight flex items-baseline">
+              <span
+                className="text-gold"
+                style={{
+                  filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.5)) drop-shadow(0 0 2px hsla(190, 100%, 50%, 0.3))',
+                }}
+              >ÆTH</span>
               <span className="text-chrome ml-1.5 font-normal text-sm">Observatory</span>
             </span>
           </div>
