@@ -53,7 +53,21 @@ export default function TriagePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-gold flex items-center gap-2 px-4 py-2 rounded-lg text-xs">
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold"
+            style={{
+              background: 'linear-gradient(135deg, hsl(40, 90%, 36%), hsl(43, 96%, 50%), hsl(48, 100%, 68%), hsl(43, 96%, 50%), hsl(40, 90%, 36%))',
+              backgroundSize: '200% 100%',
+              color: 'hsl(230, 25%, 3%)',
+              boxShadow: [
+                '0 2px 12px -2px hsla(43, 96%, 56%, 0.35)',
+                'inset 0 1px 0 hsla(48, 100%, 85%, 0.4)',
+                'inset 0 -1px 0 hsla(40, 90%, 28%, 0.5)',
+                '0 1px 2px hsla(40, 90%, 28%, 0.3)',
+              ].join(', '),
+              textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.3)',
+            }}
+          >
             <FileText className="w-3.5 h-3.5" />
             Export LP Memo
           </button>
