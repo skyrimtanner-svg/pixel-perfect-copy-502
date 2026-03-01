@@ -13,11 +13,11 @@ const domainColors: Record<Domain, string> = {
 };
 
 const domainGlows: Record<Domain, string> = {
-  compute: 'hsla(192, 100%, 52%, 0.4)',
-  energy: 'hsla(36, 100%, 56%, 0.4)',
-  connectivity: 'hsla(268, 90%, 68%, 0.4)',
-  manufacturing: 'hsla(342, 82%, 62%, 0.4)',
-  biology: 'hsla(155, 82%, 48%, 0.4)',
+  compute: 'hsla(192, 100%, 52%, 0.5)',
+  energy: 'hsla(36, 100%, 56%, 0.5)',
+  connectivity: 'hsla(268, 90%, 68%, 0.5)',
+  manufacturing: 'hsla(342, 82%, 62%, 0.5)',
+  biology: 'hsla(155, 82%, 48%, 0.5)',
 };
 
 const allDomains: Domain[] = ['compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
@@ -70,16 +70,19 @@ export default function TracesPage() {
               <motion.button
                 key={d}
                 onClick={() => toggleDomain(d)}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all relative overflow-hidden"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-medium font-mono transition-all relative overflow-hidden shine-sweep"
                 style={{
-                  background: active ? `${color.replace('hsl', 'hsla').replace(')', ', 0.08)')}` : 'hsla(232, 26%, 8%, 0.6)',
-                  border: `1px solid ${active ? `${color.replace('hsl', 'hsla').replace(')', ', 0.25)')}` : 'hsla(220, 12%, 70%, 0.08)'}`,
+                  background: active
+                    ? `linear-gradient(145deg, ${color.replace('hsl', 'hsla').replace(')', ', 0.12)')}, ${color.replace('hsl', 'hsla').replace(')', ', 0.04)')})`
+                    : 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.7), hsla(232, 22%, 6%, 0.6))',
+                  border: `1px solid ${active ? `${color.replace('hsl', 'hsla').replace(')', ', 0.3)')}` : 'hsla(220, 12%, 70%, 0.08)'}`,
                   color: active ? color : 'hsl(218, 15%, 38%)',
                   textDecoration: active ? 'none' : 'line-through',
-                  backdropFilter: 'blur(16px)',
+                  backdropFilter: 'blur(20px)',
                   boxShadow: active
-                    ? `0 0 16px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)`
-                    : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03)',
+                    ? `0 0 20px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.08), inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)`
+                    : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03), inset 0 -1px 0 hsla(232, 30%, 2%, 0.2)',
+                  textShadow: active ? `0 0 10px ${glow}` : 'none',
                 }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
@@ -93,10 +96,10 @@ export default function TracesPage() {
         <div
           className="flex gap-0.5 rounded-lg p-0.5"
           style={{
-            background: 'hsla(232, 26%, 8%, 0.6)',
-            border: '1px solid hsla(220, 12%, 70%, 0.12)',
-            boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
-            backdropFilter: 'blur(16px)',
+            background: 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.7), hsla(232, 22%, 6%, 0.6))',
+            border: '1px solid hsla(220, 12%, 70%, 0.14)',
+            boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
+            backdropFilter: 'blur(20px)',
           }}
         >
           {timeRanges.map(r => (
@@ -105,9 +108,12 @@ export default function TracesPage() {
               onClick={() => setTimeRange(r.start)}
               className="px-3 py-1 rounded-md text-xs font-mono transition-all"
               style={{
-                background: timeRange === r.start ? 'hsla(43, 96%, 56%, 0.1)' : 'transparent',
+                background: timeRange === r.start ? 'hsla(43, 96%, 56%, 0.12)' : 'transparent',
                 color: timeRange === r.start ? 'hsl(43, 96%, 56%)' : 'hsl(218, 15%, 46%)',
-                boxShadow: timeRange === r.start ? 'inset 0 1px 0 hsla(43, 96%, 56%, 0.1)' : 'none',
+                boxShadow: timeRange === r.start
+                  ? 'inset 0 1px 0 hsla(43, 96%, 56%, 0.12), 0 0 12px -4px hsla(43, 96%, 56%, 0.2)'
+                  : 'none',
+                textShadow: timeRange === r.start ? '0 0 8px hsla(43, 96%, 56%, 0.3)' : 'none',
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -121,70 +127,76 @@ export default function TracesPage() {
       <motion.div
         className="rounded-xl p-5 relative overflow-hidden"
         style={{
-          background: 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.85), hsla(232, 22%, 5%, 0.75))',
-          border: '1px solid hsla(220, 12%, 70%, 0.14)',
-          backdropFilter: 'blur(36px)',
+          background: 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.88), hsla(232, 22%, 5%, 0.82))',
+          border: '1px solid hsla(220, 12%, 70%, 0.16)',
+          backdropFilter: 'blur(40px)',
           boxShadow: [
-            'inset 0 1px 0 hsla(220, 14%, 88%, 0.08)',
-            'inset 0 -1px 0 hsla(232, 30%, 2%, 0.5)',
-            '0 8px 40px -12px hsla(232, 30%, 2%, 0.8)',
-            '0 2px 8px hsla(232, 30%, 2%, 0.4)',
+            'inset 0 1px 0 hsla(220, 16%, 95%, 0.09)',
+            'inset 0 -1px 0 hsla(232, 30%, 2%, 0.55)',
+            '0 10px 48px -12px hsla(232, 30%, 2%, 0.85)',
+            '0 2px 8px hsla(232, 30%, 2%, 0.45)',
           ].join(', '),
         }}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Top highlight */}
-        <div className="absolute top-0 left-8 right-8 h-px" style={{
-          background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.08), transparent)',
+        {/* Top gold highlight */}
+        <div className="absolute top-0 left-6 right-6 h-px" style={{
+          background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.15), hsla(220, 14%, 88%, 0.08), hsla(43, 96%, 56%, 0.15), transparent)',
+        }} />
+        {/* Glossy top reflection */}
+        <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl pointer-events-none" style={{
+          background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.03) 0%, transparent 100%)',
         }} />
 
         <ResponsiveContainer width="100%" height={isWonder ? 520 : 440}>
           <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
             <CartesianGrid
               strokeDasharray={isWonder ? '4 6' : '2 4'}
-              stroke="hsla(220, 12%, 70%, 0.06)"
+              stroke="hsla(220, 12%, 70%, 0.07)"
               vertical={false}
             />
             <XAxis
               dataKey="year"
-              stroke="hsl(220, 12%, 45%)"
+              stroke="hsl(220, 14%, 55%)"
               fontSize={10}
               fontFamily="Space Mono"
               tickLine={false}
-              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.18)', strokeWidth: 1 }}
+              axisLine={{ stroke: 'hsla(220, 14%, 70%, 0.22)', strokeWidth: 1 }}
             />
             <YAxis
-              stroke="hsl(220, 12%, 45%)"
+              stroke="hsl(220, 14%, 55%)"
               fontSize={10}
               fontFamily="Space Mono"
               tickLine={false}
-              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.18)', strokeWidth: 1 }}
+              axisLine={{ stroke: 'hsla(220, 14%, 70%, 0.22)', strokeWidth: 1 }}
               domain={[0, 1.3]}
             />
             <Tooltip
               contentStyle={{
-                background: 'hsla(232, 26%, 5%, 0.97)',
-                border: '1px solid hsla(43, 96%, 56%, 0.18)',
-                borderRadius: '10px',
+                background: 'hsla(232, 26%, 4%, 0.97)',
+                border: '1px solid hsla(43, 96%, 56%, 0.22)',
+                borderRadius: '12px',
                 fontFamily: 'Space Mono',
                 fontSize: '10px',
-                boxShadow: '0 12px 40px -8px hsla(232, 30%, 2%, 0.9), 0 0 24px -6px hsla(43, 96%, 56%, 0.1)',
-                backdropFilter: 'blur(24px)',
+                boxShadow: '0 16px 48px -8px hsla(232, 30%, 2%, 0.95), 0 0 28px -6px hsla(43, 96%, 56%, 0.12)',
+                backdropFilter: 'blur(28px)',
               }}
               labelStyle={{ color: 'hsl(43, 96%, 56%)', fontFamily: 'DM Sans', fontWeight: 600, fontSize: '11px' }}
               itemStyle={{ fontFamily: 'Space Mono', fontSize: '10px' }}
             />
             <ReferenceLine
               x={2025}
-              stroke="hsla(43, 96%, 56%, 0.35)"
-              strokeDasharray="4 4"
+              stroke="hsla(43, 96%, 56%, 0.5)"
+              strokeDasharray="6 4"
+              strokeWidth={2}
               label={{
-                value: 'NOW',
+                value: '▸ NOW',
                 fill: 'hsl(43, 96%, 56%)',
                 fontSize: 9,
                 fontFamily: 'Space Mono',
+                fontWeight: 700,
               }}
             />
             {allDomains.map(d => (
@@ -194,17 +206,17 @@ export default function TracesPage() {
                   type="monotone"
                   dataKey={d}
                   stroke={domainColors[d]}
-                  strokeWidth={isWonder ? 3 : 2}
+                  strokeWidth={isWonder ? 3 : 2.5}
                   dot={{ r: isWonder ? 2.5 : 1.5, fill: domainColors[d], strokeWidth: 0 }}
                   activeDot={{
-                    r: 6,
+                    r: 7,
                     stroke: domainColors[d],
                     strokeWidth: 2,
                     fill: 'hsl(232, 30%, 2%)',
-                    style: { filter: `drop-shadow(0 0 10px ${domainGlows[d]})` },
+                    style: { filter: `drop-shadow(0 0 12px ${domainGlows[d]})` },
                   }}
                   name={domainLabels[d]}
-                  style={{ filter: `drop-shadow(0 0 6px ${domainGlows[d]})` }}
+                  style={{ filter: `drop-shadow(0 0 8px ${domainGlows[d]})` }}
                 />
               )
             ))}
@@ -215,9 +227,9 @@ export default function TracesPage() {
         <div className="flex items-center justify-center gap-5 mt-3 pt-3" style={{ borderTop: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
           {allDomains.filter(d => activeDomains.has(d)).map(d => (
             <div key={d} className="flex items-center gap-1.5">
-              <div className="w-2.5 h-0.5 rounded-full" style={{
+              <div className="w-3 h-0.5 rounded-full" style={{
                 background: domainColors[d],
-                boxShadow: `0 0 8px ${domainGlows[d]}`,
+                boxShadow: `0 0 10px ${domainGlows[d]}, 0 0 3px ${domainColors[d]}`,
               }} />
               <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">{domainLabels[d]}</span>
             </div>
