@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { motion } from 'framer-motion';
 import { useMode } from '@/contexts/ModeContext';
 
@@ -19,12 +20,13 @@ export function ProbabilityRing({
   useGold = false,
 }: ProbabilityRingProps) {
   const { isWonder } = useMode();
+  const id = useId();
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const filled = circumference * value;
-  const gradientId = `ring-${Math.random().toString(36).slice(2, 8)}`;
-  const glowId = `glow-${Math.random().toString(36).slice(2, 8)}`;
-  const specularId = `specular-${Math.random().toString(36).slice(2, 8)}`;
+  const gradientId = `ring-${id}`;
+  const glowId = `glow-${id}`;
+  const specularId = `specular-${id}`;
   const showGold = useGold || isWonder || value > 0.7;
 
   return (

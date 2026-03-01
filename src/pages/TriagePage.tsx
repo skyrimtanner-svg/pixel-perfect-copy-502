@@ -64,7 +64,7 @@ export default function TriagePage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold btn-gold"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold btn-gold shine-sweep"
           >
             <FileText className="w-3.5 h-3.5" />
             Export LP Memo
@@ -76,7 +76,7 @@ export default function TriagePage() {
       </div>
 
       {/* Domain pills */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-5">
         <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1" />
         {domains.map(d => {
           const isActive = selectedDomain === d;
@@ -85,7 +85,7 @@ export default function TriagePage() {
             <motion.button
               key={d}
               onClick={() => { setSelectedDomain(d); setVisibleCount(INITIAL_COUNT); }}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-medium font-mono transition-all duration-200"
               style={{
                 background: isActive ? colors.bg : 'hsla(232, 26%, 8%, 0.6)',
                 border: `1px solid ${isActive ? colors.border : 'hsla(220, 12%, 70%, 0.08)'}`,
