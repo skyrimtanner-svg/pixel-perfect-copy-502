@@ -2,13 +2,22 @@ import { useState } from 'react';
 import { trajectoryData, Domain, domainLabels } from '@/data/milestones';
 import { useMode } from '@/contexts/ModeContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { motion } from 'framer-motion';
 
 const domainColors: Record<Domain, string> = {
-  compute: 'hsl(190, 100%, 50%)',
-  energy: 'hsl(38, 100%, 58%)',
-  connectivity: 'hsl(270, 90%, 68%)',
-  manufacturing: 'hsl(340, 80%, 62%)',
-  biology: 'hsl(152, 80%, 50%)',
+  compute: 'hsl(192, 100%, 52%)',
+  energy: 'hsl(36, 100%, 56%)',
+  connectivity: 'hsl(268, 90%, 68%)',
+  manufacturing: 'hsl(342, 82%, 62%)',
+  biology: 'hsl(155, 82%, 48%)',
+};
+
+const domainGlows: Record<Domain, string> = {
+  compute: 'hsla(192, 100%, 52%, 0.4)',
+  energy: 'hsla(36, 100%, 56%, 0.4)',
+  connectivity: 'hsla(268, 90%, 68%, 0.4)',
+  manufacturing: 'hsla(342, 82%, 62%, 0.4)',
+  biology: 'hsla(155, 82%, 48%, 0.4)',
 };
 
 const allDomains: Domain[] = ['compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
@@ -33,21 +42,13 @@ export default function TracesPage() {
 
   const data = trajectoryData.filter(p => p.year >= timeRange);
 
-  const domainPillColors: Record<string, { border: string; text: string }> = {
-    compute: { border: 'hsla(190, 100%, 50%, 0.25)', text: 'hsl(190, 100%, 50%)' },
-    energy: { border: 'hsla(38, 100%, 58%, 0.25)', text: 'hsl(38, 100%, 58%)' },
-    connectivity: { border: 'hsla(270, 90%, 68%, 0.25)', text: 'hsl(270, 90%, 68%)' },
-    manufacturing: { border: 'hsla(340, 80%, 62%, 0.25)', text: 'hsl(340, 80%, 62%)' },
-    biology: { border: 'hsla(152, 80%, 50%, 0.25)', text: 'hsl(152, 80%, 50%)' },
-  };
-
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-5">
         <h1 className={`font-display text-2xl font-bold ${isWonder ? 'text-gold' : 'text-foreground'}`}>
           {isWonder ? '✦ Traces' : 'Traces'}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Composite capability index (evidence-weighted, synthetic) — not a physical measurement.
         </p>
       </div>
@@ -56,18 +57,21 @@ export default function TracesPage() {
         <div className="flex gap-2">
           {allDomains.map(d => {
             const active = activeDomains.has(d);
-            const colors = domainPillColors[d];
+            const color = domainColors[d];
+            const glow = domainGlows[d];
             return (
               <button
                 key={d}
                 onClick={() => toggleDomain(d)}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all relative overflow-hidden"
                 style={{
-                  background: active ? `${colors.text.replace('hsl', 'hsla').replace(')', ', 0.08)')}` : 'hsla(230, 22%, 9%, 0.6)',
-                  border: `1px solid ${active ? colors.border : 'hsla(220, 10%, 72%, 0.08)'}`,
-                  color: active ? colors.text : 'hsl(215, 15%, 38%)',
+                  background: active ? `${color.replace('hsl', 'hsla').replace(')', ', 0.08)')}` : 'hsla(232, 26%, 8%, 0.6)',
+                  border: `1px solid ${active ? `${color.replace('hsl', 'hsla').replace(')', ', 0.25)')}` : 'hsla(220, 12%, 70%, 0.08)'}`,
+                  color: active ? color : 'hsl(218, 15%, 38%)',
                   textDecoration: active ? 'none' : 'line-through',
-                  boxShadow: active ? `0 0 12px -4px ${colors.border}` : 'none',
+                  boxShadow: active
+                    ? `0 0 14px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.05)`
+                    : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03)',
                 }}
               >
                 {domainLabels[d]}
@@ -76,7 +80,14 @@ export default function TracesPage() {
           })}
         </div>
 
-        <div className="flex gap-1 glass-chrome rounded-lg p-1">
+        <div
+          className="flex gap-0.5 rounded-lg p-0.5"
+          style={{
+            background: 'hsla(232, 26%, 8%, 0.6)',
+            border: '1px solid hsla(220, 12%, 70%, 0.1)',
+            boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.04), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
+          }}
+        >
           {timeRanges.map(r => (
             <button
               key={r.label}
@@ -84,7 +95,8 @@ export default function TracesPage() {
               className="px-3 py-1 rounded-md text-xs font-mono transition-all"
               style={{
                 background: timeRange === r.start ? 'hsla(43, 96%, 56%, 0.1)' : 'transparent',
-                color: timeRange === r.start ? 'hsl(43, 96%, 56%)' : 'hsl(215, 15%, 48%)',
+                color: timeRange === r.start ? 'hsl(43, 96%, 56%)' : 'hsl(218, 15%, 46%)',
+                boxShadow: timeRange === r.start ? 'inset 0 1px 0 hsla(43, 96%, 56%, 0.08)' : 'none',
               }}
             >
               {r.label}
@@ -93,40 +105,73 @@ export default function TracesPage() {
         </div>
       </div>
 
-      <div className="glass-premium rounded-xl p-6">
-        <ResponsiveContainer width="100%" height={500}>
+      <motion.div
+        className="rounded-xl p-5 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.82), hsla(232, 22%, 5%, 0.72))',
+          border: '1px solid hsla(220, 12%, 70%, 0.1)',
+          backdropFilter: 'blur(32px)',
+          boxShadow: [
+            'inset 0 1px 0 hsla(220, 14%, 88%, 0.06)',
+            'inset 0 -1px 0 hsla(232, 30%, 2%, 0.5)',
+            '0 8px 40px -12px hsla(232, 30%, 2%, 0.8)',
+          ].join(', '),
+        }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Top highlight */}
+        <div className="absolute top-0 left-8 right-8 h-px" style={{
+          background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
+        }} />
+
+        <ResponsiveContainer width="100%" height={480}>
           <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsla(230, 16%, 20%, 0.2)" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsla(232, 20%, 18%, 0.25)"
+              vertical={false}
+            />
             <XAxis
               dataKey="year"
-              stroke="hsl(215, 15%, 40%)"
-              fontSize={11}
+              stroke="hsl(220, 12%, 38%)"
+              fontSize={10}
               fontFamily="Space Mono"
               tickLine={false}
+              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.12)' }}
             />
             <YAxis
-              stroke="hsl(215, 15%, 40%)"
-              fontSize={11}
+              stroke="hsl(220, 12%, 38%)"
+              fontSize={10}
               fontFamily="Space Mono"
               tickLine={false}
-              domain={[0, 1.2]}
+              axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.12)' }}
+              domain={[0, 1.3]}
             />
             <Tooltip
               contentStyle={{
-                background: 'hsla(230, 22%, 6%, 0.95)',
-                border: '1px solid hsla(220, 10%, 72%, 0.12)',
-                borderRadius: '12px',
+                background: 'hsla(232, 26%, 5%, 0.96)',
+                border: '1px solid hsla(43, 96%, 56%, 0.15)',
+                borderRadius: '10px',
                 fontFamily: 'Space Mono',
-                fontSize: '11px',
-                boxShadow: '0 12px 40px -8px hsla(230, 25%, 3%, 0.8)',
+                fontSize: '10px',
+                boxShadow: '0 12px 40px -8px hsla(232, 30%, 2%, 0.9), 0 0 20px -6px hsla(43, 96%, 56%, 0.08)',
+                backdropFilter: 'blur(20px)',
               }}
-              labelStyle={{ color: 'hsl(43, 96%, 56%)', fontFamily: 'DM Sans', fontWeight: 600 }}
+              labelStyle={{ color: 'hsl(43, 96%, 56%)', fontFamily: 'DM Sans', fontWeight: 600, fontSize: '11px' }}
+              itemStyle={{ fontFamily: 'Space Mono', fontSize: '10px' }}
             />
             <ReferenceLine
               x={2025}
-              stroke="hsla(43, 96%, 56%, 0.35)"
+              stroke="hsla(43, 96%, 56%, 0.3)"
               strokeDasharray="4 4"
-              label={{ value: 'NOW', fill: 'hsl(43, 96%, 56%)', fontSize: 10, fontFamily: 'Space Mono' }}
+              label={{
+                value: 'NOW',
+                fill: 'hsl(43, 96%, 56%)',
+                fontSize: 9,
+                fontFamily: 'Space Mono',
+              }}
             />
             {allDomains.map(d => (
               activeDomains.has(d) && (
@@ -135,16 +180,36 @@ export default function TracesPage() {
                   type="monotone"
                   dataKey={d}
                   stroke={domainColors[d]}
-                  strokeWidth={2}
-                  dot={{ r: 2.5, fill: domainColors[d], strokeWidth: 0 }}
-                  activeDot={{ r: 5, stroke: domainColors[d], strokeWidth: 2, fill: 'hsl(230, 25%, 3%)' }}
+                  strokeWidth={2.5}
+                  dot={{ r: 2, fill: domainColors[d], strokeWidth: 0 }}
+                  activeDot={{
+                    r: 5,
+                    stroke: domainColors[d],
+                    strokeWidth: 2,
+                    fill: 'hsl(232, 30%, 2%)',
+                    style: { filter: `drop-shadow(0 0 6px ${domainGlows[d]})` },
+                  }}
                   name={domainLabels[d]}
+                  style={{ filter: `drop-shadow(0 0 4px ${domainGlows[d]})` }}
                 />
               )
             ))}
           </LineChart>
         </ResponsiveContainer>
-      </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-5 mt-3 pt-3" style={{ borderTop: '1px solid hsla(220, 12%, 70%, 0.06)' }}>
+          {allDomains.filter(d => activeDomains.has(d)).map(d => (
+            <div key={d} className="flex items-center gap-1.5">
+              <div className="w-2.5 h-0.5 rounded-full" style={{
+                background: domainColors[d],
+                boxShadow: `0 0 6px ${domainGlows[d]}`,
+              }} />
+              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">{domainLabels[d]}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }

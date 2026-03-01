@@ -6,21 +6,21 @@ import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Milestone } from '@/data/milestones';
-import { ChevronDown, FileText } from 'lucide-react';
+import { ChevronDown, FileText, Filter } from 'lucide-react';
 
 const domains: (Domain | 'all')[] = ['all', 'compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
 
-const domainPillColors: Record<string, { bg: string; border: string; text: string }> = {
-  all: { bg: 'hsla(43, 96%, 56%, 0.08)', border: 'hsla(43, 96%, 56%, 0.2)', text: 'hsl(43, 96%, 56%)' },
-  compute: { bg: 'hsla(190, 100%, 50%, 0.08)', border: 'hsla(190, 100%, 50%, 0.2)', text: 'hsl(190, 100%, 50%)' },
-  energy: { bg: 'hsla(38, 100%, 58%, 0.08)', border: 'hsla(38, 100%, 58%, 0.2)', text: 'hsl(38, 100%, 58%)' },
-  connectivity: { bg: 'hsla(270, 90%, 68%, 0.08)', border: 'hsla(270, 90%, 68%, 0.2)', text: 'hsl(270, 90%, 68%)' },
-  manufacturing: { bg: 'hsla(340, 80%, 62%, 0.08)', border: 'hsla(340, 80%, 62%, 0.2)', text: 'hsl(340, 80%, 62%)' },
-  biology: { bg: 'hsla(152, 80%, 50%, 0.08)', border: 'hsla(152, 80%, 50%, 0.2)', text: 'hsl(152, 80%, 50%)' },
+const domainPillColors: Record<string, { bg: string; border: string; text: string; glow: string }> = {
+  all: { bg: 'hsla(43, 96%, 56%, 0.08)', border: 'hsla(43, 96%, 56%, 0.22)', text: 'hsl(43, 96%, 56%)', glow: 'hsla(43, 96%, 56%, 0.15)' },
+  compute: { bg: 'hsla(192, 100%, 52%, 0.08)', border: 'hsla(192, 100%, 52%, 0.22)', text: 'hsl(192, 100%, 52%)', glow: 'hsla(192, 100%, 52%, 0.15)' },
+  energy: { bg: 'hsla(36, 100%, 56%, 0.08)', border: 'hsla(36, 100%, 56%, 0.22)', text: 'hsl(36, 100%, 56%)', glow: 'hsla(36, 100%, 56%, 0.15)' },
+  connectivity: { bg: 'hsla(268, 90%, 68%, 0.08)', border: 'hsla(268, 90%, 68%, 0.22)', text: 'hsl(268, 90%, 68%)', glow: 'hsla(268, 90%, 68%, 0.15)' },
+  manufacturing: { bg: 'hsla(342, 82%, 62%, 0.08)', border: 'hsla(342, 82%, 62%, 0.22)', text: 'hsl(342, 82%, 62%)', glow: 'hsla(342, 82%, 62%, 0.15)' },
+  biology: { bg: 'hsla(155, 82%, 48%, 0.08)', border: 'hsla(155, 82%, 48%, 0.22)', text: 'hsl(155, 82%, 48%)', glow: 'hsla(155, 82%, 48%, 0.15)' },
 };
 
-const INITIAL_COUNT = 10;
-const LOAD_MORE_COUNT = 6;
+const INITIAL_COUNT = 15;
+const LOAD_MORE_COUNT = 8;
 
 export default function TriagePage() {
   const { isWonder } = useMode();
@@ -41,12 +41,13 @@ export default function TriagePage() {
       {/* Triage Strip */}
       <TriageStrip />
 
-      <div className="flex items-center justify-between mb-5">
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className={`font-display text-2xl font-bold ${isWonder ? 'text-gold' : 'text-foreground'}`}>
             {isWonder ? '✦ Triage Queue' : 'Triage Queue'}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {isWonder
               ? 'The most urgent milestones shaping humanity\'s future — ranked by what matters most.'
               : 'Milestones ranked by urgency, proximity, and magnitude'}
@@ -56,14 +57,14 @@ export default function TriagePage() {
           <button
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold"
             style={{
-              background: 'linear-gradient(135deg, hsl(40, 90%, 36%), hsl(43, 96%, 50%), hsl(48, 100%, 68%), hsl(43, 96%, 50%), hsl(40, 90%, 36%))',
+              background: 'linear-gradient(135deg, hsl(38, 88%, 36%), hsl(43, 96%, 50%), hsl(48, 100%, 68%), hsl(43, 96%, 50%), hsl(38, 88%, 36%))',
               backgroundSize: '200% 100%',
-              color: 'hsl(230, 25%, 3%)',
+              color: 'hsl(232, 30%, 2%)',
               boxShadow: [
                 '0 2px 12px -2px hsla(43, 96%, 56%, 0.35)',
                 'inset 0 1px 0 hsla(48, 100%, 85%, 0.4)',
-                'inset 0 -1px 0 hsla(40, 90%, 28%, 0.5)',
-                '0 1px 2px hsla(40, 90%, 28%, 0.3)',
+                'inset 0 -1px 0 hsla(38, 88%, 28%, 0.5)',
+                '0 1px 2px hsla(38, 88%, 28%, 0.3)',
               ].join(', '),
               textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.3)',
             }}
@@ -77,8 +78,9 @@ export default function TriagePage() {
         </div>
       </div>
 
-      {/* Domain pills with gold rims */}
-      <div className="flex gap-2 mb-5">
+      {/* Domain pills with metallic rims */}
+      <div className="flex items-center gap-2 mb-4">
+        <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1" />
         {domains.map(d => {
           const isActive = selectedDomain === d;
           const colors = domainPillColors[d];
@@ -88,12 +90,12 @@ export default function TriagePage() {
               onClick={() => { setSelectedDomain(d); setVisibleCount(INITIAL_COUNT); }}
               className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
               style={{
-                background: isActive ? colors.bg : 'hsla(230, 22%, 9%, 0.6)',
-                border: `1px solid ${isActive ? colors.border : 'hsla(220, 10%, 72%, 0.08)'}`,
-                color: isActive ? colors.text : 'hsl(215, 15%, 48%)',
+                background: isActive ? colors.bg : 'hsla(232, 26%, 8%, 0.6)',
+                border: `1px solid ${isActive ? colors.border : 'hsla(220, 12%, 70%, 0.08)'}`,
+                color: isActive ? colors.text : 'hsl(218, 15%, 46%)',
                 boxShadow: isActive
-                  ? `0 0 16px -6px ${colors.border}, inset 0 1px 0 hsla(220, 10%, 85%, 0.04)`
-                  : 'inset 0 1px 0 hsla(220, 10%, 85%, 0.03)',
+                  ? `0 0 16px -6px ${colors.glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.05)`
+                  : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03)',
               }}
             >
               {d === 'all' ? 'All Domains' : domainLabels[d]}
@@ -102,8 +104,25 @@ export default function TriagePage() {
         })}
       </div>
 
+      {/* Column headers */}
+      <div
+        className="flex items-center gap-3.5 px-3 py-2 mb-1 rounded-lg text-[9px] uppercase tracking-[0.12em] text-muted-foreground font-semibold"
+        style={{
+          background: 'hsla(232, 26%, 5%, 0.4)',
+          borderBottom: '1px solid hsla(220, 12%, 70%, 0.06)',
+        }}
+      >
+        <div className="w-6 text-center">#</div>
+        <div className={isWonder ? 'w-[60px]' : 'w-[42px]'}>P(x)</div>
+        <div className="flex-1">Milestone</div>
+        <div className="w-16 text-right">Target</div>
+        <div className="w-14 text-right">Mag</div>
+        <div className="w-20 text-right">Δ Log-Odds</div>
+        <div className="w-14 text-right">Triage</div>
+      </div>
+
       {/* Milestone list */}
-      <div className={`${isWonder ? 'space-y-3' : 'space-y-1.5'}`}>
+      <div className={`${isWonder ? 'space-y-2.5' : 'space-y-1'}`}>
         <AnimatePresence mode="popLayout">
           {visible.map((m, i) => (
             <TriageCard
@@ -119,18 +138,23 @@ export default function TriagePage() {
       {/* Load More */}
       {hasMore && (
         <motion.div
-          className="flex justify-center mt-6"
+          className="flex justify-center mt-5"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
           <button
             onClick={() => setVisibleCount(v => v + LOAD_MORE_COUNT)}
-            className="glass-chrome rounded-xl px-6 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-all flex items-center gap-2 group"
-            style={{ boxShadow: 'inset 0 1px 0 hsla(220, 10%, 85%, 0.04)' }}
+            className="rounded-xl px-6 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-all flex items-center gap-2 group"
+            style={{
+              background: 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.78), hsla(232, 22%, 5%, 0.68))',
+              border: '1px solid hsla(220, 12%, 70%, 0.1)',
+              backdropFilter: 'blur(24px)',
+              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
+            }}
           >
             <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-            Load {Math.min(LOAD_MORE_COUNT, filtered.length - visibleCount)} more milestones
-            <span className="font-mono text-xs text-muted-foreground ml-1">
+            Load {Math.min(LOAD_MORE_COUNT, filtered.length - visibleCount)} more
+            <span className="font-mono text-[10px] text-muted-foreground ml-1">
               ({visibleCount}/{filtered.length})
             </span>
           </button>
