@@ -15,24 +15,53 @@ export default function AppLayout() {
       >
         <div className="max-w-[1600px] mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+            {/* Logo icon – gold/cyan glass capsule */}
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, hsla(43, 96%, 56%, 0.12), hsla(190, 100%, 50%, 0.08))',
-                border: '1px solid hsla(43, 96%, 56%, 0.2)',
-                boxShadow: '0 0 20px -4px hsla(43, 96%, 56%, 0.2), inset 0 1px 0 hsla(43, 96%, 56%, 0.1)',
+                background: 'linear-gradient(145deg, hsla(43, 96%, 56%, 0.15), hsla(230, 22%, 10%, 0.8), hsla(190, 100%, 50%, 0.08))',
+                border: '1px solid hsla(43, 96%, 56%, 0.3)',
+                boxShadow:
+                  '0 0 24px -4px hsla(43, 96%, 56%, 0.25), 0 0 8px -2px hsla(190, 100%, 50%, 0.15), inset 0 1px 0 hsla(48, 100%, 80%, 0.15), inset 0 -1px 0 hsla(230, 25%, 3%, 0.5)',
               }}
             >
-              <Eye className="w-4 h-4 text-gold-solid" />
+              <Eye className="w-4.5 h-4.5" style={{ color: 'hsl(43, 96%, 56%)', filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))' }} />
             </div>
-            <span className="font-display font-bold text-lg tracking-tight flex items-baseline">
+
+            {/* Brand wordmark */}
+            <div className="flex items-baseline gap-0">
+              {/* ÆTH – metallic gold with specular highlight & cyan neon edge */}
               <span
-                className="text-gold"
+                className="font-display font-bold text-xl tracking-tight"
                 style={{
-                  filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.5)) drop-shadow(0 0 2px hsla(190, 100%, 50%, 0.3))',
+                  background: 'linear-gradient(135deg, hsl(40, 85%, 38%) 0%, hsl(43, 96%, 52%) 25%, hsl(48, 100%, 72%) 50%, hsl(43, 96%, 56%) 75%, hsl(40, 90%, 42%) 100%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  filter: 'drop-shadow(0 0 8px hsla(43, 96%, 56%, 0.6)) drop-shadow(0 0 3px hsla(190, 100%, 50%, 0.35)) drop-shadow(0 1px 0 hsla(40, 90%, 30%, 0.8))',
+                  letterSpacing: '0.04em',
                 }}
-              >ÆTH</span>
-              <span className="text-chrome ml-1.5 font-normal text-sm">Observatory</span>
-            </span>
+              >
+                ÆTH
+              </span>
+
+              {/* Observatory – polished chrome */}
+              <span
+                className="font-display font-normal text-sm ml-2 tracking-wide"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(220, 10%, 55%) 0%, hsl(220, 12%, 82%) 40%, hsl(220, 14%, 92%) 60%, hsl(220, 10%, 68%) 100%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  filter: 'drop-shadow(0 0 4px hsla(220, 10%, 72%, 0.2))',
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase' as const,
+                }}
+              >
+                Observatory
+              </span>
+            </div>
           </div>
 
           <nav className="flex items-center gap-1">
