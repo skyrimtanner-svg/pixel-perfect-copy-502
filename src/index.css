@@ -354,3 +354,23 @@
 .gold-ring-gradient {
   stroke: url(#goldGradient);
 }
+
+/* ═══════════ 3D PERSPECTIVE ═══════════ */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* ═══════════ TABULAR NUMS ═══════════ */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════ SPRING HOVER TRANSITIONS ═══════════ */
+@keyframes metallic-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.metallic-hover:hover {
+  animation: metallic-sweep 1.5s ease-in-out;
+}

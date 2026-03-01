@@ -35,13 +35,20 @@ export default function CalibrationPage() {
   };
 
   return (
-    <div>
+    <motion.div
+      key={isWonder ? 'wonder' : 'analyst'}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="mb-5">
-        <h1 className={`font-display text-2xl font-bold ${isWonder ? 'text-gold' : 'text-foreground'}`}>
+        <h1 className={`font-display font-bold ${isWonder ? 'text-gold text-2xl' : 'text-foreground text-xl'}`}>
           {isWonder ? '✦ Calibration' : 'Calibration'}
         </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          How well do our probabilities match reality? Brier Score: 0 = perfect, 0.25 = random.
+        <p className={`mt-1 ${isWonder ? 'text-xs text-muted-foreground' : 'text-[10px] font-mono text-chrome'}`}>
+          {isWonder
+            ? 'How accurate are our predictions? A lower Brier Score means we\'re getting closer to the truth!'
+            : 'Brier Score | 0 = perfect | 0.25 = random | resolved milestones only'}
         </p>
       </div>
 
@@ -53,20 +60,20 @@ export default function CalibrationPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
           <div className="absolute top-0 left-4 right-4 h-px" style={{
             background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.2), transparent)',
           }} />
           <TrendingDown className="w-4 h-4 text-gold-solid mx-auto mb-2" style={{ filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))' }} />
           <div
-            className="font-mono text-3xl font-bold"
+            className="font-mono text-3xl font-bold tabular-nums"
             style={{
               background: 'linear-gradient(135deg, hsl(38, 88%, 38%), hsl(43, 96%, 56%), hsl(48, 100%, 72%), hsl(43, 96%, 56%))',
               backgroundSize: '200% 100%',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              textShadow: undefined,
               filter: 'drop-shadow(0 0 12px hsla(43, 96%, 56%, 0.3))',
             }}
           >
@@ -82,12 +89,13 @@ export default function CalibrationPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1, duration: 0.4 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
           <div className="absolute top-0 left-4 right-4 h-px" style={{
             background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
           }} />
           <CheckCircle2 className="w-4 h-4 text-chrome mx-auto mb-2" />
-          <div className="font-mono text-3xl font-bold text-gold-num">{resolved.length}</div>
+          <div className="font-mono text-3xl font-bold text-gold-num tabular-nums">{resolved.length}</div>
           <div className="text-[9px] text-muted-foreground mt-2 uppercase tracking-[0.15em] font-semibold font-mono">Resolved</div>
         </motion.div>
 
@@ -98,12 +106,18 @@ export default function CalibrationPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
+          whileHover={{ scale: 1.02, y: -2 }}
         >
           <div className="absolute top-0 left-4 right-4 h-px" style={{
             background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.2), transparent)',
           }} />
           <div className="flex items-center justify-center gap-2">
-            <Award className="w-7 h-7 text-gold-solid" style={{ filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.4))' }} />
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <Award className="w-7 h-7 text-gold-solid" style={{ filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.4))' }} />
+            </motion.div>
             <span className="font-display text-lg font-bold text-gold">Well Calibrated</span>
           </div>
           <div className="text-[9px] text-muted-foreground mt-2 uppercase tracking-[0.15em] font-semibold font-mono">Bias Assessment</div>
@@ -129,11 +143,9 @@ export default function CalibrationPage() {
           background: 'hsla(232, 26%, 8%, 0.6)',
           border: '1px solid hsla(220, 12%, 70%, 0.06)',
         }}>
-          {/* Gradient bar */}
           <div className="absolute inset-0 rounded-full" style={{
             background: 'linear-gradient(90deg, hsla(155, 82%, 48%, 0.3), hsla(43, 96%, 56%, 0.2), hsla(0, 72%, 55%, 0.3))',
           }} />
-          {/* Score marker */}
           <motion.div
             className="absolute top-0 h-full w-0.5 rounded-full"
             style={{
@@ -146,7 +158,7 @@ export default function CalibrationPage() {
             transition={{ delay: 0.5, duration: 0.3 }}
           />
         </div>
-        <div className="flex justify-between mt-1.5 font-mono text-[9px] text-muted-foreground">
+        <div className="flex justify-between mt-1.5 font-mono text-[9px] text-muted-foreground tabular-nums">
           <span>0 <span className="text-green-400/60">perfect</span></span>
           <span className="text-gold-num font-bold">{brierScore.toFixed(3)}</span>
           <span>0.25 <span className="text-red-400/60">random</span></span>
@@ -164,40 +176,52 @@ export default function CalibrationPage() {
         <div className="absolute top-0 left-6 right-6 h-px" style={{
           background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.05), transparent)',
         }} />
-        <h3 className="font-display font-semibold text-gold text-sm mb-3">How We Score</h3>
-        <div className="space-y-2 text-[13px] text-secondary-foreground leading-relaxed">
+        <h3 className="font-display font-semibold text-gold text-sm mb-3">
+          {isWonder ? '🎯 How We Keep Score' : 'Scoring Methodology'}
+        </h3>
+        <div className={`space-y-2 leading-relaxed ${isWonder ? 'text-[13px] text-secondary-foreground' : 'text-[12px] text-chrome font-mono'}`}>
           <p className="flex items-start gap-2">
             <span className="text-chrome mt-0.5">•</span>
-            Only milestones with explicit resolution (accomplished/falsified) count toward Brier score
+            {isWonder
+              ? 'Only milestones that have actually happened (or been disproven) count toward our accuracy score'
+              : 'Only resolved milestones (accomplished/falsified) count toward BS'}
           </p>
           <p className="flex items-start gap-2">
             <span className="text-chrome mt-0.5">•</span>
-            Historical anchors excluded from calibration scoring
+            {isWonder
+              ? 'Historical anchors (things from centuries ago) don\'t count — that would be too easy!'
+              : 'Historical anchors excluded from calibration'}
           </p>
           <p className="flex items-start gap-2">
             <span className="text-chrome mt-0.5">•</span>
-            The probability used is the LAST snapshot before resolution date
+            {isWonder
+              ? 'We use the last probability snapshot before the milestone was resolved'
+              : 'LAST snapshot before resolution date used'}
           </p>
           <p className="flex items-start gap-2">
             <span className="text-chrome mt-0.5">•</span>
-            Forecast must be ≥<span className="font-mono text-gold-num">30</span> days old at resolution to count (prevents gaming)
+            {isWonder
+              ? 'Forecasts must be at least 30 days old — no last-minute cheating allowed!'
+              : <>Forecast ≥<span className="text-gold-num">30</span>d at resolution (anti-gaming)</>}
           </p>
           <p className="flex items-start gap-2">
             <span className="text-chrome mt-0.5">•</span>
-            Sandbox scenarios never count toward canonical calibration
+            {isWonder
+              ? 'Sandbox experiments never count toward our real calibration — only the real deal!'
+              : 'Sandbox scenarios excluded from canonical calibration'}
           </p>
           <div
-            className="font-mono text-xs mt-4 px-4 py-2.5 rounded-lg text-gold-num"
+            className="font-mono text-xs mt-4 px-4 py-2.5 rounded-lg text-gold-num tabular-nums"
             style={{
               background: 'hsla(43, 96%, 56%, 0.04)',
               border: '1px solid hsla(43, 96%, 56%, 0.1)',
               boxShadow: 'inset 0 1px 0 hsla(43, 96%, 56%, 0.04)',
             }}
           >
-            BS = (<span className="text-gold-solid">1</span>/N) × Σ(predicted − outcome)² | <span className="text-gold-solid">0</span> = perfect, <span className="text-gold-solid">0.25</span> = random guessing
+            BS = (<span className="text-gold-solid">1</span>/N) × Σ(predicted − outcome)² | <span className="text-gold-solid">0</span> = perfect, <span className="text-gold-solid">0.25</span> = random
           </div>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
