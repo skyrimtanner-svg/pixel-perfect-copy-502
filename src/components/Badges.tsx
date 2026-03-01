@@ -28,8 +28,10 @@ export function StatusBadge({ status }: { status: keyof typeof statusLabels }) {
   );
 }
 
-export function ArchetypeBadge({ archetype }: { archetype: Archetype }) {
+export function ArchetypeBadge({ archetype }: { archetype?: Archetype }) {
+  if (!archetype) return null;
   const config = archetypeConfig[archetype];
+  if (!config) return null;
   return (
     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${config.color}`}
       style={{
