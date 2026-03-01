@@ -23,6 +23,7 @@ export function ProbabilityRing({
   const circumference = 2 * Math.PI * radius;
   const filled = circumference * value;
   const gradientId = `ring-${Math.random().toString(36).slice(2, 8)}`;
+  const glowId = `glow-${Math.random().toString(36).slice(2, 8)}`;
   const showGold = useGold || isWonder || value > 0.7;
 
   return (
@@ -32,8 +33,9 @@ export function ProbabilityRing({
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             {showGold ? (
               <>
-                <stop offset="0%" stopColor="hsl(43, 96%, 46%)" />
-                <stop offset="50%" stopColor="hsl(48, 100%, 67%)" />
+                <stop offset="0%" stopColor="hsl(40, 90%, 42%)" />
+                <stop offset="40%" stopColor="hsl(43, 96%, 56%)" />
+                <stop offset="70%" stopColor="hsl(48, 100%, 67%)" />
                 <stop offset="100%" stopColor="hsl(43, 96%, 56%)" />
               </>
             ) : (
@@ -43,13 +45,20 @@ export function ProbabilityRing({
               </>
             )}
           </linearGradient>
+          <filter id={glowId}>
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="hsla(228, 14%, 16%, 0.6)"
+          stroke="hsla(230, 16%, 14%, 0.6)"
           strokeWidth={strokeWidth}
         />
         <motion.circle
@@ -64,10 +73,12 @@ export function ProbabilityRing({
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference - filled }}
           transition={{ duration: 1, ease: 'easeOut' }}
-          style={showGold ? { filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.3))' } : undefined}
+          filter={showGold ? `url(#${glowId})` : undefined}
         />
       </svg>
-      <span className={`absolute font-mono text-sm font-bold ${showGold ? 'text-gold' : 'text-foreground'}`}>
+      <span className={`absolute font-mono text-sm font-bold ${showGold ? 'text-gold' : 'text-foreground'}`}
+        style={showGold ? { textShadow: '0 0 8px hsla(43, 96%, 56%, 0.25)' } : undefined}
+      >
         {Math.round(value * 100)}%
       </span>
     </div>

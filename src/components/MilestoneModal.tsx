@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Milestone, Evidence, statusLabels } from '@/data/milestones';
-import { DomainBadge, StatusBadge } from '@/components/Badges';
+import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
 import { ProbabilityRing } from '@/components/ProbabilityRing';
 import { WaterfallChart } from '@/components/WaterfallChart';
 import { useMode } from '@/contexts/ModeContext';
@@ -27,10 +27,10 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
   const isContradict = ev.direction === 'contradicts';
   const dirIcon = isSupport ? '↑' : isContradict ? '↓' : '~';
   const dirColor = isSupport ? 'text-gold-solid' : isContradict ? 'text-red-400' : 'text-muted-foreground';
-  const borderColor = isSupport ? 'border-gold/20' : isContradict ? 'border-red-400/20' : 'border-chrome/10';
+  const borderColor = isSupport ? 'hsla(43, 96%, 56%, 0.15)' : isContradict ? 'hsla(0, 72%, 55%, 0.15)' : 'hsla(220, 10%, 72%, 0.08)';
 
   return (
-    <div className={`glass-chrome rounded-lg p-3.5 border ${borderColor}`}>
+    <div className="glass-chrome rounded-lg p-4" style={{ border: `1px solid ${borderColor}` }}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <span className={`font-mono font-bold text-lg ${dirColor}`}>{dirIcon}</span>
@@ -44,11 +44,11 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
         </span>
       </div>
       <p className="text-xs text-secondary-foreground leading-relaxed">{ev.summary}</p>
-      <div className="flex gap-3 mt-2 font-mono text-[10px] text-muted-foreground">
-        <span>Cred {ev.credibility.toFixed(2)}</span>
-        <span>Decay {ev.recency.toFixed(2)}</span>
-        <span>Cons {ev.consensus.toFixed(2)}</span>
-        <span>Match {ev.criteria_match.toFixed(2)}</span>
+      <div className="flex gap-3 mt-2.5 font-mono text-[10px] text-muted-foreground">
+        <span>Cred <span className="text-gold-num">{ev.credibility.toFixed(2)}</span></span>
+        <span>Decay <span className="text-gold-num">{ev.recency.toFixed(2)}</span></span>
+        <span>Cons <span className="text-gold-num">{ev.consensus.toFixed(2)}</span></span>
+        <span>Match <span className="text-gold-num">{ev.criteria_match.toFixed(2)}</span></span>
         <span className="text-gold-solid font-semibold">E={ev.composite.toFixed(3)}</span>
       </div>
     </div>
@@ -66,15 +66,16 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="glass-strong max-w-3xl max-h-[85vh] overflow-y-auto p-0"
         style={{
-          border: '1px solid hsla(220, 10%, 72%, 0.12)',
-          boxShadow: '0 0 60px -20px hsla(228, 20%, 5%, 0.8), 0 0 30px -10px hsla(43, 96%, 56%, 0.06)',
+          border: '1px solid hsla(220, 10%, 72%, 0.1)',
+          boxShadow: '0 0 80px -20px hsla(230, 25%, 3%, 0.9), 0 0 40px -10px hsla(43, 96%, 56%, 0.06)',
         }}
       >
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-chrome/10">
+        <DialogHeader className="p-6 pb-4" style={{ borderBottom: '1px solid hsla(220, 10%, 72%, 0.08)' }}>
           <div className="flex items-center gap-2 mb-2">
             <DomainBadge domain={milestone.domain} />
             <StatusBadge status={milestone.status} />
+            <ArchetypeBadge archetype={milestone.archetype} />
           </div>
           <DialogTitle className={`font-display text-xl font-bold flex items-center gap-3 ${
             isWonder ? 'text-gold' : 'text-foreground'
@@ -89,10 +90,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             />
           </DialogTitle>
           <div className="flex items-center gap-4 mt-2 font-mono text-xs text-muted-foreground">
-            <span>Target: {milestone.year}</span>
+            <span>Target: <span className="text-gold-num">{milestone.year}</span></span>
             <span>Tier: {milestone.tier}</span>
             <span className={`${milestone.magnitude >= 9 ? 'text-gold-solid' : ''}`}>
-              Magnitude: {milestone.magnitude}/10
+              Magnitude: <span className="text-gold-num">{milestone.magnitude}/10</span>
             </span>
             <span className={`flex items-center gap-1 ${isPositive ? 'text-gold-solid' : 'text-red-400'}`}>
               {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -103,7 +104,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="p-6 pt-4">
-          <TabsList className="glass-chrome border border-chrome/15 mb-4">
+          <TabsList className="glass-chrome border-bevel mb-4">
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary">Overview</TabsTrigger>
             <TabsTrigger value="why" className="data-[state=active]:bg-gold/10 data-[state=active]:text-gold-solid">Why It Changed</TabsTrigger>
             <TabsTrigger value="evidence" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary">Evidence ({milestone.evidence.length})</TabsTrigger>
@@ -111,18 +112,23 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
 
           <TabsContent value="overview" className="space-y-4">
             <p className="text-sm text-secondary-foreground leading-relaxed">{milestone.description}</p>
-            <div className="glass-chrome rounded-lg p-4 border border-primary/15">
+            <div className="glass-chrome rounded-lg p-4" style={{ border: '1px solid hsla(190, 100%, 50%, 0.12)' }}>
               <h4 className="text-xs uppercase tracking-wider text-primary mb-2 font-semibold">Success Criteria</h4>
               <p className="text-sm text-foreground">{milestone.success_criteria}</p>
             </div>
-            <div className="glass-chrome rounded-lg p-4 border border-destructive/15">
+            <div className="glass-chrome rounded-lg p-4" style={{ border: '1px solid hsla(0, 72%, 55%, 0.12)' }}>
               <h4 className="text-xs uppercase tracking-wider text-destructive mb-2 font-semibold">Falsification Condition</h4>
               <p className="text-sm text-foreground">{milestone.falsification}</p>
             </div>
             {/* Belief trajectory */}
             <div className="glass-chrome rounded-lg p-4">
               <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-semibold">Belief Trajectory</h4>
-              <div className="relative h-7 bg-muted/20 rounded-full overflow-hidden border border-chrome/10">
+              <div className="relative h-7 rounded-full overflow-hidden"
+                style={{
+                  background: 'hsla(230, 22%, 8%, 0.6)',
+                  border: '1px solid hsla(220, 10%, 72%, 0.08)',
+                }}
+              >
                 <motion.div
                   className="absolute left-0 top-0 h-full rounded-full"
                   style={{
@@ -138,8 +144,8 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 />
               </div>
               <div className="flex justify-between mt-1.5 font-mono text-[10px] text-muted-foreground">
-                <span>Prior: {(milestone.prior * 100).toFixed(1)}%</span>
-                <span className="text-gold-solid">Posterior: {(milestone.posterior * 100).toFixed(1)}%</span>
+                <span>Prior: <span className="text-gold-num">{(milestone.prior * 100).toFixed(1)}%</span></span>
+                <span className="text-gold-solid">Posterior: <span className="text-gold-num">{(milestone.posterior * 100).toFixed(1)}%</span></span>
               </div>
             </div>
           </TabsContent>

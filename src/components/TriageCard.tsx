@@ -1,6 +1,6 @@
 import { Milestone } from '@/data/milestones';
-import { domainColorClass, domainGlowClass } from '@/lib/domain-styles';
-import { DomainBadge, StatusBadge } from '@/components/Badges';
+import { domainColorClass } from '@/lib/domain-styles';
+import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
 import { ProbabilityRing } from '@/components/ProbabilityRing';
 import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
@@ -29,14 +29,14 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
   if (isWonder) {
     return (
       <motion.button
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.06, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ delay: index * 0.05, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={onClick}
         className={`w-full rounded-2xl p-5 text-left group transition-all duration-300 shine-sweep ${
           isTopItem ? 'glass-gold' : 'glass-chrome'
         }`}
-        whileHover={{ scale: 1.01, y: -2 }}
+        whileHover={{ scale: 1.008, y: -2 }}
       >
         <div className="flex items-center gap-5">
           <div className="w-8 text-center">
@@ -57,6 +57,7 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
             <div className="flex items-center gap-2 mb-1.5">
               <DomainBadge domain={milestone.domain} />
               <StatusBadge status={milestone.status} />
+              <ArchetypeBadge archetype={milestone.archetype} />
             </div>
             <h3 className={`font-display font-bold text-base ${isTopItem ? 'text-gold' : domainColorClass[milestone.domain]}`}>
               {milestone.title}
@@ -67,11 +68,11 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
           <div className="flex items-center gap-6 shrink-0">
             <div className="text-right">
               <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Target</div>
-              <div className="font-mono text-sm text-foreground">{milestone.year}</div>
+              <div className="font-mono text-sm text-gold-num">{milestone.year}</div>
             </div>
             <div className="text-right">
               <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Magnitude</div>
-              <div className={`font-mono text-sm ${milestone.magnitude >= 9 ? 'text-gold' : 'text-foreground'}`}>
+              <div className={`font-mono text-sm ${milestone.magnitude >= 9 ? 'text-gold-num' : 'text-foreground'}`}>
                 {milestone.magnitude}/10
               </div>
             </div>
@@ -96,46 +97,47 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
     );
   }
 
-  // Analyst mode — dense, minimal motion
+  // Analyst mode — dense, minimal
   return (
     <motion.button
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: index * 0.02, duration: 0.15 }}
+      transition={{ delay: index * 0.015, duration: 0.12 }}
       onClick={onClick}
-      className={`w-full glass-chrome rounded-xl p-3.5 hover:bg-accent/20 transition-all duration-150 text-left chrome-sweep ${
+      className={`w-full glass-chrome rounded-xl p-3 hover:bg-accent/20 transition-all duration-150 text-left chrome-sweep ${
         isTopItem ? 'border-gold/20' : ''
       }`}
     >
-      <div className="flex items-center gap-4">
-        <div className="w-7 text-center">
-          <span className={`font-mono text-xs ${isTopItem ? 'text-gold-solid font-bold' : 'text-muted-foreground'}`}>
+      <div className="flex items-center gap-3.5">
+        <div className="w-6 text-center">
+          <span className={`font-mono text-[11px] ${isTopItem ? 'text-gold-solid font-bold' : 'text-muted-foreground'}`}>
             #{index + 1}
           </span>
         </div>
 
         <ProbabilityRing
           value={milestone.posterior}
-          size={46}
-          strokeWidth={3.5}
+          size={42}
+          strokeWidth={3}
           domainColor={domainHsl[milestone.domain]}
           useGold={isTopItem}
         />
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-1.5 mb-0.5">
             <DomainBadge domain={milestone.domain} />
             <StatusBadge status={milestone.status} />
+            <ArchetypeBadge archetype={milestone.archetype} />
           </div>
           <h3 className={`font-display font-semibold text-sm truncate ${domainColorClass[milestone.domain]}`}>
             {milestone.title}
           </h3>
         </div>
 
-        <div className="flex items-center gap-5 shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           <div className="text-right">
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Target</div>
-            <div className="font-mono text-xs text-foreground">{milestone.year}</div>
+            <div className="font-mono text-xs text-gold-num">{milestone.year}</div>
           </div>
           <div className="text-right">
             <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Mag</div>

@@ -6,32 +6,32 @@
 
 @layer base {
   :root {
-    --background: 228 20% 5%;
+    --background: 230 25% 3%;
     --foreground: 210 40% 92%;
 
-    --card: 228 18% 8%;
+    --card: 230 22% 6%;
     --card-foreground: 210 40% 92%;
 
-    --popover: 228 18% 7%;
+    --popover: 230 22% 5%;
     --popover-foreground: 210 40% 92%;
 
     --primary: 190 90% 50%;
-    --primary-foreground: 228 20% 5%;
+    --primary-foreground: 230 25% 3%;
 
-    --secondary: 228 16% 14%;
+    --secondary: 230 18% 12%;
     --secondary-foreground: 210 40% 85%;
 
-    --muted: 228 14% 12%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 230 16% 10%;
+    --muted-foreground: 215 15% 48%;
 
-    --accent: 228 16% 16%;
+    --accent: 230 18% 14%;
     --accent-foreground: 210 40% 90%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 228 14% 16%;
-    --input: 228 14% 16%;
+    --border: 230 16% 14%;
+    --input: 230 16% 14%;
     --ring: 190 90% 50%;
 
     --radius: 0.75rem;
@@ -39,6 +39,7 @@
     /* Gold & Chrome */
     --gold: 43 96% 56%;
     --gold-light: 48 100% 67%;
+    --gold-deep: 40 90% 42%;
     --chrome: 220 10% 72%;
     --chrome-light: 220 10% 85%;
     --chrome-dark: 220 8% 40%;
@@ -62,17 +63,17 @@
     --status-falsified: 0 72% 55%;
 
     /* Glassmorphism */
-    --glass-bg: 228 18% 8% / 0.55;
-    --glass-border: 228 14% 22% / 0.5;
+    --glass-bg: 230 22% 6% / 0.6;
+    --glass-border: 230 16% 20% / 0.5;
     --glass-blur: 20px;
 
-    --sidebar-background: 228 20% 5%;
+    --sidebar-background: 230 25% 3%;
     --sidebar-foreground: 210 40% 92%;
     --sidebar-primary: 190 90% 50%;
-    --sidebar-primary-foreground: 228 20% 5%;
-    --sidebar-accent: 228 16% 14%;
+    --sidebar-primary-foreground: 230 25% 3%;
+    --sidebar-accent: 230 18% 12%;
     --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 228 14% 16%;
+    --sidebar-border: 230 16% 14%;
     --sidebar-ring: 190 90% 50%;
   }
 }
@@ -97,7 +98,7 @@
     font-family: 'Space Mono', monospace;
   }
 
-  /* Glass variants */
+  /* ========== GLASS VARIANTS ========== */
   .glass {
     background: hsla(var(--glass-bg));
     border: 1px solid hsla(var(--glass-border));
@@ -105,40 +106,63 @@
   }
 
   .glass-strong {
-    background: hsla(228, 18%, 8%, 0.88);
-    border: 1px solid hsla(228, 14%, 24%, 0.6);
+    background: hsla(230, 22%, 6%, 0.92);
+    border: 1px solid hsla(230, 16%, 22%, 0.6);
     backdrop-filter: blur(28px);
+    box-shadow:
+      inset 0 1px 0 hsla(220, 10%, 85%, 0.06),
+      inset 0 -1px 0 hsla(230, 25%, 3%, 0.4);
   }
 
   .glass-chrome {
     background: linear-gradient(
-      135deg,
-      hsla(228, 18%, 10%, 0.7),
-      hsla(228, 14%, 14%, 0.5)
+      168deg,
+      hsla(230, 22%, 9%, 0.75),
+      hsla(230, 18%, 6%, 0.65)
     );
-    border: 1px solid hsla(220, 10%, 72%, 0.15);
+    border: 1px solid hsla(220, 10%, 72%, 0.12);
     backdrop-filter: blur(24px);
     box-shadow:
-      inset 0 1px 0 hsla(220, 10%, 85%, 0.08),
-      0 4px 24px -8px hsla(228, 20%, 5%, 0.6);
+      inset 0 1px 0 hsla(220, 10%, 85%, 0.07),
+      inset 0 -1px 0 hsla(230, 25%, 3%, 0.3),
+      0 4px 24px -8px hsla(230, 25%, 3%, 0.7),
+      0 1px 3px hsla(230, 25%, 3%, 0.4);
   }
 
   .glass-gold {
     background: linear-gradient(
-      135deg,
-      hsla(228, 18%, 10%, 0.7),
-      hsla(228, 14%, 14%, 0.5)
+      168deg,
+      hsla(230, 22%, 9%, 0.75),
+      hsla(230, 18%, 6%, 0.65)
     );
     border: 1px solid hsla(43, 96%, 56%, 0.2);
     backdrop-filter: blur(24px);
     box-shadow:
       inset 0 1px 0 hsla(43, 96%, 56%, 0.1),
-      0 0 30px -10px hsla(43, 96%, 56%, 0.08);
+      inset 0 -1px 0 hsla(230, 25%, 3%, 0.3),
+      0 0 40px -12px hsla(43, 96%, 56%, 0.1),
+      0 4px 24px -8px hsla(230, 25%, 3%, 0.6);
   }
 
-  /* Metallic gold text */
+  .glass-premium {
+    background: linear-gradient(
+      168deg,
+      hsla(230, 22%, 10%, 0.8),
+      hsla(230, 18%, 7%, 0.7)
+    );
+    border: 1px solid hsla(220, 10%, 72%, 0.15);
+    backdrop-filter: blur(32px);
+    box-shadow:
+      inset 0 1px 0 hsla(220, 10%, 85%, 0.08),
+      inset 0 -1px 0 hsla(230, 25%, 3%, 0.4),
+      0 8px 40px -12px hsla(230, 25%, 3%, 0.8),
+      0 2px 6px hsla(230, 25%, 3%, 0.5);
+  }
+
+  /* ========== TEXT EFFECTS ========== */
   .text-gold {
-    background: linear-gradient(135deg, hsl(43, 96%, 56%), hsl(48, 100%, 67%), hsl(43, 96%, 56%));
+    background: linear-gradient(135deg, hsl(40, 90%, 42%), hsl(43, 96%, 56%), hsl(48, 100%, 67%), hsl(43, 96%, 56%));
+    background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -149,13 +173,19 @@
   }
 
   .text-chrome {
-    background: linear-gradient(135deg, hsl(220, 10%, 60%), hsl(220, 10%, 85%), hsl(220, 10%, 60%));
+    background: linear-gradient(135deg, hsl(220, 10%, 55%), hsl(220, 10%, 82%), hsl(220, 12%, 90%), hsl(220, 10%, 65%));
+    background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Chrome border highlight */
+  .text-gold-num {
+    color: hsl(43, 80%, 58%);
+    text-shadow: 0 0 8px hsla(43, 96%, 56%, 0.2);
+  }
+
+  /* ========== BORDERS ========== */
   .border-chrome {
     border-color: hsla(220, 10%, 72%, 0.2);
   }
@@ -164,7 +194,14 @@
     border-color: hsla(43, 96%, 56%, 0.25);
   }
 
-  /* Metallic shine sweep on hover */
+  .border-bevel {
+    border: 1px solid hsla(220, 10%, 72%, 0.15);
+    box-shadow:
+      inset 0 1px 0 hsla(220, 10%, 85%, 0.08),
+      inset 0 -1px 0 hsla(230, 25%, 3%, 0.4);
+  }
+
+  /* ========== SHINE SWEEPS ========== */
   .shine-sweep {
     position: relative;
     overflow: hidden;
@@ -180,15 +217,16 @@
       90deg,
       transparent,
       hsla(43, 96%, 56%, 0.06),
+      hsla(43, 96%, 56%, 0.02),
       transparent
     );
-    transition: left 0.6s ease;
+    transition: left 0.7s ease;
+    pointer-events: none;
   }
   .shine-sweep:hover::after {
     left: 150%;
   }
 
-  /* Chrome shine for analyst mode */
   .chrome-sweep {
     position: relative;
     overflow: hidden;
@@ -206,13 +244,14 @@
       hsla(220, 10%, 85%, 0.04),
       transparent
     );
-    transition: left 0.6s ease;
+    transition: left 0.7s ease;
+    pointer-events: none;
   }
   .chrome-sweep:hover::after {
     left: 150%;
   }
 
-  /* Domain glow */
+  /* ========== DOMAIN GLOWS ========== */
   .domain-glow-compute {
     box-shadow: 0 0 24px hsla(var(--domain-compute) / 0.2), 0 0 60px hsla(var(--domain-compute) / 0.06);
   }
@@ -246,56 +285,62 @@
   .bg-ambiguous { background-color: hsl(var(--evidence-ambiguous)); }
 }
 
-/* Nebula background */
+/* ========== NEBULA BACKGROUND ========== */
 .nebula-bg {
-  background-color: hsl(228, 20%, 5%);
+  background-color: hsl(230, 25%, 3%);
   background-image:
-    radial-gradient(ellipse at 15% 80%, hsla(270, 60%, 20%, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 20%, hsla(190, 80%, 25%, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, hsla(43, 60%, 15%, 0.05) 0%, transparent 60%);
+    radial-gradient(ellipse at 10% 85%, hsla(270, 60%, 18%, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 15%, hsla(190, 80%, 22%, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(43, 60%, 12%, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 70%, hsla(340, 50%, 15%, 0.06) 0%, transparent 40%);
 }
 
-/* Stars overlay */
+/* ========== STARFIELD ========== */
 .stars-bg {
   background-image:
-    radial-gradient(1.5px 1.5px at 20px 30px, hsla(210, 40%, 92%, 0.12), transparent),
-    radial-gradient(1px 1px at 40px 70px, hsla(210, 40%, 92%, 0.08), transparent),
-    radial-gradient(1px 1px at 90px 40px, hsla(210, 40%, 92%, 0.1), transparent),
-    radial-gradient(0.5px 0.5px at 130px 80px, hsla(43, 96%, 56%, 0.1), transparent),
-    radial-gradient(1px 1px at 160px 30px, hsla(190, 100%, 50%, 0.08), transparent),
-    radial-gradient(0.5px 0.5px at 170px 60px, hsla(43, 96%, 56%, 0.06), transparent);
+    radial-gradient(1.5px 1.5px at 20px 30px, hsla(210, 40%, 92%, 0.1), transparent),
+    radial-gradient(1px 1px at 40px 70px, hsla(210, 40%, 92%, 0.07), transparent),
+    radial-gradient(1px 1px at 90px 40px, hsla(210, 40%, 92%, 0.08), transparent),
+    radial-gradient(0.5px 0.5px at 130px 80px, hsla(43, 96%, 56%, 0.08), transparent),
+    radial-gradient(1px 1px at 160px 30px, hsla(190, 100%, 50%, 0.06), transparent),
+    radial-gradient(0.5px 0.5px at 170px 60px, hsla(43, 96%, 56%, 0.05), transparent),
+    radial-gradient(0.5px 0.5px at 50px 90px, hsla(43, 96%, 56%, 0.06), transparent);
   background-size: 200px 100px;
 }
 
-/* Gold gradient button */
+/* ========== GOLD BUTTON ========== */
 .btn-gold {
-  background: linear-gradient(135deg, hsl(43, 96%, 46%), hsl(43, 96%, 56%), hsl(48, 100%, 67%));
-  color: hsl(228, 20%, 5%);
+  background: linear-gradient(135deg, hsl(40, 90%, 42%), hsl(43, 96%, 56%), hsl(48, 100%, 67%));
+  color: hsl(230, 25%, 3%);
   font-weight: 600;
-  box-shadow: 0 2px 12px -2px hsla(43, 96%, 56%, 0.3);
+  box-shadow:
+    0 2px 12px -2px hsla(43, 96%, 56%, 0.3),
+    inset 0 1px 0 hsla(48, 100%, 80%, 0.3);
   transition: all 0.2s;
 }
 .btn-gold:hover {
-  box-shadow: 0 4px 20px -2px hsla(43, 96%, 56%, 0.45);
+  box-shadow:
+    0 4px 20px -2px hsla(43, 96%, 56%, 0.45),
+    inset 0 1px 0 hsla(48, 100%, 80%, 0.4);
   filter: brightness(1.1);
 }
 
-/* Gold ring for SVG */
-.gold-ring-gradient {
-  stroke: url(#goldGradient);
-}
-
-/* Scrollbar */
+/* ========== SCROLLBAR ========== */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: hsla(228, 18%, 8%, 0.5);
+  background: hsla(230, 22%, 6%, 0.5);
 }
 ::-webkit-scrollbar-thumb {
-  background: hsla(228, 14%, 24%, 0.6);
+  background: hsla(230, 16%, 22%, 0.6);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsla(228, 14%, 32%, 0.8);
+  background: hsla(230, 16%, 30%, 0.8);
+}
+
+/* ========== GOLD SVG RING ========== */
+.gold-ring-gradient {
+  stroke: url(#goldGradient);
 }

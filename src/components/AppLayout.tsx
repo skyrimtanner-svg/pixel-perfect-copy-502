@@ -7,14 +7,19 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen nebula-bg stars-bg flex flex-col">
       {/* Top bar */}
-      <header className="glass-strong border-b border-chrome/10 sticky top-0 z-50">
+      <header className="glass-strong sticky top-0 z-50"
+        style={{
+          borderBottom: '1px solid hsla(220, 10%, 72%, 0.08)',
+          boxShadow: '0 4px 30px -8px hsla(230, 25%, 3%, 0.6)',
+        }}
+      >
         <div className="max-w-[1600px] mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, hsla(43, 96%, 56%, 0.15), hsla(190, 100%, 50%, 0.1))',
+                background: 'linear-gradient(135deg, hsla(43, 96%, 56%, 0.12), hsla(190, 100%, 50%, 0.08))',
                 border: '1px solid hsla(43, 96%, 56%, 0.2)',
-                boxShadow: '0 0 16px -4px hsla(43, 96%, 56%, 0.2)',
+                boxShadow: '0 0 20px -4px hsla(43, 96%, 56%, 0.2), inset 0 1px 0 hsla(43, 96%, 56%, 0.1)',
               }}
             >
               <Eye className="w-4 h-4 text-gold-solid" />
