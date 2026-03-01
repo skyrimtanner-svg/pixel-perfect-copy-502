@@ -56,11 +56,13 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
           deep: "hsl(var(--gold-deep))",
+          specular: "hsl(var(--gold-specular))",
         },
         chrome: {
           DEFAULT: "hsl(var(--chrome))",
           light: "hsl(var(--chrome-light))",
           dark: "hsl(var(--chrome-dark))",
+          specular: "hsl(var(--chrome-specular))",
         },
         domain: {
           compute: "hsl(var(--domain-compute))",
