@@ -160,6 +160,40 @@ export default function AppLayout() {
       <main className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6">
         <Outlet />
       </main>
+
+      {/* ═══════ BRANDED FOOTER ═══════ */}
+      <footer
+        className="relative mt-auto"
+        style={{
+          borderTop: '1px solid hsla(220, 10%, 72%, 0.06)',
+          background: 'linear-gradient(180deg, hsla(230, 22%, 4%, 0.6) 0%, hsla(230, 22%, 3%, 0.9) 100%)',
+        }}
+      >
+        <div className="absolute top-0 left-0 right-0 h-px" style={{
+          background: 'linear-gradient(90deg, transparent 10%, hsla(43, 96%, 56%, 0.08) 30%, hsla(220, 10%, 72%, 0.06) 50%, hsla(43, 96%, 56%, 0.08) 70%, transparent 90%)',
+        }} />
+        <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className="font-display font-bold text-xs tracking-tight"
+              style={{
+                background: 'linear-gradient(135deg, hsl(40, 85%, 36%), hsl(43, 96%, 50%), hsl(48, 100%, 74%))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              ÆTH
+            </span>
+            <span className="text-[10px] text-muted-foreground font-mono tracking-wider">
+              See Why the Future Changes
+            </span>
+          </div>
+          <div className="font-mono text-[9px] text-muted-foreground/50 tabular-nums tracking-wider">
+            v3.0 • Observatory
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
