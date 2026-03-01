@@ -23,6 +23,13 @@ interface MilestoneModalProps {
   onClose: () => void;
 }
 
+const goldGradientStyle = {
+  background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
+  WebkitBackgroundClip: 'text' as const,
+  WebkitTextFillColor: 'transparent' as const,
+  backgroundClip: 'text' as const,
+};
+
 /* ═══ PROVENANCE BADGE ═══ */
 function ProvenanceBadge({ label, value, icon, tooltip }: { label: string; value: string; icon: React.ReactNode; tooltip: string }) {
   return (
@@ -32,21 +39,22 @@ function ProvenanceBadge({ label, value, icon, tooltip }: { label: string; value
           <div
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[10px] cursor-help transition-all duration-200 hover:scale-105"
             style={{
-              background: 'hsla(232, 26%, 8%, 0.7)',
-              border: '1px solid hsla(220, 12%, 70%, 0.1)',
-              boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.04), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
+              background: 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.8), hsla(232, 22%, 6%, 0.7))',
+              border: '1px solid hsla(220, 12%, 70%, 0.12)',
+              boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 1px 3px hsla(232, 30%, 2%, 0.3)',
+              backdropFilter: 'blur(12px)',
             }}
           >
             <span className="text-chrome">{icon}</span>
             <span className="text-muted-foreground">{label}</span>
-            <span className="text-gold-num font-bold">{value}</span>
+            <span className="text-gold-num font-bold tabular-nums">{value}</span>
           </div>
         </TooltipTrigger>
         <TooltipContent
           className="glass-strong text-xs max-w-[220px]"
           style={{
-            background: 'hsla(232, 26%, 5%, 0.96)',
-            border: '1px solid hsla(43, 96%, 56%, 0.15)',
+            background: 'hsla(232, 26%, 5%, 0.97)',
+            border: '1px solid hsla(43, 96%, 56%, 0.18)',
             boxShadow: '0 12px 40px -8px hsla(232, 30%, 2%, 0.9)',
           }}
         >
@@ -63,16 +71,16 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
   const isContradict = ev.direction === 'contradicts';
 
   const borderColor = isSupport
-    ? 'hsla(155, 82%, 48%, 0.2)'
+    ? 'hsla(155, 82%, 48%, 0.22)'
     : isContradict
-    ? 'hsla(0, 72%, 55%, 0.2)'
-    : 'hsla(220, 10%, 72%, 0.08)';
+    ? 'hsla(0, 72%, 55%, 0.22)'
+    : 'hsla(220, 10%, 72%, 0.1)';
 
   const accentGradient = isSupport
-    ? 'linear-gradient(135deg, hsla(155, 82%, 48%, 0.08), hsla(155, 82%, 48%, 0.02))'
+    ? 'linear-gradient(135deg, hsla(155, 82%, 48%, 0.1), hsla(155, 82%, 48%, 0.03))'
     : isContradict
-    ? 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.08), hsla(0, 72%, 55%, 0.02))'
-    : 'linear-gradient(135deg, hsla(220, 10%, 50%, 0.06), hsla(220, 10%, 50%, 0.02))';
+    ? 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.1), hsla(0, 72%, 55%, 0.03))'
+    : 'linear-gradient(135deg, hsla(220, 10%, 50%, 0.08), hsla(220, 10%, 50%, 0.02))';
 
   const iconBg = isSupport
     ? 'linear-gradient(145deg, hsl(155, 70%, 28%), hsl(155, 82%, 42%), hsl(155, 70%, 55%))'
@@ -89,7 +97,8 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
       style={{
         background: accentGradient,
         border: `1px solid ${borderColor}`,
-        boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.03)',
+        backdropFilter: 'blur(24px)',
+        boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3), 0 2px 8px -4px hsla(232, 30%, 2%, 0.4)',
       }}
       whileHover={{ scale: 1.005, y: -1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
@@ -101,7 +110,7 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-background"
             style={{
               background: iconBg,
-              boxShadow: `inset 0 1px 0 hsla(0, 0%, 100%, 0.2), 0 2px 6px -2px ${borderColor}`,
+              boxShadow: `inset 0 1px 0 hsla(0, 0%, 100%, 0.25), inset 0 -1px 0 hsla(0, 0%, 0%, 0.2), 0 2px 8px -2px ${borderColor}`,
             }}
           >
             {isSupport ? '↑' : isContradict ? '↓' : '~'}
@@ -118,7 +127,7 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
             {dirLabel}
           </span>
           <span
-            className="font-mono text-xs font-bold"
+            className="font-mono text-xs font-bold tabular-nums"
             style={isSupport ? {
               background: 'linear-gradient(135deg, hsl(155, 70%, 35%), hsl(155, 82%, 55%))',
               WebkitBackgroundClip: 'text',
@@ -145,11 +154,11 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
         <ProvenanceBadge label="Cons" value={ev.consensus.toFixed(2)} icon={<Users className="w-2.5 h-2.5" />} tooltip="Expert consensus alignment — how many independent sources agree" />
         <ProvenanceBadge label="Match" value={ev.criteria_match.toFixed(2)} icon={<Crosshair className="w-2.5 h-2.5" />} tooltip="How directly this evidence addresses the milestone's success criteria" />
         <div
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold tabular-nums"
           style={{
-            background: 'hsla(43, 96%, 56%, 0.06)',
-            border: '1px solid hsla(43, 96%, 56%, 0.15)',
-            boxShadow: 'inset 0 1px 0 hsla(48, 100%, 80%, 0.05)',
+            background: 'hsla(43, 96%, 56%, 0.08)',
+            border: '1px solid hsla(43, 96%, 56%, 0.18)',
+            boxShadow: 'inset 0 1px 0 hsla(48, 100%, 80%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
             color: 'hsl(43, 96%, 56%)',
           }}
         >
@@ -173,23 +182,23 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         className="max-w-3xl max-h-[85vh] overflow-y-auto p-0"
         style={{
           background: 'hsla(232, 26%, 4%, 0.97)',
-          border: '1px solid hsla(220, 10%, 72%, 0.12)',
+          border: '1px solid hsla(220, 10%, 72%, 0.14)',
           boxShadow: [
-            '0 0 100px -20px hsla(230, 25%, 3%, 0.95)',
-            '0 0 60px -10px hsla(43, 96%, 56%, 0.08)',
-            'inset 0 1px 0 hsla(220, 16%, 95%, 0.06)',
+            '0 0 120px -20px hsla(230, 25%, 3%, 0.95)',
+            '0 0 80px -10px hsla(43, 96%, 56%, 0.1)',
+            'inset 0 1px 0 hsla(220, 16%, 95%, 0.08)',
             'inset 0 -1px 0 hsla(232, 30%, 2%, 0.5)',
           ].join(', '),
-          backdropFilter: 'blur(40px)',
+          backdropFilter: 'blur(44px)',
         }}
       >
         {/* Top gold rim */}
         <div className="absolute top-0 left-6 right-6 h-px" style={{
-          background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.2), hsla(48, 100%, 80%, 0.1), transparent)',
+          background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.25), hsla(48, 100%, 80%, 0.12), transparent)',
         }} />
 
         {/* Header */}
-        <DialogHeader className="p-6 pb-4" style={{ borderBottom: '1px solid hsla(220, 10%, 72%, 0.08)' }}>
+        <DialogHeader className="p-6 pb-4" style={{ borderBottom: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
           <div className="flex items-center gap-2 mb-2">
             <DomainBadge domain={milestone.domain} />
             <StatusBadge status={milestone.status} />
@@ -215,14 +224,14 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             </motion.div>
           </DialogTitle>
           <div className="flex items-center gap-4 mt-3 font-mono text-[10px] text-muted-foreground flex-wrap">
-            <span>Target: <span className="text-gold-num font-bold">{milestone.year}</span></span>
+            <span>Target: <span className="text-gold-num font-bold tabular-nums">{milestone.year}</span></span>
             <span>Tier: <span className="text-chrome font-bold uppercase">{milestone.tier}</span></span>
-            <span className={milestone.magnitude >= 9 ? '' : ''}>
-              Magnitude: <span className="text-gold-num font-bold">{milestone.magnitude}/10</span>
+            <span>
+              Magnitude: <span className="text-gold-num font-bold tabular-nums">{milestone.magnitude}/10</span>
             </span>
             <span className={`flex items-center gap-1 font-bold ${isPositive ? 'text-gold-solid' : 'text-red-400'}`}>
               {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-              Δ {isFinite(milestone.delta_log_odds) ? milestone.delta_log_odds.toFixed(2) : '∞'} log-odds
+              <span className="tabular-nums">Δ {isFinite(milestone.delta_log_odds) ? milestone.delta_log_odds.toFixed(2) : '∞'} log-odds</span>
             </span>
           </div>
         </DialogHeader>
@@ -233,8 +242,8 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             className="mb-4 rounded-xl p-1"
             style={{
               background: 'hsla(232, 26%, 6%, 0.7)',
-              border: '1px solid hsla(220, 12%, 70%, 0.1)',
-              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.04)',
+              border: '1px solid hsla(220, 12%, 70%, 0.12)',
+              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
             }}
           >
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs">Overview</TabsTrigger>
@@ -246,18 +255,20 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             <p className="text-sm text-secondary-foreground leading-relaxed">{milestone.description}</p>
 
             <div className="rounded-xl p-4" style={{
-              background: 'linear-gradient(135deg, hsla(192, 100%, 52%, 0.04), hsla(192, 100%, 52%, 0.01))',
-              border: '1px solid hsla(192, 100%, 52%, 0.15)',
-              boxShadow: 'inset 0 1px 0 hsla(192, 100%, 70%, 0.04)',
+              background: 'linear-gradient(135deg, hsla(192, 100%, 52%, 0.06), hsla(192, 100%, 52%, 0.02))',
+              border: '1px solid hsla(192, 100%, 52%, 0.18)',
+              boxShadow: 'inset 0 1px 0 hsla(192, 100%, 70%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
+              backdropFilter: 'blur(20px)',
             }}>
               <h4 className="text-[10px] uppercase tracking-[0.12em] text-primary mb-2 font-mono font-bold">Success Criteria</h4>
               <p className="text-sm text-foreground">{milestone.success_criteria}</p>
             </div>
 
             <div className="rounded-xl p-4" style={{
-              background: 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.04), hsla(0, 72%, 55%, 0.01))',
-              border: '1px solid hsla(0, 72%, 55%, 0.15)',
-              boxShadow: 'inset 0 1px 0 hsla(0, 72%, 70%, 0.04)',
+              background: 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.06), hsla(0, 72%, 55%, 0.02))',
+              border: '1px solid hsla(0, 72%, 55%, 0.18)',
+              boxShadow: 'inset 0 1px 0 hsla(0, 72%, 70%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
+              backdropFilter: 'blur(20px)',
             }}>
               <h4 className="text-[10px] uppercase tracking-[0.12em] text-destructive mb-2 font-mono font-bold">Falsification Condition</h4>
               <p className="text-sm text-foreground">{milestone.falsification}</p>
@@ -265,22 +276,23 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
 
             {/* Belief trajectory */}
             <div className="rounded-xl p-4" style={{
-              background: 'hsla(232, 26%, 6%, 0.5)',
-              border: '1px solid hsla(220, 12%, 70%, 0.08)',
-              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03)',
+              background: 'linear-gradient(168deg, hsla(232, 26%, 7%, 0.7), hsla(232, 22%, 5%, 0.6))',
+              border: '1px solid hsla(220, 12%, 70%, 0.1)',
+              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
+              backdropFilter: 'blur(20px)',
             }}>
               <h4 className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-3 font-mono font-bold">Belief Trajectory</h4>
               <div className="relative h-8 rounded-full overflow-hidden"
                 style={{
                   background: 'hsla(230, 22%, 8%, 0.6)',
-                  border: '1px solid hsla(220, 10%, 72%, 0.08)',
+                  border: '1px solid hsla(220, 10%, 72%, 0.1)',
                 }}
               >
                 <motion.div
                   className="absolute left-0 top-0 h-full rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg, hsla(43, 96%, 56%, 0.3), hsla(43, 96%, 56%, 0.1))',
-                    boxShadow: '0 0 16px -4px hsla(43, 96%, 56%, 0.2)',
+                    background: 'linear-gradient(90deg, hsla(43, 96%, 56%, 0.35), hsla(43, 96%, 56%, 0.12))',
+                    boxShadow: '0 0 20px -4px hsla(43, 96%, 56%, 0.25)',
                   }}
                   initial={{ width: `${milestone.prior * 100}%` }}
                   animate={{ width: `${milestone.posterior * 100}%` }}
@@ -288,12 +300,12 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 />
                 <div
                   className="absolute top-0 h-full w-0.5"
-                  style={{ left: `${milestone.prior * 100}%`, background: 'hsla(220, 12%, 70%, 0.25)' }}
+                  style={{ left: `${milestone.prior * 100}%`, background: 'hsla(220, 12%, 70%, 0.3)' }}
                 />
               </div>
               <div className="flex justify-between mt-2 font-mono text-[10px] text-muted-foreground">
-                <span>Prior: <span className="text-gold-num">{(milestone.prior * 100).toFixed(1)}%</span></span>
-                <span className="text-gold-solid font-bold">Posterior: <span className="text-gold-num">{(milestone.posterior * 100).toFixed(1)}%</span></span>
+                <span>Prior: <span className="text-gold-num tabular-nums">{(milestone.prior * 100).toFixed(1)}%</span></span>
+                <span className="text-gold-solid font-bold">Posterior: <span className="text-gold-num tabular-nums">{(milestone.posterior * 100).toFixed(1)}%</span></span>
               </div>
             </div>
           </TabsContent>
