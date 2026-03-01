@@ -64,7 +64,7 @@ export default function TriagePage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold btn-gold shine-sweep"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold btn-gold shine-sweep relative overflow-hidden"
           >
             <FileText className="w-3.5 h-3.5" />
             Export LP Memo
@@ -90,9 +90,10 @@ export default function TriagePage() {
                 background: isActive ? colors.bg : 'hsla(232, 26%, 8%, 0.6)',
                 border: `1px solid ${isActive ? colors.border : 'hsla(220, 12%, 70%, 0.08)'}`,
                 color: isActive ? colors.text : 'hsl(218, 15%, 46%)',
+                backdropFilter: 'blur(16px)',
                 boxShadow: isActive
-                  ? `0 0 16px -6px ${colors.glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.05)`
-                  : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03)',
+                  ? `0 0 18px -6px ${colors.glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)`
+                  : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03), inset 0 -1px 0 hsla(232, 30%, 2%, 0.2)',
               }}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -106,10 +107,12 @@ export default function TriagePage() {
       {/* Column headers — Analyst mode only */}
       {!isWonder && (
         <div
-          className="flex items-center gap-2.5 px-2.5 py-1.5 mb-0.5 rounded-md text-[8px] uppercase tracking-[0.14em] text-chrome font-mono font-semibold"
+          className="flex items-center gap-2.5 px-2.5 py-1.5 mb-0.5 rounded-md text-[8px] uppercase tracking-[0.14em] font-mono font-semibold"
           style={{
-            background: 'hsla(232, 26%, 4%, 0.5)',
-            borderBottom: '1px solid hsla(220, 12%, 70%, 0.06)',
+            background: 'hsla(232, 26%, 4%, 0.6)',
+            borderBottom: '1px solid hsla(220, 12%, 70%, 0.08)',
+            color: 'hsl(var(--chrome))',
+            backdropFilter: 'blur(16px)',
           }}
         >
           <div className="w-5 text-center">#</div>

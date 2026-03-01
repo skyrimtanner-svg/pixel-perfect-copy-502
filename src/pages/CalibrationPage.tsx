@@ -3,35 +3,44 @@ import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
 import { Award, Target, CheckCircle2, TrendingDown } from 'lucide-react';
 
+const goldGradientStyle = {
+  background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
+  backgroundSize: '200% 100%',
+  WebkitBackgroundClip: 'text' as const,
+  WebkitTextFillColor: 'transparent' as const,
+  backgroundClip: 'text' as const,
+};
+
 export default function CalibrationPage() {
   const { isWonder } = useMode();
   const resolved = milestones.filter(m => m.status === 'accomplished' || m.status === 'falsified');
   const brierScore = 0.142;
 
   const cardBase = {
-    background: 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.82), hsla(232, 22%, 5%, 0.72))',
-    backdropFilter: 'blur(32px)',
+    background: 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.85), hsla(232, 22%, 5%, 0.75))',
+    backdropFilter: 'blur(36px)',
     boxShadow: [
-      'inset 0 1px 0 hsla(220, 14%, 88%, 0.06)',
+      'inset 0 1px 0 hsla(220, 14%, 88%, 0.08)',
       'inset 0 -1px 0 hsla(232, 30%, 2%, 0.5)',
-      '0 4px 24px -8px hsla(232, 30%, 2%, 0.7)',
+      '0 6px 28px -8px hsla(232, 30%, 2%, 0.7)',
+      '0 2px 6px hsla(232, 30%, 2%, 0.4)',
     ].join(', '),
   };
 
   const goldCard = {
     ...cardBase,
-    border: '1px solid hsla(43, 96%, 56%, 0.2)',
+    border: '1px solid hsla(43, 96%, 56%, 0.25)',
     boxShadow: [
-      'inset 0 1px 0 hsla(48, 100%, 80%, 0.08)',
+      'inset 0 1px 0 hsla(48, 100%, 80%, 0.1)',
       'inset 0 -1px 0 hsla(232, 30%, 2%, 0.5)',
-      '0 0 32px -12px hsla(43, 96%, 56%, 0.1)',
-      '0 4px 24px -8px hsla(232, 30%, 2%, 0.7)',
+      '0 0 40px -12px hsla(43, 96%, 56%, 0.12)',
+      '0 6px 28px -8px hsla(232, 30%, 2%, 0.7)',
     ].join(', '),
   };
 
   const chromeCard = {
     ...cardBase,
-    border: '1px solid hsla(220, 12%, 70%, 0.1)',
+    border: '1px solid hsla(220, 12%, 70%, 0.14)',
   };
 
   return (
@@ -63,18 +72,18 @@ export default function CalibrationPage() {
           whileHover={{ scale: 1.02, y: -2 }}
         >
           <div className="absolute top-0 left-4 right-4 h-px" style={{
-            background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.2), transparent)',
+            background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.25), transparent)',
           }} />
-          <TrendingDown className="w-4 h-4 text-gold-solid mx-auto mb-2" style={{ filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))' }} />
+          {/* Glossy top reflection */}
+          <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl pointer-events-none" style={{
+            background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.04) 0%, transparent 100%)',
+          }} />
+          <TrendingDown className="w-4 h-4 text-gold-solid mx-auto mb-2" style={{ filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.5))' }} />
           <div
             className="font-mono text-3xl font-bold tabular-nums"
             style={{
-              background: 'linear-gradient(135deg, hsl(38, 88%, 38%), hsl(43, 96%, 56%), hsl(48, 100%, 72%), hsl(43, 96%, 56%))',
-              backgroundSize: '200% 100%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              filter: 'drop-shadow(0 0 12px hsla(43, 96%, 56%, 0.3))',
+              ...goldGradientStyle,
+              filter: 'drop-shadow(0 0 14px hsla(43, 96%, 56%, 0.35))',
             }}
           >
             {brierScore.toFixed(3)}
@@ -92,7 +101,10 @@ export default function CalibrationPage() {
           whileHover={{ scale: 1.02, y: -2 }}
         >
           <div className="absolute top-0 left-4 right-4 h-px" style={{
-            background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
+            background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.08), transparent)',
+          }} />
+          <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl pointer-events-none" style={{
+            background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.03) 0%, transparent 100%)',
           }} />
           <CheckCircle2 className="w-4 h-4 text-chrome mx-auto mb-2" />
           <div className="font-mono text-3xl font-bold text-gold-num tabular-nums">{resolved.length}</div>
@@ -109,14 +121,17 @@ export default function CalibrationPage() {
           whileHover={{ scale: 1.02, y: -2 }}
         >
           <div className="absolute top-0 left-4 right-4 h-px" style={{
-            background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.2), transparent)',
+            background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.25), transparent)',
+          }} />
+          <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl pointer-events-none" style={{
+            background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.04) 0%, transparent 100%)',
           }} />
           <div className="flex items-center justify-center gap-2">
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <Award className="w-7 h-7 text-gold-solid" style={{ filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.4))' }} />
+              <Award className="w-7 h-7 text-gold-solid" style={{ filter: 'drop-shadow(0 0 8px hsla(43, 96%, 56%, 0.5))' }} />
             </motion.div>
             <span className="font-display text-lg font-bold text-gold">Well Calibrated</span>
           </div>
@@ -133,7 +148,7 @@ export default function CalibrationPage() {
         transition={{ delay: 0.3 }}
       >
         <div className="absolute top-0 left-6 right-6 h-px" style={{
-          background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.05), transparent)',
+          background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
         }} />
         <div className="flex items-center gap-3 mb-2">
           <Target className="w-3.5 h-3.5 text-muted-foreground" />
@@ -141,17 +156,17 @@ export default function CalibrationPage() {
         </div>
         <div className="relative h-5 rounded-full overflow-hidden" style={{
           background: 'hsla(232, 26%, 8%, 0.6)',
-          border: '1px solid hsla(220, 12%, 70%, 0.06)',
+          border: '1px solid hsla(220, 12%, 70%, 0.08)',
         }}>
           <div className="absolute inset-0 rounded-full" style={{
             background: 'linear-gradient(90deg, hsla(155, 82%, 48%, 0.3), hsla(43, 96%, 56%, 0.2), hsla(0, 72%, 55%, 0.3))',
           }} />
           <motion.div
-            className="absolute top-0 h-full w-0.5 rounded-full"
+            className="absolute top-0 h-full w-1 rounded-full"
             style={{
               left: `${(brierScore / 0.25) * 100}%`,
-              background: 'hsl(43, 96%, 56%)',
-              boxShadow: '0 0 8px hsla(43, 96%, 56%, 0.6), 0 0 2px hsla(43, 96%, 56%, 0.9)',
+              background: 'linear-gradient(180deg, hsl(48, 100%, 80%), hsl(43, 96%, 56%))',
+              boxShadow: '0 0 10px hsla(43, 96%, 56%, 0.7), 0 0 3px hsla(43, 96%, 56%, 0.9)',
             }}
             initial={{ scaleY: 0 }}
             animate={{ scaleY: 1 }}
@@ -160,7 +175,7 @@ export default function CalibrationPage() {
         </div>
         <div className="flex justify-between mt-1.5 font-mono text-[9px] text-muted-foreground tabular-nums">
           <span>0 <span className="text-green-400/60">perfect</span></span>
-          <span className="text-gold-num font-bold">{brierScore.toFixed(3)}</span>
+          <span style={goldGradientStyle} className="font-bold">{brierScore.toFixed(3)}</span>
           <span>0.25 <span className="text-red-400/60">random</span></span>
         </div>
       </motion.div>
@@ -174,7 +189,7 @@ export default function CalibrationPage() {
         transition={{ delay: 0.4, duration: 0.4 }}
       >
         <div className="absolute top-0 left-6 right-6 h-px" style={{
-          background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.05), transparent)',
+          background: 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
         }} />
         <h3 className="font-display font-semibold text-gold text-sm mb-3">
           {isWonder ? '🎯 How We Keep Score' : 'Scoring Methodology'}
@@ -202,7 +217,7 @@ export default function CalibrationPage() {
             <span className="text-chrome mt-0.5">•</span>
             {isWonder
               ? 'Forecasts must be at least 30 days old — no last-minute cheating allowed!'
-              : <>Forecast ≥<span className="text-gold-num">30</span>d at resolution (anti-gaming)</>}
+              : <>Forecast ≥<span className="text-gold-num tabular-nums">30</span>d at resolution (anti-gaming)</>}
           </p>
           <p className="flex items-start gap-2">
             <span className="text-chrome mt-0.5">•</span>
@@ -213,9 +228,10 @@ export default function CalibrationPage() {
           <div
             className="font-mono text-xs mt-4 px-4 py-2.5 rounded-lg text-gold-num tabular-nums"
             style={{
-              background: 'hsla(43, 96%, 56%, 0.04)',
-              border: '1px solid hsla(43, 96%, 56%, 0.1)',
-              boxShadow: 'inset 0 1px 0 hsla(43, 96%, 56%, 0.04)',
+              background: 'hsla(43, 96%, 56%, 0.05)',
+              border: '1px solid hsla(43, 96%, 56%, 0.12)',
+              boxShadow: 'inset 0 1px 0 hsla(43, 96%, 56%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
+              backdropFilter: 'blur(12px)',
             }}
           >
             BS = (<span className="text-gold-solid">1</span>/N) × Σ(predicted − outcome)² | <span className="text-gold-solid">0</span> = perfect, <span className="text-gold-solid">0.25</span> = random

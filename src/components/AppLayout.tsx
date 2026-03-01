@@ -6,14 +6,17 @@ import { motion } from 'framer-motion';
 
 export default function AppLayout() {
   return (
-    <div className="min-h-screen nebula-bg stars-bg flex flex-col">
+    <div className="min-h-screen nebula-bg stars-bg flex flex-col relative">
+      {/* Constellation particles overlay */}
+      <div className="constellation-particles" />
+
       {/* ═══════ PREMIUM HEADER ═══════ */}
       <header
         className="sticky top-0 z-50"
         style={{
-          background: 'linear-gradient(180deg, hsla(230, 22%, 7%, 0.96) 0%, hsla(230, 22%, 5%, 0.92) 100%)',
-          backdropFilter: 'blur(32px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(32px) saturate(1.4)',
+          background: 'linear-gradient(180deg, hsla(230, 22%, 7%, 0.97) 0%, hsla(230, 22%, 4%, 0.94) 100%)',
+          backdropFilter: 'blur(40px) saturate(1.5)',
+          WebkitBackdropFilter: 'blur(40px) saturate(1.5)',
           borderBottom: '1px solid hsla(220, 10%, 72%, 0.07)',
           boxShadow: [
             '0 1px 0 hsla(220, 10%, 85%, 0.04)',
@@ -28,7 +31,7 @@ export default function AppLayout() {
         <div
           className="absolute top-0 left-0 right-0 h-px"
           style={{
-            background: 'linear-gradient(90deg, transparent 5%, hsla(43, 96%, 56%, 0.15) 20%, hsla(220, 10%, 85%, 0.1) 50%, hsla(43, 96%, 56%, 0.15) 80%, transparent 95%)',
+            background: 'linear-gradient(90deg, transparent 5%, hsla(43, 96%, 56%, 0.18) 20%, hsla(220, 10%, 85%, 0.12) 50%, hsla(43, 96%, 56%, 0.18) 80%, transparent 95%)',
           }}
         />
 
@@ -44,12 +47,12 @@ export default function AppLayout() {
             <div
               className="relative w-10 h-10 rounded-xl flex items-center justify-center"
               style={{
-                background: 'linear-gradient(145deg, hsla(43, 96%, 56%, 0.12), hsla(230, 22%, 8%, 0.9), hsla(190, 100%, 50%, 0.06))',
-                border: '1px solid hsla(43, 96%, 56%, 0.25)',
+                background: 'linear-gradient(145deg, hsla(43, 96%, 56%, 0.14), hsla(230, 22%, 8%, 0.9), hsla(190, 100%, 50%, 0.08))',
+                border: '1px solid hsla(43, 96%, 56%, 0.3)',
                 boxShadow: [
-                  '0 0 28px -4px hsla(43, 96%, 56%, 0.2)',
-                  '0 0 10px -2px hsla(190, 100%, 50%, 0.12)',
-                  'inset 0 1px 0 hsla(48, 100%, 80%, 0.12)',
+                  '0 0 32px -4px hsla(43, 96%, 56%, 0.25)',
+                  '0 0 12px -2px hsla(190, 100%, 50%, 0.15)',
+                  'inset 0 1px 0 hsla(48, 100%, 80%, 0.15)',
                   'inset 0 -1px 0 hsla(230, 25%, 3%, 0.6)',
                 ].join(', '),
               }}
@@ -58,36 +61,44 @@ export default function AppLayout() {
               <div
                 className="absolute inset-0.5 rounded-[10px]"
                 style={{
-                  border: '1px solid hsla(43, 96%, 56%, 0.08)',
-                  background: 'radial-gradient(circle at 30% 30%, hsla(43, 96%, 56%, 0.06), transparent 70%)',
+                  border: '1px solid hsla(43, 96%, 56%, 0.1)',
+                  background: 'radial-gradient(circle at 30% 30%, hsla(43, 96%, 56%, 0.08), transparent 70%)',
+                }}
+              />
+              {/* Cyan rim glow */}
+              <div
+                className="absolute inset-[-2px] rounded-[14px] pointer-events-none"
+                style={{
+                  boxShadow: 'inset 0 0 8px hsla(190, 100%, 50%, 0.12), 0 0 16px -4px hsla(190, 100%, 50%, 0.1)',
                 }}
               />
               <Eye
                 className="w-[18px] h-[18px] relative z-10"
                 style={{
                   color: 'hsl(43, 96%, 56%)',
-                  filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.5)) drop-shadow(0 0 2px hsla(190, 100%, 50%, 0.3))',
+                  filter: 'drop-shadow(0 0 8px hsla(43, 96%, 56%, 0.6)) drop-shadow(0 0 3px hsla(190, 100%, 50%, 0.4))',
                 }}
               />
             </div>
 
             {/* Wordmark */}
             <div className="flex items-baseline">
-              {/* ÆTH – premium metallic gold */}
+              {/* ÆTH – HERO metallic gold with specular + chrome bevel + cyan rim */}
               <span
-                className="font-display font-bold text-[22px] tracking-tight"
+                className="font-display font-bold text-[24px] tracking-tight relative"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(40, 85%, 36%) 0%, hsl(43, 96%, 50%) 20%, hsl(48, 100%, 74%) 45%, hsl(43, 96%, 58%) 65%, hsl(40, 90%, 40%) 100%)',
+                  background: 'linear-gradient(135deg, hsl(38, 88%, 32%) 0%, hsl(43, 96%, 48%) 15%, hsl(48, 100%, 72%) 35%, hsl(50, 100%, 88%) 50%, hsl(48, 100%, 72%) 65%, hsl(43, 96%, 55%) 80%, hsl(38, 88%, 36%) 100%)',
                   backgroundSize: '200% 100%',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   filter: [
-                    'drop-shadow(0 0 10px hsla(43, 96%, 56%, 0.5))',
-                    'drop-shadow(0 0 4px hsla(190, 100%, 50%, 0.3))',
+                    'drop-shadow(0 0 14px hsla(43, 96%, 56%, 0.6))',
+                    'drop-shadow(0 0 6px hsla(190, 100%, 50%, 0.35))',
                     'drop-shadow(0 1px 0 hsla(40, 90%, 28%, 0.9))',
+                    'drop-shadow(0 2px 1px hsla(230, 25%, 3%, 0.8))',
                   ].join(' '),
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.07em',
                 }}
               >
                 ÆTH
@@ -95,23 +106,23 @@ export default function AppLayout() {
 
               {/* Separator dot */}
               <span
-                className="mx-2 w-1 h-1 rounded-full inline-block relative top-[-1px]"
+                className="mx-2 w-1.5 h-1.5 rounded-full inline-block relative top-[-1px]"
                 style={{
-                  background: 'hsl(43, 96%, 56%)',
-                  boxShadow: '0 0 6px hsla(43, 96%, 56%, 0.5)',
+                  background: 'radial-gradient(circle at 35% 35%, hsl(48, 100%, 82%), hsl(43, 96%, 56%))',
+                  boxShadow: '0 0 8px hsla(43, 96%, 56%, 0.6), 0 0 3px hsla(190, 100%, 50%, 0.3)',
                 }}
               />
 
-              {/* OBSERVATORY – polished chrome */}
+              {/* OBSERVATORY – polished chrome with specular */}
               <span
                 className="font-display font-medium text-[11px] tracking-[0.18em] uppercase"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(220, 10%, 50%) 0%, hsl(220, 12%, 78%) 30%, hsl(220, 14%, 92%) 55%, hsl(220, 10%, 72%) 80%, hsl(220, 10%, 55%) 100%)',
+                  background: 'linear-gradient(135deg, hsl(220, 10%, 48%) 0%, hsl(220, 12%, 76%) 25%, hsl(220, 16%, 94%) 50%, hsl(220, 14%, 88%) 60%, hsl(220, 10%, 70%) 80%, hsl(220, 10%, 52%) 100%)',
                   backgroundSize: '200% 100%',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  filter: 'drop-shadow(0 0 3px hsla(220, 10%, 72%, 0.15))',
+                  filter: 'drop-shadow(0 0 4px hsla(220, 10%, 72%, 0.2))',
                 }}
               >
                 Observatory
