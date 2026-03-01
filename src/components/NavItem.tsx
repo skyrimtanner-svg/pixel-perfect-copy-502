@@ -14,15 +14,26 @@ export function NavItem({ to, children, icon }: NavItemProps) {
       to={to}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-200',
+          'relative flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium tracking-wide transition-all duration-250 uppercase',
           isActive
-            ? 'bg-gold/8 text-gold-solid border border-gold/15'
-            : 'text-muted-foreground hover:text-foreground hover:bg-accent/30'
+            ? 'text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
         )
+      }
+      style={({ isActive }) =>
+        isActive
+          ? {
+              background: 'linear-gradient(135deg, hsla(43, 96%, 56%, 0.08), hsla(190, 100%, 50%, 0.04))',
+              border: '1px solid hsla(43, 96%, 56%, 0.15)',
+              boxShadow: 'inset 0 1px 0 hsla(43, 96%, 56%, 0.08), 0 0 12px -4px hsla(43, 96%, 56%, 0.15)',
+            }
+          : {
+              border: '1px solid transparent',
+            }
       }
     >
       {icon}
-      {children}
+      <span style={{ letterSpacing: '0.08em' }}>{children}</span>
     </RouterNavLink>
   );
 }
