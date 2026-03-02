@@ -2,6 +2,7 @@ import { milestones, archetypeConfig } from '@/data/milestones';
 import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
 import { Zap, AlertTriangle, TrendingUp } from 'lucide-react';
+import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
 export function TriageStrip() {
   const { isWonder } = useMode();
@@ -15,26 +16,12 @@ export function TriageStrip() {
   return (
     <div
       className="rounded-xl p-2.5 mb-5 relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.88), hsla(232, 22%, 5%, 0.82))',
-        border: '1px solid hsla(220, 12%, 70%, 0.14)',
-        backdropFilter: 'blur(40px)',
-        boxShadow: [
-          'inset 0 1px 0 hsla(220, 16%, 95%, 0.09)',
-          'inset 0 -1px 0 hsla(232, 30%, 2%, 0.55)',
-          '0 8px 36px -8px hsla(232, 30%, 2%, 0.75)',
-          '0 2px 6px hsla(232, 30%, 2%, 0.45)',
-        ].join(', '),
-      }}
+      style={glassPanelGold}
     >
       {/* Top gold chrome line */}
-      <div className="absolute top-0 left-4 right-4 h-px" style={{
-        background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.15), hsla(220, 14%, 88%, 0.08), hsla(43, 96%, 56%, 0.15), transparent)',
-      }} />
-      {/* Glossy top reflection */}
-      <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl pointer-events-none" style={{
-        background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.035) 0%, transparent 100%)',
-      }} />
+      <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+      {/* Specular top reflection */}
+      <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl" style={specularReflection} />
 
       <div className="flex items-center gap-3 overflow-x-auto">
         {/* Label */}
@@ -69,19 +56,21 @@ export function TriageStrip() {
             transition={{ delay: i * 0.06 }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg shrink-0 shine-sweep relative overflow-hidden"
             style={{
-              background: 'linear-gradient(145deg, hsla(155, 82%, 48%, 0.12), hsla(155, 82%, 48%, 0.04))',
-              border: '1px solid hsla(155, 82%, 48%, 0.22)',
+              background: 'linear-gradient(145deg, hsla(155, 82%, 48%, 0.14), rgba(8, 10, 28, 0.82))',
+              border: '1px solid hsla(155, 82%, 48%, 0.25)',
               boxShadow: [
-                'inset 0 1px 0 hsla(155, 82%, 70%, 0.1)',
-                'inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
-                '0 0 20px -6px hsla(155, 82%, 48%, 0.2)',
+                'inset 0 1px 0 hsla(155, 82%, 70%, 0.12)',
+                'inset 0 -1px 0 hsla(232, 30%, 2%, 0.45)',
+                '0 0 24px -6px hsla(155, 82%, 48%, 0.25)',
+                '0 4px 16px -4px hsla(232, 30%, 2%, 0.5)',
               ].join(', '),
-              backdropFilter: 'blur(20px)',
+              backdropFilter: 'blur(28px)',
+              WebkitBackdropFilter: 'blur(28px)',
             }}
           >
-            {/* Glossy sheen */}
+            {/* Specular sheen */}
             <div className="absolute top-0 left-0 right-0 h-[45%] rounded-t-lg pointer-events-none" style={{
-              background: 'linear-gradient(180deg, hsla(155, 82%, 80%, 0.04) 0%, transparent 100%)',
+              background: 'linear-gradient(180deg, hsla(155, 82%, 80%, 0.06) 0%, transparent 100%)',
             }} />
             <Zap className="w-3 h-3" style={{
               color: 'hsl(155, 82%, 55%)',
@@ -120,18 +109,20 @@ export function TriageStrip() {
             transition={{ delay: (breakthroughs.length + i) * 0.06 }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg shrink-0 shine-sweep relative overflow-hidden"
             style={{
-              background: 'linear-gradient(145deg, hsla(36, 100%, 56%, 0.1), hsla(36, 100%, 56%, 0.03))',
-              border: '1px solid hsla(36, 100%, 56%, 0.2)',
+              background: 'linear-gradient(145deg, hsla(36, 100%, 56%, 0.12), rgba(8, 10, 28, 0.82))',
+              border: '1px solid hsla(36, 100%, 56%, 0.22)',
               boxShadow: [
-                'inset 0 1px 0 hsla(36, 100%, 75%, 0.08)',
-                'inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
-                '0 0 18px -6px hsla(36, 100%, 56%, 0.15)',
+                'inset 0 1px 0 hsla(36, 100%, 75%, 0.1)',
+                'inset 0 -1px 0 hsla(232, 30%, 2%, 0.45)',
+                '0 0 22px -6px hsla(36, 100%, 56%, 0.2)',
+                '0 4px 16px -4px hsla(232, 30%, 2%, 0.5)',
               ].join(', '),
-              backdropFilter: 'blur(20px)',
+              backdropFilter: 'blur(28px)',
+              WebkitBackdropFilter: 'blur(28px)',
             }}
           >
             <div className="absolute top-0 left-0 right-0 h-[45%] rounded-t-lg pointer-events-none" style={{
-              background: 'linear-gradient(180deg, hsla(36, 100%, 80%, 0.03) 0%, transparent 100%)',
+              background: 'linear-gradient(180deg, hsla(36, 100%, 80%, 0.04) 0%, transparent 100%)',
             }} />
             <AlertTriangle className="w-3 h-3" style={{
               color: 'hsl(36, 100%, 60%)',
