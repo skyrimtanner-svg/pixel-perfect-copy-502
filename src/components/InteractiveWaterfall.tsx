@@ -1,12 +1,13 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw, Undo2, Copy, CheckCircle2, FileCheck } from 'lucide-react';
+import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw, Undo2, Copy, CheckCircle2, FileCheck, Flame } from 'lucide-react';
 import { glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Contribution, EvidenceItem, WhatIfResult } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
 import { EvidenceToggle } from '@/components/EvidenceToggle';
 import { WaterfallNebula } from '@/components/WaterfallNebula';
+import { NegativeDropSparks } from '@/components/NegativeDropSparks';
 import { toast } from '@/hooks/use-toast';
 
 /* ═══ SPEC COLORS ═══ */
@@ -52,6 +53,7 @@ interface InteractiveWaterfallProps {
   ledgerHash?: string;
   onNegativeShift?: (isNegative: boolean, posterior: number) => void;
   onEvidenceClick?: (evidenceId: string) => void;
+  onCommitNegativeEvidence?: (excludedIds: string[], whatIfResult: WhatIfResult) => Promise<void>;
 }
 
 function logOddsToProb(lo: number): number {
@@ -71,7 +73,7 @@ function shorten(s: string, maxLen = 28): string {
 export function InteractiveWaterfall({
   prior, contributions, evidence, milestoneId, tier = 'active',
   onWhatIf, whatIfResult, whatIfLoading, ledgerHash: externalHash,
-  onNegativeShift, onEvidenceClick,
+  onNegativeShift, onEvidenceClick, onCommitNegativeEvidence,
 }: InteractiveWaterfallProps) {
   const { isWonder } = useMode();
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
@@ -79,6 +81,8 @@ export function InteractiveWaterfall({
   const [showReceipt, setShowReceipt] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [particleBurst, setParticleBurst] = useState<string | null>(null);
+  const [commitSparks, setCommitSparks] = useState(false);
+  const [isCommitting, setIsCommitting] = useState(false);
   const prevPosteriorRef = useRef<number | null>(null);
 
   const isSimActive = excludedIds.size > 0;
@@ -737,6 +741,94 @@ export function InteractiveWaterfall({
             </span>
           </motion.div>
         )}
+
+        {/* ═══ COMMIT AS REAL NEGATIVE EVIDENCE ═══ */}
+        <AnimatePresence>
+          {isSimActive && isDropping && effectiveWhatIf && onCommitNegativeEvidence && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
+              className="relative z-10"
+            >
+              <button
+                disabled={isCommitting}
+                onClick={async () => {
+                  if (!effectiveWhatIf) return;
+                  setIsCommitting(true);
+                  setCommitSparks(true);
+                  
+                  // Mode-aware commit toast
+                  if (isWonder) {
+                    toast({
+                      title: "💔 The future just got heavier…",
+                      description: "…but we have the receipt ❤️‍🔥",
+                    });
+                  } else {
+                    const loShift = effectiveWhatIf.update_result.delta_log_odds;
+                    toast({
+                      title: "⚠ Evidence Committed",
+                      description: `Δ ${(posteriorDelta * 100).toFixed(1)}pp | ${loShift > 0 ? '+' : ''}${loShift.toFixed(4)} LO → Trust Ledger`,
+                    });
+                  }
+
+                  try {
+                    await onCommitNegativeEvidence(Array.from(excludedIds), effectiveWhatIf);
+                    // Reset sandbox after commit
+                    setTimeout(() => {
+                      setExcludedIds(new Set());
+                      setSnapshotHash(null);
+                      setShowReceipt(false);
+                      setIsCommitting(false);
+                    }, 1500);
+                  } catch {
+                    setIsCommitting(false);
+                  }
+                  setTimeout(() => setCommitSparks(false), 2000);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: 'linear-gradient(135deg, hsla(0, 72%, 45%, 0.25), hsla(0, 72%, 35%, 0.15), rgba(8, 10, 28, 0.8))',
+                  border: '1px solid hsla(0, 72%, 55%, 0.35)',
+                  boxShadow: [
+                    '0 0 32px -8px hsla(0, 72%, 55%, 0.4)',
+                    'inset 0 1px 0 hsla(0, 72%, 70%, 0.12)',
+                    'inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
+                  ].join(', '),
+                  color: 'hsl(0, 72%, 65%)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                }}
+              >
+                <Flame className="w-4 h-4" style={{
+                  filter: 'drop-shadow(0 0 8px hsla(0, 72%, 55%, 0.6))',
+                  animation: 'pulse 1.5s infinite',
+                }} />
+                <span style={{
+                  background: 'linear-gradient(135deg, hsl(0, 60%, 50%), hsl(0, 72%, 65%), hsl(355, 80%, 72%))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>
+                  {isCommitting ? 'COMMITTING TO LEDGER…' : 'COMMIT AS REAL NEGATIVE EVIDENCE'}
+                </span>
+                <Flame className="w-4 h-4" style={{
+                  filter: 'drop-shadow(0 0 8px hsla(0, 72%, 55%, 0.6))',
+                  animation: 'pulse 1.5s infinite 0.3s',
+                }} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Full-screen commit sparks */}
+        <NegativeDropSparks
+          active={commitSparks}
+          intensity={0.85}
+          containerSize={200}
+          fullScreen
+        />
 
         {/* Loading bar */}
         {whatIfLoading && (

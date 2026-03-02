@@ -35,6 +35,7 @@ interface MilestoneModalProps {
 export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps) {
   const { isWonder } = useMode();
   const { loading, detail, whatIfResult, whatIfLoading, fetchMilestone, runWhatIf } = useMilestoneAPI();
+  const [commitInProgress, setCommitInProgress] = useState(false);
   const hysteresis = useHysteresis();
   const [ledgerHash, setLedgerHash] = useState<string | null>(null);
   const [snapshotTimestamp, setSnapshotTimestamp] = useState<string | null>(null);
@@ -98,6 +99,46 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
       setTagFlip(null);
     }
   }, [milestone, hysteresis]);
+
+  // Commit negative evidence — triggers full-screen sparks and Trust Ledger snapshot
+  const handleCommitNegativeEvidence = useCallback(async (excludedIds: string[], whatIfRes: any) => {
+    if (!milestone) return;
+    setCommitInProgress(true);
+    try {
+      // Call the evidence submission endpoint
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/milestones-api/${milestone.id}/evidence`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source: 'What-If Sandbox Commit',
+          type: 'analyst_override',
+          direction: 'contradicts',
+          summary: `Excluded ${excludedIds.length} evidence items via sandbox simulation`,
+          excluded_evidence_ids: excludedIds,
+          sandbox_posterior: whatIfRes.update_result.posterior,
+          sandbox_delta_lo: whatIfRes.update_result.delta_log_odds,
+        }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        if (result?.snapshot_hash) {
+          setLedgerHash(result.snapshot_hash);
+          setSnapshotTimestamp(new Date().toISOString());
+        }
+        // Refresh milestone data
+        await fetchMilestone(milestone.id);
+      }
+    } catch (err) {
+      console.error('Commit failed:', err);
+    } finally {
+      setCommitInProgress(false);
+    }
+  }, [milestone, fetchMilestone]);
+
 
   if (!milestone) return null;
 
@@ -413,7 +454,8 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                   whatIfResult={whatIfResult}
                   whatIfLoading={whatIfLoading}
                   ledgerHash={ledgerHash ?? undefined}
-                  onNegativeShift={handleNegativeShift}
+                   onNegativeShift={handleNegativeShift}
+                   onCommitNegativeEvidence={handleCommitNegativeEvidence}
                 />
               </>
             ) : (
@@ -457,7 +499,8 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                   onWhatIf={runWhatIf}
                   whatIfResult={whatIfResult}
                   whatIfLoading={whatIfLoading}
-                  onNegativeShift={handleNegativeShift}
+                   onNegativeShift={handleNegativeShift}
+                   onCommitNegativeEvidence={handleCommitNegativeEvidence}
                 />
               </>
             )}
