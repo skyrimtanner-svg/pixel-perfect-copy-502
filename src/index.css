@@ -305,56 +305,85 @@
 
 /* ═══════════ DEEP-SPACE NEBULA BACKGROUND ═══════════ */
 .nebula-bg {
-  background-color: hsl(232, 30%, 2%);
+  background-color: #06060c;
   background-image:
-    radial-gradient(ellipse at 8% 90%, hsla(268, 65%, 14%, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse at 92% 10%, hsla(192, 85%, 18%, 0.16) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 50%, hsla(43, 60%, 8%, 0.08) 0%, transparent 65%),
-    radial-gradient(ellipse at 75% 65%, hsla(342, 50%, 12%, 0.08) 0%, transparent 45%),
-    radial-gradient(ellipse at 20% 30%, hsla(230, 60%, 10%, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 60% 85%, hsla(268, 40%, 8%, 0.1) 0%, transparent 40%);
+    radial-gradient(ellipse at 8% 85%, hsla(268, 65%, 16%, 0.22) 0%, transparent 50%),
+    radial-gradient(ellipse at 92% 12%, hsla(192, 85%, 18%, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(43, 50%, 8%, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 75% 60%, hsla(342, 50%, 14%, 0.1) 0%, transparent 45%),
+    radial-gradient(ellipse at 20% 30%, hsla(250, 60%, 12%, 0.16) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 85%, hsla(280, 45%, 10%, 0.12) 0%, transparent 40%),
+    radial-gradient(ellipse at 35% 15%, hsla(220, 60%, 8%, 0.14) 0%, transparent 55%);
 }
 
-/* ═══════════ BREATHING NEBULA ANIMATION ═══════════ */
-@keyframes nebula-breathe {
-  0%, 100% { opacity: 0.12; transform: scale(1); }
-  50% { opacity: 0.2; transform: scale(1.05); }
+/* ═══════════ BREATHING NEBULA LAYERS ═══════════ */
+@keyframes nebula-breathe-1 {
+  0%, 100% { opacity: 0.14; transform: scale(1) translate(0, 0); }
+  33% { opacity: 0.22; transform: scale(1.06) translate(8px, -5px); }
+  66% { opacity: 0.16; transform: scale(1.03) translate(-4px, 3px); }
+}
+@keyframes nebula-breathe-2 {
+  0%, 100% { opacity: 0.1; transform: scale(1.02) translate(0, 0); }
+  50% { opacity: 0.2; transform: scale(1.08) translate(-10px, 6px); }
 }
 
 .nebula-bg::before {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -60px;
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 15% 80%, hsla(268, 60%, 18%, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 20%, hsla(192, 80%, 22%, 0.12) 0%, transparent 50%);
-  animation: nebula-breathe 12s ease-in-out infinite;
+    radial-gradient(ellipse at 15% 80%, hsla(268, 55%, 20%, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 20%, hsla(192, 75%, 22%, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 60%, hsla(280, 40%, 15%, 0.1) 0%, transparent 55%);
+  animation: nebula-breathe-1 16s ease-in-out infinite;
+}
+
+.nebula-bg::after {
+  content: '';
+  position: fixed;
+  inset: -40px;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 70% 75%, hsla(250, 50%, 18%, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 25% 25%, hsla(220, 65%, 15%, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 55% 10%, hsla(43, 60%, 12%, 0.08) 0%, transparent 40%);
+  animation: nebula-breathe-2 22s ease-in-out infinite;
 }
 
 /* ═══════════ GOLD-TINTED STARFIELD ═══════════ */
 .stars-bg {
   background-image:
-    radial-gradient(1.5px 1.5px at 20px 30px, hsla(210, 40%, 93%, 0.12), transparent),
-    radial-gradient(1px 1px at 40px 70px, hsla(43, 96%, 56%, 0.08), transparent),
-    radial-gradient(1.2px 1.2px at 90px 40px, hsla(210, 40%, 93%, 0.1), transparent),
-    radial-gradient(0.8px 0.8px at 130px 80px, hsla(43, 96%, 56%, 0.1), transparent),
-    radial-gradient(1px 1px at 160px 30px, hsla(192, 100%, 52%, 0.07), transparent),
-    radial-gradient(0.6px 0.6px at 170px 60px, hsla(43, 96%, 56%, 0.07), transparent),
-    radial-gradient(0.5px 0.5px at 50px 90px, hsla(48, 100%, 70%, 0.08), transparent),
-    radial-gradient(1px 1px at 110px 15px, hsla(43, 96%, 56%, 0.06), transparent),
-    radial-gradient(0.7px 0.7px at 180px 50px, hsla(210, 40%, 93%, 0.07), transparent);
+    radial-gradient(1.8px 1.8px at 15px 25px, hsla(210, 40%, 93%, 0.14), transparent),
+    radial-gradient(1.2px 1.2px at 45px 72px, hsla(43, 96%, 56%, 0.1), transparent),
+    radial-gradient(1.4px 1.4px at 95px 38px, hsla(210, 40%, 93%, 0.12), transparent),
+    radial-gradient(0.8px 0.8px at 135px 82px, hsla(43, 96%, 56%, 0.12), transparent),
+    radial-gradient(1px 1px at 165px 28px, hsla(192, 100%, 52%, 0.08), transparent),
+    radial-gradient(0.6px 0.6px at 175px 58px, hsla(43, 96%, 56%, 0.09), transparent),
+    radial-gradient(0.5px 0.5px at 55px 95px, hsla(48, 100%, 70%, 0.1), transparent),
+    radial-gradient(1.1px 1.1px at 115px 12px, hsla(43, 96%, 56%, 0.07), transparent),
+    radial-gradient(0.7px 0.7px at 185px 48px, hsla(210, 40%, 93%, 0.08), transparent),
+    radial-gradient(0.4px 0.4px at 75px 60px, hsla(268, 60%, 70%, 0.06), transparent),
+    radial-gradient(0.6px 0.6px at 25px 80px, hsla(192, 80%, 60%, 0.05), transparent),
+    radial-gradient(1px 1px at 145px 45px, hsla(43, 96%, 56%, 0.05), transparent);
   background-size: 200px 100px;
 }
 
-/* ═══════════ CONSTELLATION PARTICLES ═══════════ */
-@keyframes constellation-drift {
-  0% { transform: translateY(0) translateX(0); opacity: 0.04; }
-  25% { opacity: 0.08; }
-  50% { transform: translateY(-30px) translateX(15px); opacity: 0.05; }
-  75% { opacity: 0.09; }
-  100% { transform: translateY(-60px) translateX(-10px); opacity: 0.04; }
+/* ═══════════ CONSTELLATION PARTICLES — LAYER 1 (slow, large) ═══════════ */
+@keyframes constellation-drift-1 {
+  0% { transform: translateY(0) translateX(0); opacity: 0.05; }
+  25% { opacity: 0.1; }
+  50% { transform: translateY(-40px) translateX(20px); opacity: 0.06; }
+  75% { opacity: 0.11; }
+  100% { transform: translateY(-80px) translateX(-15px); opacity: 0.05; }
+}
+
+@keyframes constellation-drift-2 {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.04; }
+  50% { transform: translateY(25px) translateX(-18px) rotate(1deg); opacity: 0.09; }
+  100% { transform: translateY(-20px) translateX(10px) rotate(-0.5deg); opacity: 0.04; }
 }
 
 .constellation-particles {
@@ -363,14 +392,31 @@
   z-index: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(1px 1px at 10% 20%, hsla(43, 96%, 56%, 0.12), transparent),
-    radial-gradient(1px 1px at 30% 60%, hsla(43, 96%, 56%, 0.08), transparent),
-    radial-gradient(1px 1px at 55% 35%, hsla(192, 100%, 52%, 0.06), transparent),
-    radial-gradient(0.5px 0.5px at 70% 80%, hsla(43, 96%, 56%, 0.1), transparent),
-    radial-gradient(0.8px 0.8px at 85% 15%, hsla(268, 90%, 68%, 0.06), transparent),
-    radial-gradient(0.5px 0.5px at 45% 90%, hsla(43, 96%, 56%, 0.07), transparent);
+    radial-gradient(1.2px 1.2px at 10% 20%, hsla(43, 96%, 56%, 0.14), transparent),
+    radial-gradient(0.8px 0.8px at 30% 60%, hsla(43, 96%, 56%, 0.09), transparent),
+    radial-gradient(1px 1px at 55% 35%, hsla(192, 100%, 52%, 0.07), transparent),
+    radial-gradient(0.5px 0.5px at 70% 80%, hsla(43, 96%, 56%, 0.12), transparent),
+    radial-gradient(0.8px 0.8px at 85% 15%, hsla(268, 90%, 68%, 0.07), transparent),
+    radial-gradient(0.5px 0.5px at 45% 90%, hsla(43, 96%, 56%, 0.08), transparent);
   background-size: 400px 300px;
-  animation: constellation-drift 25s ease-in-out infinite;
+  animation: constellation-drift-1 30s ease-in-out infinite;
+}
+
+/* ═══════════ CONSTELLATION PARTICLES — LAYER 2 (faster, smaller, offset) ═══════════ */
+.constellation-particles-2 {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(0.6px 0.6px at 22% 42%, hsla(268, 60%, 70%, 0.08), transparent),
+    radial-gradient(0.4px 0.4px at 68% 18%, hsla(192, 80%, 60%, 0.06), transparent),
+    radial-gradient(0.7px 0.7px at 40% 75%, hsla(43, 96%, 56%, 0.07), transparent),
+    radial-gradient(0.5px 0.5px at 88% 55%, hsla(220, 40%, 80%, 0.06), transparent),
+    radial-gradient(0.3px 0.3px at 15% 65%, hsla(43, 96%, 56%, 0.05), transparent),
+    radial-gradient(0.5px 0.5px at 75% 35%, hsla(268, 50%, 65%, 0.05), transparent);
+  background-size: 350px 250px;
+  animation: constellation-drift-2 20s ease-in-out infinite;
 }
 
 /* ═══════════ GOLD BUTTON ═══════════ */
