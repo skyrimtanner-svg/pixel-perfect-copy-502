@@ -8,6 +8,7 @@ import { WaterfallChart } from '@/components/WaterfallChart';
 import { useMode } from '@/contexts/ModeContext';
 import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
 const domainHsl: Record<string, string> = {
   compute: 'hsl(190, 100%, 50%)',
@@ -38,12 +39,7 @@ function ProvenanceBadge({ label, value, icon, tooltip }: { label: string; value
         <TooltipTrigger asChild>
           <div
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[10px] cursor-help transition-all duration-200 hover:scale-105"
-            style={{
-              background: 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.8), hsla(232, 22%, 6%, 0.7))',
-              border: '1px solid hsla(220, 12%, 70%, 0.12)',
-              boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 1px 3px hsla(232, 30%, 2%, 0.3)',
-              backdropFilter: 'blur(12px)',
-            }}
+            style={glassInner}
           >
             <span className="text-chrome">{icon}</span>
             <span className="text-muted-foreground">{label}</span>
@@ -51,11 +47,10 @@ function ProvenanceBadge({ label, value, icon, tooltip }: { label: string; value
           </div>
         </TooltipTrigger>
         <TooltipContent
-          className="glass-strong text-xs max-w-[220px]"
+          className="text-xs max-w-[220px]"
           style={{
-            background: 'hsla(232, 26%, 5%, 0.97)',
+            ...glassPanelStrong,
             border: '1px solid hsla(43, 96%, 56%, 0.18)',
-            boxShadow: '0 12px 40px -8px hsla(232, 30%, 2%, 0.9)',
           }}
         >
           {tooltip}
@@ -76,11 +71,11 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
     ? 'hsla(0, 72%, 55%, 0.22)'
     : 'hsla(220, 10%, 72%, 0.1)';
 
-  const accentGradient = isSupport
-    ? 'linear-gradient(135deg, hsla(155, 82%, 48%, 0.1), hsla(155, 82%, 48%, 0.03))'
+  const accentTint = isSupport
+    ? 'hsla(155, 82%, 48%, 0.08)'
     : isContradict
-    ? 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.1), hsla(0, 72%, 55%, 0.03))'
-    : 'linear-gradient(135deg, hsla(220, 10%, 50%, 0.08), hsla(220, 10%, 50%, 0.02))';
+    ? 'hsla(0, 72%, 55%, 0.08)'
+    : 'transparent';
 
   const iconBg = isSupport
     ? 'linear-gradient(145deg, hsl(155, 70%, 28%), hsl(155, 82%, 42%), hsl(155, 70%, 55%))'
@@ -95,16 +90,23 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
     <motion.div
       className="rounded-xl p-4 relative overflow-hidden group"
       style={{
-        background: accentGradient,
+        background: `linear-gradient(168deg, ${accentTint}, rgba(8, 10, 28, 0.82))`,
         border: `1px solid ${borderColor}`,
-        backdropFilter: 'blur(24px)',
-        boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3), 0 2px 8px -4px hsla(232, 30%, 2%, 0.4)',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        boxShadow: [
+          'inset 0 1px 0 hsla(220, 16%, 95%, 0.07)',
+          'inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
+          '0 4px 16px -4px hsla(232, 30%, 2%, 0.5)',
+        ].join(', '),
       }}
       whileHover={{ scale: 1.005, y: -1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
-      {/* Metallic chrome direction badge */}
-      <div className="flex items-start justify-between gap-3 mb-2.5">
+      {/* Specular sheen */}
+      <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
+
+      <div className="flex items-start justify-between gap-3 mb-2.5 relative z-10">
         <div className="flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-background"
@@ -145,10 +147,9 @@ function EvidenceRow({ ev }: { ev: Evidence }) {
         </div>
       </div>
 
-      <p className="text-xs text-secondary-foreground leading-relaxed mb-3">{ev.summary}</p>
+      <p className="text-xs text-secondary-foreground leading-relaxed mb-3 relative z-10">{ev.summary}</p>
 
-      {/* Provenance badges row */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap relative z-10">
         <ProvenanceBadge label="Cred" value={ev.credibility.toFixed(2)} icon={<Shield className="w-2.5 h-2.5" />} tooltip="Source credibility score based on publication type and track record" />
         <ProvenanceBadge label="Decay" value={ev.recency.toFixed(2)} icon={<Clock className="w-2.5 h-2.5" />} tooltip="Temporal recency weight — newer evidence decays less" />
         <ProvenanceBadge label="Cons" value={ev.consensus.toFixed(2)} icon={<Users className="w-2.5 h-2.5" />} tooltip="Expert consensus alignment — how many independent sources agree" />
@@ -181,24 +182,23 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
       <DialogContent
         className="max-w-3xl max-h-[85vh] overflow-y-auto p-0"
         style={{
-          background: 'hsla(232, 26%, 4%, 0.97)',
-          border: '1px solid hsla(220, 10%, 72%, 0.14)',
+          ...glassPanelStrong,
+          border: '1px solid hsla(220, 10%, 72%, 0.18)',
           boxShadow: [
             '0 0 120px -20px hsla(230, 25%, 3%, 0.95)',
             '0 0 80px -10px hsla(43, 96%, 56%, 0.1)',
-            'inset 0 1px 0 hsla(220, 16%, 95%, 0.08)',
-            'inset 0 -1px 0 hsla(232, 30%, 2%, 0.5)',
+            'inset 0 1px 0 hsla(220, 16%, 95%, 0.12)',
+            'inset 0 -1px 0 hsla(232, 30%, 2%, 0.6)',
           ].join(', '),
-          backdropFilter: 'blur(44px)',
         }}
       >
         {/* Top gold rim */}
-        <div className="absolute top-0 left-6 right-6 h-px" style={{
-          background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.25), hsla(48, 100%, 80%, 0.12), transparent)',
-        }} />
+        <div className="absolute top-0 left-6 right-6 h-px" style={goldChromeLine} />
+        {/* Specular top reflection */}
+        <div className="absolute top-0 left-0 right-0 h-[25%] rounded-t-lg" style={specularReflection} />
 
         {/* Header */}
-        <DialogHeader className="p-6 pb-4" style={{ borderBottom: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
+        <DialogHeader className="p-6 pb-4 relative z-10" style={{ borderBottom: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
           <div className="flex items-center gap-2 mb-2">
             <DomainBadge domain={milestone.domain} />
             <StatusBadge status={milestone.status} />
@@ -208,7 +208,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             isWonder ? 'text-gold' : 'text-foreground'
           }`}>
             {milestone.title}
-            {/* Live updating posterior ring */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -237,14 +236,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         </DialogHeader>
 
         {/* Tabs */}
-        <Tabs defaultValue="overview" className="p-6 pt-4">
+        <Tabs defaultValue="overview" className="p-6 pt-4 relative z-10">
           <TabsList
             className="mb-4 rounded-xl p-1"
-            style={{
-              background: 'hsla(232, 26%, 6%, 0.7)',
-              border: '1px solid hsla(220, 12%, 70%, 0.12)',
-              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
-            }}
+            style={glassInner}
           >
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs">Overview</TabsTrigger>
             <TabsTrigger value="why" className="data-[state=active]:bg-gold/10 data-[state=active]:text-gold-solid rounded-lg text-xs">Why It Changed</TabsTrigger>
@@ -254,37 +249,41 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           <TabsContent value="overview" className="space-y-4">
             <p className="text-sm text-secondary-foreground leading-relaxed">{milestone.description}</p>
 
-            <div className="rounded-xl p-4" style={{
-              background: 'linear-gradient(135deg, hsla(192, 100%, 52%, 0.06), hsla(192, 100%, 52%, 0.02))',
-              border: '1px solid hsla(192, 100%, 52%, 0.18)',
-              boxShadow: 'inset 0 1px 0 hsla(192, 100%, 70%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
-              backdropFilter: 'blur(20px)',
+            <div className="rounded-xl p-4 relative overflow-hidden" style={{
+              background: 'linear-gradient(135deg, hsla(192, 100%, 52%, 0.08), rgba(8, 10, 28, 0.82))',
+              border: '1px solid hsla(192, 100%, 52%, 0.2)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: 'inset 0 1px 0 hsla(192, 100%, 70%, 0.08), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 4px 16px -4px hsla(232, 30%, 2%, 0.4)',
             }}>
-              <h4 className="text-[10px] uppercase tracking-[0.12em] text-primary mb-2 font-mono font-bold">Success Criteria</h4>
-              <p className="text-sm text-foreground">{milestone.success_criteria}</p>
+              <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
+              <h4 className="text-[10px] uppercase tracking-[0.12em] text-primary mb-2 font-mono font-bold relative z-10">Success Criteria</h4>
+              <p className="text-sm text-foreground relative z-10">{milestone.success_criteria}</p>
             </div>
 
-            <div className="rounded-xl p-4" style={{
-              background: 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.06), hsla(0, 72%, 55%, 0.02))',
-              border: '1px solid hsla(0, 72%, 55%, 0.18)',
-              boxShadow: 'inset 0 1px 0 hsla(0, 72%, 70%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
-              backdropFilter: 'blur(20px)',
+            <div className="rounded-xl p-4 relative overflow-hidden" style={{
+              background: 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.08), rgba(8, 10, 28, 0.82))',
+              border: '1px solid hsla(0, 72%, 55%, 0.2)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: 'inset 0 1px 0 hsla(0, 72%, 70%, 0.08), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 4px 16px -4px hsla(232, 30%, 2%, 0.4)',
             }}>
-              <h4 className="text-[10px] uppercase tracking-[0.12em] text-destructive mb-2 font-mono font-bold">Falsification Condition</h4>
-              <p className="text-sm text-foreground">{milestone.falsification}</p>
+              <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
+              <h4 className="text-[10px] uppercase tracking-[0.12em] text-destructive mb-2 font-mono font-bold relative z-10">Falsification Condition</h4>
+              <p className="text-sm text-foreground relative z-10">{milestone.falsification}</p>
             </div>
 
             {/* Belief trajectory */}
-            <div className="rounded-xl p-4" style={{
-              background: 'linear-gradient(168deg, hsla(232, 26%, 7%, 0.7), hsla(232, 22%, 5%, 0.6))',
-              border: '1px solid hsla(220, 12%, 70%, 0.1)',
-              boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.05), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
-              backdropFilter: 'blur(20px)',
+            <div className="rounded-xl p-4 relative overflow-hidden" style={{
+              ...glassInner,
+              backdropFilter: 'blur(28px)',
+              WebkitBackdropFilter: 'blur(28px)',
             }}>
-              <h4 className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-3 font-mono font-bold">Belief Trajectory</h4>
+              <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl" style={specularReflection} />
+              <h4 className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-3 font-mono font-bold relative z-10">Belief Trajectory</h4>
               <div className="relative h-8 rounded-full overflow-hidden"
                 style={{
-                  background: 'hsla(230, 22%, 8%, 0.6)',
+                  background: 'rgba(8, 10, 28, 0.6)',
                   border: '1px solid hsla(220, 10%, 72%, 0.1)',
                 }}
               >
@@ -303,7 +302,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                   style={{ left: `${milestone.prior * 100}%`, background: 'hsla(220, 12%, 70%, 0.3)' }}
                 />
               </div>
-              <div className="flex justify-between mt-2 font-mono text-[10px] text-muted-foreground">
+              <div className="flex justify-between mt-2 font-mono text-[10px] text-muted-foreground relative z-10">
                 <span>Prior: <span className="text-gold-num tabular-nums">{(milestone.prior * 100).toFixed(1)}%</span></span>
                 <span className="text-gold-solid font-bold">Posterior: <span className="text-gold-num tabular-nums">{(milestone.posterior * 100).toFixed(1)}%</span></span>
               </div>

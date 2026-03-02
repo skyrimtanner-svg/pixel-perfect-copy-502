@@ -6,6 +6,7 @@ import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { glassPanelGold, glassPanel, glassPanelChrome, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
 const domainHsl: Record<string, string> = {
   compute: 'hsl(192, 100%, 52%)',
@@ -28,7 +29,6 @@ const goldGradientStyle = {
   backgroundClip: 'text' as const,
 };
 
-/* ═══ Wonder Mode: ELI13 descriptions ═══ */
 const wonderDescriptions: Record<string, string> = {
   agi: "Imagine a computer that can think about anything as well as you can — that's AGI! 🧠",
   fusion: "What if we could make a tiny sun on Earth for unlimited clean energy? ☀️",
@@ -50,7 +50,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
   const isHighMag = milestone.magnitude >= 9;
 
   if (isWonder) {
-    // ═══ WONDER MODE: Trading-card style with glossy hover ═══
     return (
       <motion.div
         initial={{ opacity: 0, y: 16, rotateX: -5 }}
@@ -75,40 +74,16 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
               rotateX: isFlipped ? -2 : 0,
             }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            style={{
-              background: isTopItem
-                ? 'linear-gradient(155deg, hsla(43, 40%, 10%, 0.78), hsla(232, 26%, 9%, 0.88), hsla(232, 22%, 5%, 0.82))'
-                : 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.88), hsla(232, 22%, 5%, 0.82))',
-              border: `1px solid ${isTopItem ? 'hsla(43, 96%, 56%, 0.32)' : 'hsla(220, 12%, 70%, 0.16)'}`,
-              backdropFilter: 'blur(40px)',
-              boxShadow: isTopItem
-                ? [
-                    'inset 0 1px 0 hsla(48, 100%, 80%, 0.16)',
-                    'inset 0 -1px 0 hsla(232, 30%, 2%, 0.55)',
-                    '0 0 52px -12px hsla(43, 96%, 56%, 0.2)',
-                    '0 10px 40px -8px hsla(232, 30%, 2%, 0.75)',
-                    '0 2px 6px hsla(232, 30%, 2%, 0.45)',
-                  ].join(', ')
-                : [
-                    'inset 0 1px 0 hsla(220, 16%, 95%, 0.09)',
-                    'inset 0 -1px 0 hsla(232, 30%, 2%, 0.55)',
-                    '0 8px 32px -8px hsla(232, 30%, 2%, 0.65)',
-                    '0 2px 6px hsla(232, 30%, 2%, 0.35)',
-                  ].join(', '),
-            }}
+            style={isTopItem ? glassPanelGold : glassPanel}
           >
-            {/* Glossy top reflection */}
-            <div className="absolute top-0 left-0 right-0 h-[45%] rounded-t-2xl pointer-events-none" style={{
-              background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.045) 0%, transparent 100%)',
-            }} />
+            {/* Specular top reflection */}
+            <div className="absolute top-0 left-0 right-0 h-[45%] rounded-t-2xl" style={specularReflection} />
 
             {/* Gold shimmer line for top items */}
             {isTopItem && (
               <motion.div
                 className="absolute top-0 left-4 right-4 h-px"
-                style={{
-                  background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.4), hsla(48, 100%, 80%, 0.2), transparent)',
-                }}
+                style={goldChromeLine}
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 3, repeat: Infinity }}
               />
@@ -138,7 +113,7 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
                     color: 'hsl(232, 30%, 2%)',
                     boxShadow: '0 2px 12px -2px hsla(43, 96%, 56%, 0.5), inset 0 1px 0 hsla(48, 100%, 85%, 0.4), inset 0 -1px 0 hsla(38, 88%, 28%, 0.45)',
                   } : {
-                    background: 'linear-gradient(168deg, hsla(220, 12%, 70%, 0.12), hsla(220, 12%, 70%, 0.04))',
+                    background: 'linear-gradient(168deg, rgba(14, 17, 38, 0.6), rgba(10, 13, 32, 0.5))',
                     border: '1px solid hsla(220, 12%, 70%, 0.16)',
                     color: 'hsl(220, 14%, 70%)',
                     boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.07), inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
@@ -148,7 +123,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
                 </div>
               </div>
 
-              {/* Probability ring */}
               <ProbabilityRing
                 value={milestone.posterior}
                 size={64}
@@ -157,7 +131,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
                 useGold={isTopItem}
               />
 
-              {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <DomainBadge domain={milestone.domain} />
@@ -172,7 +145,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
                 </p>
               </div>
 
-              {/* Metrics column */}
               <div className="flex flex-col items-end gap-2 shrink-0 pt-1">
                 <div className="font-mono text-xs tabular-nums" style={{
                   color: 'hsl(43, 82%, 60%)',
@@ -226,14 +198,10 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
       onClick={onClick}
       className="w-full rounded-md px-2.5 py-1.5 transition-all duration-100 text-left chrome-sweep relative group"
       style={{
-        background: isTopItem
-          ? 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.9), hsla(232, 22%, 4%, 0.82))'
-          : 'hsla(232, 26%, 5%, 0.5)',
-        border: `1px solid ${isTopItem ? 'hsla(43, 96%, 56%, 0.16)' : 'hsla(220, 12%, 70%, 0.06)'}`,
+        ...(isTopItem ? glassPanelGold : glassPanelChrome),
+        // Override for analyst density — lighter glass
         backdropFilter: 'blur(24px)',
-        boxShadow: isTopItem
-          ? 'inset 0 1px 0 hsla(48, 100%, 80%, 0.07), inset 0 -1px 0 hsla(232, 30%, 2%, 0.35), 0 2px 10px -4px hsla(232, 30%, 2%, 0.5)'
-          : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.025)',
+        WebkitBackdropFilter: 'blur(24px)',
       }}
       whileHover={{
         backgroundColor: 'hsla(232, 26%, 8%, 0.7)',
@@ -252,7 +220,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
       />
 
       <div className="flex items-center gap-2.5">
-        {/* Rank */}
         <div className="w-5 text-center">
           <span className={`font-mono text-[10px] tabular-nums ${isTopItem ? 'font-bold' : 'text-muted-foreground'}`}
             style={isTopItem ? {
@@ -264,7 +231,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
           </span>
         </div>
 
-        {/* Compact probability ring */}
         <ProbabilityRing
           value={milestone.posterior}
           size={30}
@@ -273,7 +239,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
           useGold={isTopItem}
         />
 
-        {/* Badges + title */}
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <div className="flex items-center gap-1 shrink-0">
             <DomainBadge domain={milestone.domain} />
@@ -284,7 +249,6 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
           </h3>
         </div>
 
-        {/* Dense metrics */}
         <div className="flex items-center gap-3 shrink-0 font-mono text-[10px]">
           <div className="w-8 text-right tabular-nums" style={{
             color: 'hsl(43, 82%, 60%)',

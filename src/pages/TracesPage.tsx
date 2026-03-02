@@ -3,6 +3,7 @@ import { trajectoryData, Domain, domainLabels } from '@/data/milestones';
 import { useMode } from '@/contexts/ModeContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { motion } from 'framer-motion';
+import { glassPanelStrong, glassInner, specularReflection, goldChromeLine, chromeTopLine } from '@/lib/glass-styles';
 
 const domainColors: Record<Domain, string> = {
   compute: 'hsl(192, 100%, 52%)',
@@ -73,15 +74,16 @@ export default function TracesPage() {
                 className="px-3.5 py-1.5 rounded-lg text-xs font-medium font-mono transition-all relative overflow-hidden shine-sweep"
                 style={{
                   background: active
-                    ? `linear-gradient(145deg, ${color.replace('hsl', 'hsla').replace(')', ', 0.12)')}, ${color.replace('hsl', 'hsla').replace(')', ', 0.04)')})`
-                    : 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.7), hsla(232, 22%, 6%, 0.6))',
-                  border: `1px solid ${active ? `${color.replace('hsl', 'hsla').replace(')', ', 0.3)')}` : 'hsla(220, 12%, 70%, 0.08)'}`,
+                    ? `linear-gradient(145deg, ${color.replace('hsl', 'hsla').replace(')', ', 0.14)')}, rgba(8, 10, 28, 0.82))`
+                    : 'linear-gradient(168deg, rgba(14, 17, 38, 0.72), rgba(8, 10, 28, 0.82))',
+                  border: `1px solid ${active ? `${color.replace('hsl', 'hsla').replace(')', ', 0.3)')}` : 'hsla(220, 12%, 70%, 0.1)'}`,
                   color: active ? color : 'hsl(218, 15%, 38%)',
                   textDecoration: active ? 'none' : 'line-through',
-                  backdropFilter: 'blur(20px)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
                   boxShadow: active
-                    ? `0 0 20px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.08), inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)`
-                    : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03), inset 0 -1px 0 hsla(232, 30%, 2%, 0.2)',
+                    ? `0 0 24px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.1), inset 0 -1px 0 hsla(232, 30%, 2%, 0.45)`
+                    : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.04), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
                   textShadow: active ? `0 0 10px ${glow}` : 'none',
                 }}
                 whileHover={{ scale: 1.04 }}
@@ -95,12 +97,7 @@ export default function TracesPage() {
 
         <div
           className="flex gap-0.5 rounded-lg p-0.5"
-          style={{
-            background: 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.7), hsla(232, 22%, 6%, 0.6))',
-            border: '1px solid hsla(220, 12%, 70%, 0.14)',
-            boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
-            backdropFilter: 'blur(20px)',
-          }}
+          style={glassInner}
         >
           {timeRanges.map(r => (
             <motion.button
@@ -126,29 +123,15 @@ export default function TracesPage() {
 
       <motion.div
         className="rounded-xl p-5 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(168deg, hsla(232, 26%, 9%, 0.88), hsla(232, 22%, 5%, 0.82))',
-          border: '1px solid hsla(220, 12%, 70%, 0.16)',
-          backdropFilter: 'blur(40px)',
-          boxShadow: [
-            'inset 0 1px 0 hsla(220, 16%, 95%, 0.09)',
-            'inset 0 -1px 0 hsla(232, 30%, 2%, 0.55)',
-            '0 10px 48px -12px hsla(232, 30%, 2%, 0.85)',
-            '0 2px 8px hsla(232, 30%, 2%, 0.45)',
-          ].join(', '),
-        }}
+        style={glassPanelStrong}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         {/* Top gold highlight */}
-        <div className="absolute top-0 left-6 right-6 h-px" style={{
-          background: 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.15), hsla(220, 14%, 88%, 0.08), hsla(43, 96%, 56%, 0.15), transparent)',
-        }} />
-        {/* Glossy top reflection */}
-        <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl pointer-events-none" style={{
-          background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.03) 0%, transparent 100%)',
-        }} />
+        <div className="absolute top-0 left-6 right-6 h-px" style={goldChromeLine} />
+        {/* Specular top reflection */}
+        <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl" style={specularReflection} />
 
         <ResponsiveContainer width="100%" height={isWonder ? 520 : 440}>
           <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
@@ -175,13 +158,11 @@ export default function TracesPage() {
             />
             <Tooltip
               contentStyle={{
-                background: 'hsla(232, 26%, 4%, 0.97)',
+                ...glassPanelStrong,
                 border: '1px solid hsla(43, 96%, 56%, 0.22)',
                 borderRadius: '12px',
                 fontFamily: 'Space Mono',
                 fontSize: '10px',
-                boxShadow: '0 16px 48px -8px hsla(232, 30%, 2%, 0.95), 0 0 28px -6px hsla(43, 96%, 56%, 0.12)',
-                backdropFilter: 'blur(28px)',
               }}
               labelStyle={{ color: 'hsl(43, 96%, 56%)', fontFamily: 'DM Sans', fontWeight: 600, fontSize: '11px' }}
               itemStyle={{ fontFamily: 'Space Mono', fontSize: '10px' }}
@@ -224,7 +205,7 @@ export default function TracesPage() {
         </ResponsiveContainer>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-5 mt-3 pt-3" style={{ borderTop: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
+        <div className="flex items-center justify-center gap-5 mt-3 pt-3 relative z-10" style={{ borderTop: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
           {allDomains.filter(d => activeDomains.has(d)).map(d => (
             <div key={d} className="flex items-center gap-1.5">
               <div className="w-3 h-0.5 rounded-full" style={{

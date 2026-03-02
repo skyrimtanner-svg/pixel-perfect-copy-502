@@ -1,5 +1,6 @@
 import { Evidence } from '@/data/milestones';
 import { motion } from 'framer-motion';
+import { glassInner, specularReflection } from '@/lib/glass-styles';
 
 interface WaterfallChartProps {
   prior: number;
@@ -31,8 +32,9 @@ export function WaterfallChart({ prior, evidence }: WaterfallChartProps) {
         <div className="w-36 text-[10px] font-mono font-bold text-chrome truncate uppercase tracking-wider">Base Prior</div>
         <div className="flex-1 h-8 rounded-lg relative overflow-hidden"
           style={{
-            background: 'hsla(230, 22%, 8%, 0.5)',
-            border: '1px solid hsla(220, 10%, 72%, 0.06)',
+            background: 'rgba(8, 10, 28, 0.6)',
+            border: '1px solid hsla(220, 10%, 72%, 0.1)',
+            boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.04), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
           }}
         >
           <motion.div
@@ -57,7 +59,6 @@ export function WaterfallChart({ prior, evidence }: WaterfallChartProps) {
         const isSupport = block.ev.direction === 'supports';
         const isContradict = block.ev.direction === 'contradicts';
 
-        // Metallic colored gradients
         const barBg = isSupport
           ? 'linear-gradient(90deg, hsla(155, 82%, 38%, 0.6), hsla(155, 82%, 55%, 0.4), hsla(155, 82%, 65%, 0.2))'
           : isContradict
@@ -85,8 +86,9 @@ export function WaterfallChart({ prior, evidence }: WaterfallChartProps) {
               </div>
               <div className="flex-1 h-8 rounded-lg relative overflow-hidden"
                 style={{
-                  background: 'hsla(230, 22%, 8%, 0.35)',
-                  border: '1px solid hsla(220, 10%, 72%, 0.04)',
+                  background: 'rgba(8, 10, 28, 0.5)',
+                  border: '1px solid hsla(220, 10%, 72%, 0.06)',
+                  boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.03)',
                 }}
               >
                 <motion.div
@@ -108,24 +110,26 @@ export function WaterfallChart({ prior, evidence }: WaterfallChartProps) {
                 {block.ev.delta_log_odds > 0 ? '+' : ''}{block.ev.delta_log_odds.toFixed(2)} LO
               </div>
             </div>
-            {/* Hover detail */}
-            <div className="hidden group-hover:block ml-[9.5rem] mb-2 rounded-xl p-3 text-xs space-y-1.5"
+            {/* Hover detail — heavy glass panel */}
+            <div className="hidden group-hover:block ml-[9.5rem] mb-2 rounded-xl p-3 text-xs space-y-1.5 relative overflow-hidden"
               style={{
-                background: 'linear-gradient(168deg, hsla(232, 26%, 8%, 0.9), hsla(232, 22%, 5%, 0.85))',
-                border: '1px solid hsla(43, 96%, 56%, 0.1)',
-                boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.04), 0 8px 24px -6px hsla(232, 30%, 2%, 0.8)',
-                backdropFilter: 'blur(20px)',
+                ...glassInner,
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
+                border: '1px solid hsla(43, 96%, 56%, 0.12)',
+                boxShadow: 'inset 0 1px 0 hsla(220, 14%, 88%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 8px 24px -6px hsla(232, 30%, 2%, 0.8)',
               }}
             >
-              <p className="text-foreground">{block.ev.summary}</p>
-              <div className="flex gap-2.5 font-mono text-[10px] text-muted-foreground">
+              <div className="absolute top-0 left-0 right-0 h-[35%] rounded-t-xl" style={specularReflection} />
+              <p className="text-foreground relative z-10">{block.ev.summary}</p>
+              <div className="flex gap-2.5 font-mono text-[10px] text-muted-foreground relative z-10">
                 <span>Cred: <span className="text-gold-num">{block.ev.credibility.toFixed(2)}</span></span>
                 <span>Decay: <span className="text-gold-num">{block.ev.recency.toFixed(2)}</span></span>
                 <span>Cons: <span className="text-gold-num">{block.ev.consensus.toFixed(2)}</span></span>
                 <span>Match: <span className="text-gold-num">{block.ev.criteria_match.toFixed(2)}</span></span>
                 <span className="text-gold-solid font-bold">E={block.ev.composite.toFixed(3)}</span>
               </div>
-              <div className="font-mono text-[10px] text-muted-foreground">
+              <div className="font-mono text-[10px] text-muted-foreground relative z-10">
                 <span className="text-gold-num">{(block.startProb * 100).toFixed(1)}%</span> → <span className="text-gold-num">{(block.endProb * 100).toFixed(1)}%</span>
               </div>
             </div>
@@ -140,9 +144,9 @@ export function WaterfallChart({ prior, evidence }: WaterfallChartProps) {
         <div className="w-36 text-[10px] font-mono font-bold text-gold-solid uppercase tracking-wider">Posterior</div>
         <div className="flex-1 h-8 rounded-lg relative overflow-hidden"
           style={{
-            background: 'hsla(230, 22%, 8%, 0.5)',
-            border: '1px solid hsla(43, 96%, 56%, 0.15)',
-            boxShadow: 'inset 0 1px 0 hsla(43, 96%, 56%, 0.05)',
+            background: 'rgba(8, 10, 28, 0.6)',
+            border: '1px solid hsla(43, 96%, 56%, 0.18)',
+            boxShadow: 'inset 0 1px 0 hsla(43, 96%, 56%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
           }}
         >
           <motion.div
