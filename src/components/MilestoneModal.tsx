@@ -1,21 +1,27 @@
+import { useEffect, useState, useId } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Milestone, Evidence, statusLabels } from '@/data/milestones';
+import { Milestone } from '@/data/milestones';
 import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
 import { ProbabilityRing } from '@/components/ProbabilityRing';
-import { WaterfallChart } from '@/components/WaterfallChart';
+import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
+import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
-import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
 const domainHsl: Record<string, string> = {
-  compute: 'hsl(190, 100%, 50%)',
-  energy: 'hsl(38, 100%, 58%)',
-  connectivity: 'hsl(270, 90%, 68%)',
-  manufacturing: 'hsl(340, 80%, 62%)',
+  compute: 'hsl(190, 100%, 50%)', energy: 'hsl(38, 100%, 58%)',
+  connectivity: 'hsl(270, 90%, 68%)', manufacturing: 'hsl(340, 80%, 62%)',
   biology: 'hsl(152, 80%, 50%)',
+};
+
+const goldGradientStyle = {
+  background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
+  backgroundSize: '200% 100%',
+  WebkitBackgroundClip: 'text' as const, WebkitTextFillColor: 'transparent' as const, backgroundClip: 'text' as const,
 };
 
 interface MilestoneModalProps {
@@ -24,207 +30,89 @@ interface MilestoneModalProps {
   onClose: () => void;
 }
 
-const goldGradientStyle = {
-  background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
-  backgroundSize: '200% 100%',
-  WebkitBackgroundClip: 'text' as const,
-  WebkitTextFillColor: 'transparent' as const,
-  backgroundClip: 'text' as const,
-};
-
-/* ═══ PROVENANCE BADGE — metallic enhanced ═══ */
-function ProvenanceBadge({ label, value, icon, tooltip }: { label: string; value: string; icon: React.ReactNode; tooltip: string }) {
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[10px] cursor-help transition-all duration-200 hover:scale-105 relative overflow-hidden shine-sweep"
-            style={{
-              ...glassInner,
-              border: '1px solid hsla(220, 12%, 70%, 0.12)',
-              boxShadow: [
-                'inset 0 1px 0 hsla(220, 16%, 95%, 0.07)',
-                'inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
-                '0 2px 8px -4px hsla(232, 30%, 2%, 0.4)',
-              ].join(', '),
-            }}
-          >
-            <span style={{
-              background: 'linear-gradient(135deg, hsl(220, 10%, 55%), hsl(220, 14%, 82%))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>{icon}</span>
-            <span className="text-muted-foreground">{label}</span>
-            <span className="font-bold tabular-nums" style={{
-              ...goldGradientStyle,
-              filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
-            }}>{value}</span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent
-          className="text-xs max-w-[220px]"
-          style={{
-            ...glassPanelStrong,
-            border: '1px solid hsla(43, 96%, 56%, 0.2)',
-          }}
-        >
-          {tooltip}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-/* ═══ EVIDENCE ROW — metallic themed ═══ */
-function EvidenceRow({ ev }: { ev: Evidence }) {
-  const isSupport = ev.direction === 'supports';
-  const isContradict = ev.direction === 'contradicts';
-
-  const borderColor = isSupport
-    ? 'hsla(155, 82%, 48%, 0.22)'
-    : isContradict
-    ? 'hsla(0, 72%, 55%, 0.22)'
-    : 'hsla(220, 10%, 72%, 0.1)';
-
-  const accentTint = isSupport
-    ? 'hsla(155, 82%, 48%, 0.08)'
-    : isContradict
-    ? 'hsla(0, 72%, 55%, 0.08)'
-    : 'transparent';
-
-  const iconBg = isSupport
-    ? 'linear-gradient(145deg, hsl(155, 70%, 28%), hsl(155, 82%, 42%), hsl(155, 70%, 55%))'
-    : isContradict
-    ? 'linear-gradient(145deg, hsl(0, 60%, 30%), hsl(0, 72%, 48%), hsl(0, 60%, 58%))'
-    : 'linear-gradient(145deg, hsl(220, 10%, 35%), hsl(220, 12%, 55%), hsl(220, 10%, 40%))';
-
-  const dirLabel = isSupport ? '↑ SUPPORTS' : isContradict ? '↓ CONTRADICTS' : '~ AMBIGUOUS';
-
-  return (
-    <motion.div
-      className="rounded-xl p-4 relative overflow-hidden group shine-sweep"
-      style={{
-        background: `linear-gradient(168deg, ${accentTint}, rgba(8, 10, 28, 0.82))`,
-        border: `1px solid ${borderColor}`,
-        backdropFilter: 'blur(28px)',
-        WebkitBackdropFilter: 'blur(28px)',
-        boxShadow: [
-          'inset 0 1px 0 hsla(220, 16%, 95%, 0.07)',
-          'inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
-          '0 4px 16px -4px hsla(232, 30%, 2%, 0.5)',
-        ].join(', '),
-      }}
-      whileHover={{ scale: 1.005, y: -1 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-    >
-      {/* Specular sheen */}
-      <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
-
-      <div className="flex items-start justify-between gap-3 mb-2.5 relative z-10">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-background"
-            style={{
-              background: iconBg,
-              boxShadow: `inset 0 1px 0 hsla(0, 0%, 100%, 0.3), inset 0 -1px 0 hsla(0, 0%, 0%, 0.25), 0 2px 8px -2px ${borderColor}`,
-            }}
-          >
-            {isSupport ? '↑' : isContradict ? '↓' : '~'}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">{ev.source}</p>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {ev.type.replace('_', ' ')} • {ev.date}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="font-mono text-[9px] font-bold tracking-wider" style={{
-            color: isSupport ? 'hsl(155, 82%, 55%)' : isContradict ? 'hsl(0, 72%, 60%)' : 'hsl(220, 12%, 65%)',
-            textShadow: isSupport ? '0 0 8px hsla(155, 82%, 48%, 0.3)' : isContradict ? '0 0 8px hsla(0, 72%, 55%, 0.3)' : 'none',
-          }}>
-            {dirLabel}
-          </span>
-          <span
-            className="font-mono text-xs font-bold tabular-nums"
-            style={isSupport ? {
-              background: 'linear-gradient(135deg, hsl(155, 70%, 35%), hsl(155, 82%, 55%), hsl(155, 70%, 65%))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              filter: 'drop-shadow(0 0 4px hsla(155, 82%, 48%, 0.2))',
-            } : isContradict ? {
-              background: 'linear-gradient(135deg, hsl(0, 60%, 40%), hsl(0, 72%, 60%), hsl(0, 60%, 68%))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              filter: 'drop-shadow(0 0 4px hsla(0, 72%, 55%, 0.2))',
-            } : {
-              background: 'linear-gradient(135deg, hsl(220, 10%, 50%), hsl(220, 14%, 75%))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            {ev.delta_log_odds > 0 ? '+' : ''}{ev.delta_log_odds.toFixed(2)} LO
-          </span>
-        </div>
-      </div>
-
-      <p className="text-xs text-secondary-foreground leading-relaxed mb-3 relative z-10">{ev.summary}</p>
-
-      <div className="flex gap-2 flex-wrap relative z-10">
-        <ProvenanceBadge label="Cred" value={ev.credibility.toFixed(2)} icon={<Shield className="w-2.5 h-2.5" />} tooltip="Source credibility score based on publication type and track record" />
-        <ProvenanceBadge label="Decay" value={ev.recency.toFixed(2)} icon={<Clock className="w-2.5 h-2.5" />} tooltip="Temporal recency weight — newer evidence decays less" />
-        <ProvenanceBadge label="Cons" value={ev.consensus.toFixed(2)} icon={<Users className="w-2.5 h-2.5" />} tooltip="Expert consensus alignment — how many independent sources agree" />
-        <ProvenanceBadge label="Match" value={ev.criteria_match.toFixed(2)} icon={<Crosshair className="w-2.5 h-2.5" />} tooltip="How directly this evidence addresses the milestone's success criteria" />
-        <div
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold tabular-nums"
-          style={{
-            background: 'hsla(43, 96%, 56%, 0.1)',
-            border: '1px solid hsla(43, 96%, 56%, 0.22)',
-            boxShadow: 'inset 0 1px 0 hsla(48, 100%, 80%, 0.08), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
-          }}
-        >
-          <span style={{
-            ...goldGradientStyle,
-            filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))',
-          }}>E={ev.composite.toFixed(3)}</span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps) {
-  if (!milestone) return null;
   const { isWonder } = useMode();
+  const { loading, detail, whatIfResult, whatIfLoading, fetchMilestone, runWhatIf } = useMilestoneAPI();
+  const [ledgerHash, setLedgerHash] = useState<string | null>(null);
 
-  const delta = milestone.posterior - milestone.prior;
+  // Fetch live data on open
+  useEffect(() => {
+    if (open && milestone) {
+      fetchMilestone(milestone.id).then(result => {
+        if (result?.bayes) {
+          setLedgerHash(null);
+        }
+      });
+    }
+  }, [open, milestone?.id, fetchMilestone]);
+
+  if (!milestone) return null;
+
+  const liveData = detail;
+  const livePosterior = liveData?.bayes?.posterior ?? milestone.posterior;
+  const livePrior = liveData?.bayes?.prior ?? milestone.prior;
+  const liveDeltaLO = liveData?.bayes?.delta_log_odds ?? milestone.delta_log_odds;
+  const delta = livePosterior - livePrior;
   const isPositive = delta >= 0;
+
+  const displayPosterior = whatIfResult?.update_result.posterior ?? livePosterior;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
-        className="max-w-3xl max-h-[85vh] overflow-y-auto p-0"
+        className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 relative"
         style={{
           ...glassPanelStrong,
-          border: '1px solid hsla(220, 10%, 72%, 0.2)',
+          border: `1px solid ${isNegativeShift ? 'hsla(0, 72%, 55%, 0.3)' : 'hsla(220, 10%, 72%, 0.2)'}`,
           boxShadow: [
             '0 0 120px -20px hsla(230, 25%, 3%, 0.95)',
-            '0 0 80px -10px hsla(43, 96%, 56%, 0.12)',
+            isNegativeShift ? '0 0 80px -10px hsla(0, 72%, 55%, 0.2)' : '0 0 80px -10px hsla(43, 96%, 56%, 0.12)',
             'inset 0 1px 0 hsla(220, 16%, 95%, 0.14)',
             'inset 0 -1px 0 hsla(232, 30%, 2%, 0.6)',
-            'inset 1px 0 0 hsla(220, 16%, 95%, 0.04)',
-            'inset -1px 0 0 hsla(220, 16%, 95%, 0.04)',
           ].join(', '),
+          transition: 'border-color 0.5s, box-shadow 0.5s',
         }}
       >
-        {/* Top gold rim */}
-        <div className="absolute top-0 left-6 right-6 h-px" style={goldChromeLine} />
-        {/* Specular top reflection */}
+        {/* Red particle effect for negative shifts */}
+        <AnimatePresence>
+          {isNegativeShift && (
+            <>
+              {[...Array(8)].map((_, i) => (
+                <motion.div
+                  key={`red-particle-${i}`}
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: 3 + Math.random() * 4,
+                    height: 3 + Math.random() * 4,
+                    background: `radial-gradient(circle, hsla(0, 72%, 60%, ${0.4 + Math.random() * 0.4}), transparent)`,
+                    boxShadow: '0 0 8px hsla(0, 72%, 55%, 0.5)',
+                  }}
+                  initial={{
+                    x: 100 + Math.random() * 400,
+                    y: 50 + Math.random() * 200,
+                    opacity: 0.8,
+                    scale: 1,
+                  }}
+                  animate={{
+                    y: [null, 50 + Math.random() * 300],
+                    x: [null, 80 + Math.random() * 440],
+                    opacity: [0.8, 0],
+                    scale: [1, 0.3],
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 2 + Math.random() * 2, ease: 'easeOut', delay: i * 0.15 }}
+                />
+              ))}
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Top gold/red rim */}
+        <div className="absolute top-0 left-6 right-6 h-px transition-all duration-500" style={
+          isNegativeShift
+            ? { background: 'linear-gradient(90deg, transparent, hsla(0, 72%, 55%, 0.3), hsla(0, 72%, 65%, 0.15), hsla(0, 72%, 55%, 0.3), transparent)' }
+            : goldChromeLine
+        } />
         <div className="absolute top-0 left-0 right-0 h-[25%] rounded-t-lg" style={{
           background: 'linear-gradient(180deg, hsla(220, 16%, 95%, 0.08) 0%, hsla(48, 100%, 90%, 0.02) 30%, transparent 100%)',
           pointerEvents: 'none',
@@ -236,42 +124,50 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             <DomainBadge domain={milestone.domain} />
             <StatusBadge status={milestone.status} />
             <ArchetypeBadge archetype={milestone.archetype} />
+            {loading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
           </div>
-          <DialogTitle className={`font-display text-xl font-bold flex items-center gap-4 ${
-            isWonder ? 'text-gold' : 'text-foreground'
-          }`}>
+          <DialogTitle className={`font-display text-xl font-bold flex items-center gap-4 ${isWonder ? 'text-gold' : 'text-foreground'}`}>
             {milestone.title}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             >
-              <ProbabilityRing
-                value={milestone.posterior}
-                size={56}
-                strokeWidth={5}
-                domainColor={domainHsl[milestone.domain]}
-                useGold={true}
-              />
+              {/* Ring with red glow for negative shift */}
+              <div className="relative">
+                <ProbabilityRing
+                  value={displayPosterior}
+                  size={56}
+                  strokeWidth={5}
+                  domainColor={isNegativeShift ? 'hsl(0, 72%, 55%)' : domainHsl[milestone.domain]}
+                  useGold={!isNegativeShift}
+                />
+                {/* Red glow ring overlay */}
+                <AnimatePresence>
+                  {isNegativeShift && (
+                    <motion.div
+                      className="absolute inset-[-6px] rounded-full pointer-events-none"
+                      initial={{ opacity: 0, scale: 1.2 }}
+                      animate={{ opacity: [0, 0.6, 0.3], scale: [1.2, 1, 1.05] }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                      style={{
+                        boxShadow: '0 0 30px 8px hsla(0, 72%, 55%, 0.4), inset 0 0 20px hsla(0, 72%, 55%, 0.2)',
+                        border: '1px solid hsla(0, 72%, 55%, 0.3)',
+                      }}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
             </motion.div>
           </DialogTitle>
           <div className="flex items-center gap-4 mt-3 font-mono text-[10px] text-muted-foreground flex-wrap">
-            <span>Target: <span className="font-bold tabular-nums" style={{
-              ...goldGradientStyle,
-              filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
-            }}>{milestone.year}</span></span>
+            <span>Target: <span className="font-bold tabular-nums" style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))' }}>{milestone.year}</span></span>
             <span>Tier: <span className="font-bold uppercase" style={{
               background: 'linear-gradient(135deg, hsl(220, 10%, 55%), hsl(220, 14%, 82%), hsl(220, 16%, 92%))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>{milestone.tier}</span></span>
-            <span>
-              Magnitude: <span className="font-bold tabular-nums" style={{
-                ...goldGradientStyle,
-                filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
-              }}>{milestone.magnitude}/10</span>
-            </span>
+            <span>Magnitude: <span className="font-bold tabular-nums" style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))' }}>{milestone.magnitude}/10</span></span>
             <span className="flex items-center gap-1 font-bold">
               {isPositive ? (
                 <ArrowUpRight className="w-3 h-3" style={{ color: 'hsl(43, 96%, 56%)', filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.5))' }} />
@@ -279,10 +175,9 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 <ArrowDownRight className="w-3 h-3" style={{ color: 'hsl(0, 72%, 58%)', filter: 'drop-shadow(0 0 3px hsla(0, 72%, 55%, 0.3))' }} />
               )}
               <span className="tabular-nums" style={isPositive ? {
-                ...goldGradientStyle,
-                filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))',
+                ...goldGradientStyle, filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))',
               } : { color: 'hsl(0, 72%, 58%)', textShadow: '0 0 4px hsla(0, 72%, 55%, 0.2)' }}>
-                Δ {isFinite(milestone.delta_log_odds) ? milestone.delta_log_odds.toFixed(2) : '∞'} log-odds
+                Δ {isFinite(liveDeltaLO) ? liveDeltaLO.toFixed(2) : '∞'} log-odds
               </span>
             </span>
           </div>
@@ -290,17 +185,13 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
 
         {/* Tabs */}
         <Tabs defaultValue="overview" className="p-6 pt-4 relative z-10">
-          <TabsList
-            className="mb-4 rounded-xl p-1 relative overflow-hidden"
-            style={{
-              ...glassInner,
-              border: '1px solid hsla(220, 12%, 70%, 0.12)',
-            }}
-          >
+          <TabsList className="mb-4 rounded-xl p-1 relative overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
             <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl pointer-events-none" style={specularReflection} />
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">Overview</TabsTrigger>
             <TabsTrigger value="why" className="data-[state=active]:bg-gold/10 data-[state=active]:text-gold-solid rounded-lg text-xs relative z-10">Why It Changed</TabsTrigger>
-            <TabsTrigger value="evidence" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">Evidence ({milestone.evidence.length})</TabsTrigger>
+            <TabsTrigger value="evidence" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">
+              Evidence ({liveData?.evidence?.length ?? milestone.evidence.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -309,92 +200,218 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             <div className="rounded-xl p-4 relative overflow-hidden shine-sweep" style={{
               background: 'linear-gradient(135deg, hsla(192, 100%, 52%, 0.08), rgba(8, 10, 28, 0.82))',
               border: '1px solid hsla(192, 100%, 52%, 0.2)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-              boxShadow: 'inset 0 1px 0 hsla(192, 100%, 70%, 0.1), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 4px 16px -4px hsla(232, 30%, 2%, 0.4)',
+              backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: 'inset 0 1px 0 hsla(192, 100%, 70%, 0.1), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
             }}>
               <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
-              <h4 className="text-[10px] uppercase tracking-[0.12em] text-primary mb-2 font-mono font-bold relative z-10" style={{ textShadow: '0 0 8px hsla(192, 95%, 50%, 0.3)' }}>Success Criteria</h4>
+              <h4 className="text-[10px] uppercase tracking-[0.12em] text-primary mb-2 font-mono font-bold relative z-10">Success Criteria</h4>
               <p className="text-sm text-foreground relative z-10">{milestone.success_criteria}</p>
             </div>
 
             <div className="rounded-xl p-4 relative overflow-hidden shine-sweep" style={{
               background: 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.08), rgba(8, 10, 28, 0.82))',
               border: '1px solid hsla(0, 72%, 55%, 0.2)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
-              boxShadow: 'inset 0 1px 0 hsla(0, 72%, 70%, 0.1), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 4px 16px -4px hsla(232, 30%, 2%, 0.4)',
+              backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: 'inset 0 1px 0 hsla(0, 72%, 70%, 0.1), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
             }}>
               <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
-              <h4 className="text-[10px] uppercase tracking-[0.12em] text-destructive mb-2 font-mono font-bold relative z-10" style={{ textShadow: '0 0 8px hsla(0, 72%, 55%, 0.3)' }}>Falsification Condition</h4>
+              <h4 className="text-[10px] uppercase tracking-[0.12em] text-destructive mb-2 font-mono font-bold relative z-10">Falsification Condition</h4>
               <p className="text-sm text-foreground relative z-10">{milestone.falsification}</p>
             </div>
 
             {/* Belief trajectory */}
-            <div className="rounded-xl p-4 relative overflow-hidden" style={{
-              ...glassInner,
-              backdropFilter: 'blur(28px)',
-              WebkitBackdropFilter: 'blur(28px)',
-              border: '1px solid hsla(220, 12%, 70%, 0.12)',
-            }}>
+            <div className="rounded-xl p-4 relative overflow-hidden" style={{ ...glassInner, backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
               <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl" style={specularReflection} />
               <h4 className="text-[10px] uppercase tracking-[0.12em] mb-3 font-mono font-bold relative z-10" style={{
                 background: 'linear-gradient(135deg, hsl(220, 10%, 55%), hsl(220, 14%, 78%), hsl(220, 16%, 88%))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>Belief Trajectory</h4>
-              <div className="relative h-8 rounded-full overflow-hidden"
-                style={{
-                  background: 'rgba(8, 10, 28, 0.6)',
-                  border: '1px solid hsla(220, 10%, 72%, 0.1)',
-                }}
-              >
+              <div className="relative h-8 rounded-full overflow-hidden" style={{ background: 'rgba(8, 10, 28, 0.6)', border: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
                 <motion.div
                   className="absolute left-0 top-0 h-full rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg, hsla(43, 96%, 56%, 0.4), hsla(48, 100%, 72%, 0.15), hsla(43, 96%, 56%, 0.08))',
-                    boxShadow: '0 0 24px -4px hsla(43, 96%, 56%, 0.3), inset 0 1px 0 hsla(48, 100%, 80%, 0.1)',
+                    background: isNegativeShift
+                      ? 'linear-gradient(90deg, hsla(0, 72%, 55%, 0.4), hsla(0, 72%, 65%, 0.15), hsla(0, 72%, 55%, 0.08))'
+                      : 'linear-gradient(90deg, hsla(43, 96%, 56%, 0.4), hsla(48, 100%, 72%, 0.15), hsla(43, 96%, 56%, 0.08))',
+                    boxShadow: isNegativeShift
+                      ? '0 0 24px -4px hsla(0, 72%, 55%, 0.4)'
+                      : '0 0 24px -4px hsla(43, 96%, 56%, 0.3)',
+                    transition: 'background 0.5s, box-shadow 0.5s',
                   }}
-                  initial={{ width: `${milestone.prior * 100}%` }}
-                  animate={{ width: `${milestone.posterior * 100}%` }}
-                  transition={{ duration: 1, ease: 'easeOut' }}
+                  initial={{ width: `${livePrior * 100}%` }}
+                  animate={{ width: `${displayPosterior * 100}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
                 />
-                <div
-                  className="absolute top-0 h-full w-0.5"
-                  style={{ left: `${milestone.prior * 100}%`, background: 'hsla(220, 12%, 70%, 0.3)' }}
-                />
+                <div className="absolute top-0 h-full w-0.5" style={{ left: `${livePrior * 100}%`, background: 'hsla(220, 12%, 70%, 0.3)' }} />
               </div>
               <div className="flex justify-between mt-2 font-mono text-[10px] text-muted-foreground relative z-10">
-                <span>Prior: <span className="font-bold tabular-nums" style={{
-                  ...goldGradientStyle,
-                  filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
-                }}>{(milestone.prior * 100).toFixed(1)}%</span></span>
-                <span className="font-bold">Posterior: <span className="tabular-nums" style={{
-                  ...goldGradientStyle,
-                  filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.25))',
-                }}>{(milestone.posterior * 100).toFixed(1)}%</span></span>
+                <span>Prior: <span className="font-bold tabular-nums" style={{ ...goldGradientStyle }}>{(livePrior * 100).toFixed(1)}%</span></span>
+                <span className="font-bold">Posterior: <motion.span
+                  className="tabular-nums"
+                  key={displayPosterior.toFixed(3)}
+                  initial={{ scale: 1.4, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  style={isNegativeShift ? {
+                    color: 'hsl(0, 72%, 58%)',
+                    textShadow: '0 0 12px hsla(0, 72%, 55%, 0.5)',
+                  } : {
+                    ...goldGradientStyle,
+                    filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.25))',
+                  }}
+                >{(displayPosterior * 100).toFixed(1)}%</motion.span></span>
               </div>
             </div>
+
+            {/* Calibration snapshot */}
+            {liveData?.calibration && (
+              <div className="rounded-xl p-4 relative overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(43, 96%, 56%, 0.12)' }}>
+                <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl" style={specularReflection} />
+                <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+                <h4 className="text-[10px] uppercase tracking-[0.12em] mb-3 font-mono font-bold relative z-10" style={{
+                  ...goldGradientStyle, filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))',
+                }}>Calibration Forecast</h4>
+                <div className="grid grid-cols-3 gap-3 relative z-10">
+                  <CalibMetric label="P(Demonstrated)" value={liveData.calibration.p_demonstrated} />
+                  <CalibMetric label="P(Deployed)" value={liveData.calibration.p_deployed} />
+                  <CalibMetric label="P(Accomplished)" value={liveData.calibration.p_accomplished} />
+                </div>
+                <div className="flex items-center gap-3 mt-3 font-mono text-[10px] text-muted-foreground relative z-10">
+                  <span>Implied: <span className="font-bold" style={goldGradientStyle}>{liveData.calibration.implied_status}</span></span>
+                  <span>σ-future: <span className="font-bold tabular-nums" style={goldGradientStyle}>{liveData.calibration.sigma_future.toFixed(3)}</span></span>
+                  <span>Horizon: <span className="font-bold tabular-nums" style={goldGradientStyle}>{liveData.calibration.horizon_years.toFixed(1)}y</span></span>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="why">
-            <h4 className="text-sm font-semibold mb-4 font-display" style={{
-              ...goldGradientStyle,
-              filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.2))',
-            }}>Interactive Waterfall — What moved the probability?</h4>
-            <WaterfallChart prior={milestone.prior} evidence={milestone.evidence} />
+            {loading ? (
+              <div className="flex items-center justify-center py-12 gap-3">
+                <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'hsl(43, 96%, 56%)' }} />
+                <span className="text-sm text-muted-foreground font-mono">Loading Bayesian engine...</span>
+              </div>
+            ) : liveData?.bayes ? (
+              <InteractiveWaterfall
+                prior={liveData.bayes.prior}
+                contributions={liveData.bayes.contributions}
+                evidence={liveData.evidence}
+                milestoneId={milestone.id}
+                onWhatIf={runWhatIf}
+                whatIfResult={whatIfResult}
+                whatIfLoading={whatIfLoading}
+                ledgerHash={ledgerHash ?? undefined}
+              />
+            ) : (
+              // Fallback to static data
+              <InteractiveWaterfall
+                prior={milestone.prior}
+                contributions={milestone.evidence.map(ev => ({
+                  evidence_id: ev.id,
+                  evidence_meta: {
+                    type: ev.type, credibility: ev.credibility, recency: ev.recency,
+                    decay: ev.recency, consensus: ev.consensus, direction: ev.direction,
+                    criteria_match: ev.criteria_match,
+                  },
+                  composite: ev.composite,
+                  delta_log_odds: ev.delta_log_odds,
+                }))}
+                evidence={milestone.evidence.map(ev => ({
+                  id: ev.id, milestone_id: milestone.id, source: ev.source,
+                  type: ev.type, direction: ev.direction, credibility: ev.credibility,
+                  recency: ev.recency, consensus: ev.consensus, criteria_match: ev.criteria_match,
+                  composite: ev.composite, delta_log_odds: ev.delta_log_odds,
+                  date: ev.date, summary: ev.summary,
+                }))}
+                milestoneId={milestone.id}
+                onWhatIf={runWhatIf}
+                whatIfResult={whatIfResult}
+                whatIfLoading={whatIfLoading}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="evidence" className="space-y-3">
-            {milestone.evidence.length === 0 ? (
+            {(liveData?.evidence ?? milestone.evidence).length === 0 ? (
               <p className="text-sm text-muted-foreground">Historical milestone — no tracked evidence.</p>
             ) : (
-              milestone.evidence.map((ev) => <EvidenceRow key={ev.id} ev={ev} />)
+              (liveData?.evidence ?? milestone.evidence).map((ev: any) => (
+                <EvidenceRow key={ev.id} ev={ev} />
+              ))
             )}
           </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function CalibMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="text-center">
+      <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider mb-1">{label}</div>
+      <div className="font-mono text-sm font-bold tabular-nums" style={{
+        ...goldGradientStyle,
+        filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))',
+      }}>{(value * 100).toFixed(1)}%</div>
+    </div>
+  );
+}
+
+/* ═══ EVIDENCE ROW — metallic themed ═══ */
+function EvidenceRow({ ev }: { ev: any }) {
+  const isSupport = ev.direction === 'supports';
+  const isContradict = ev.direction === 'contradicts';
+  const borderColor = isSupport ? 'hsla(155, 82%, 48%, 0.22)' : isContradict ? 'hsla(0, 72%, 55%, 0.22)' : 'hsla(220, 10%, 72%, 0.1)';
+  const accentTint = isSupport ? 'hsla(155, 82%, 48%, 0.08)' : isContradict ? 'hsla(0, 72%, 55%, 0.08)' : 'transparent';
+  const dirLabel = isSupport ? '↑ SUPPORTS' : isContradict ? '↓ CONTRADICTS' : '~ AMBIGUOUS';
+
+  return (
+    <motion.div
+      className="rounded-xl p-4 relative overflow-hidden group shine-sweep"
+      style={{
+        background: `linear-gradient(168deg, ${accentTint}, rgba(8, 10, 28, 0.82))`,
+        border: `1px solid ${borderColor}`,
+        backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
+        boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.07), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 4px 16px -4px hsla(232, 30%, 2%, 0.5)',
+      }}
+      whileHover={{ scale: 1.005, y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    >
+      <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
+      <div className="flex items-start justify-between gap-3 mb-2.5 relative z-10">
+        <div>
+          <p className="text-sm font-medium text-foreground">{ev.source}</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {(ev.type || '').replace('_', ' ')} • {ev.date}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className="font-mono text-[9px] font-bold tracking-wider" style={{
+            color: isSupport ? 'hsl(155, 82%, 55%)' : isContradict ? 'hsl(0, 72%, 60%)' : 'hsl(220, 12%, 65%)',
+          }}>{dirLabel}</span>
+          <span className="font-mono text-xs font-bold tabular-nums" style={isSupport ? {
+            background: 'linear-gradient(135deg, hsl(155, 70%, 35%), hsl(155, 82%, 55%))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          } : isContradict ? {
+            background: 'linear-gradient(135deg, hsl(0, 60%, 40%), hsl(0, 72%, 60%))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          } : { color: 'hsl(220, 10%, 55%)' }}>
+            {ev.delta_log_odds > 0 ? '+' : ''}{Number(ev.delta_log_odds).toFixed(2)} LO
+          </span>
+        </div>
+      </div>
+      <p className="text-xs text-secondary-foreground leading-relaxed mb-3 relative z-10">{ev.summary}</p>
+      <div className="flex gap-2 flex-wrap relative z-10 font-mono text-[10px]">
+        <span className="px-2 py-0.5 rounded-lg" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
+          Cred <span className="font-bold tabular-nums" style={goldGradientStyle}>{Number(ev.credibility).toFixed(2)}</span>
+        </span>
+        <span className="px-2 py-0.5 rounded-lg" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
+          Cons <span className="font-bold tabular-nums" style={goldGradientStyle}>{Number(ev.consensus).toFixed(2)}</span>
+        </span>
+        <span className="px-2 py-0.5 rounded-lg" style={{ background: 'hsla(43, 96%, 56%, 0.1)', border: '1px solid hsla(43, 96%, 56%, 0.22)' }}>
+          <span style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))' }}>E={Number(ev.composite).toFixed(3)}</span>
+        </span>
+      </div>
+    </motion.div>
   );
 }
