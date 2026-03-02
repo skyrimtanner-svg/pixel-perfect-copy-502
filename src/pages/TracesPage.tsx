@@ -3,7 +3,7 @@ import { trajectoryData, Domain, domainLabels } from '@/data/milestones';
 import { useMode } from '@/contexts/ModeContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { motion } from 'framer-motion';
-import { glassPanelStrong, glassInner, specularReflection, goldChromeLine, chromeTopLine } from '@/lib/glass-styles';
+import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
 const domainColors: Record<Domain, string> = {
   compute: 'hsl(192, 100%, 52%)',
@@ -19,6 +19,14 @@ const domainGlows: Record<Domain, string> = {
   connectivity: 'hsla(268, 90%, 68%, 0.5)',
   manufacturing: 'hsla(342, 82%, 62%, 0.5)',
   biology: 'hsla(155, 82%, 48%, 0.5)',
+};
+
+const goldGradientStyle = {
+  background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
+  backgroundSize: '200% 100%',
+  WebkitBackgroundClip: 'text' as const,
+  WebkitTextFillColor: 'transparent' as const,
+  backgroundClip: 'text' as const,
 };
 
 const allDomains: Domain[] = ['compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
@@ -82,7 +90,7 @@ export default function TracesPage() {
                   backdropFilter: 'blur(24px)',
                   WebkitBackdropFilter: 'blur(24px)',
                   boxShadow: active
-                    ? `0 0 24px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.1), inset 0 -1px 0 hsla(232, 30%, 2%, 0.45)`
+                    ? `0 0 24px -4px ${glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.12), inset 0 -1px 0 hsla(232, 30%, 2%, 0.45)`
                     : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.04), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)',
                   textShadow: active ? `0 0 10px ${glow}` : 'none',
                 }}
@@ -96,21 +104,23 @@ export default function TracesPage() {
         </div>
 
         <div
-          className="flex gap-0.5 rounded-lg p-0.5"
+          className="flex gap-0.5 rounded-lg p-0.5 relative overflow-hidden"
           style={glassInner}
         >
+          {/* Chrome specular on time range selector */}
+          <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-lg pointer-events-none" style={specularReflection} />
           {timeRanges.map(r => (
             <motion.button
               key={r.label}
               onClick={() => setTimeRange(r.start)}
-              className="px-3 py-1 rounded-md text-xs font-mono transition-all"
+              className="px-3 py-1 rounded-md text-xs font-mono transition-all relative z-10"
               style={{
                 background: timeRange === r.start ? 'hsla(43, 96%, 56%, 0.12)' : 'transparent',
                 color: timeRange === r.start ? 'hsl(43, 96%, 56%)' : 'hsl(218, 15%, 46%)',
                 boxShadow: timeRange === r.start
-                  ? 'inset 0 1px 0 hsla(43, 96%, 56%, 0.12), 0 0 12px -4px hsla(43, 96%, 56%, 0.2)'
+                  ? 'inset 0 1px 0 hsla(43, 96%, 56%, 0.15), 0 0 14px -4px hsla(43, 96%, 56%, 0.25), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)'
                   : 'none',
-                textShadow: timeRange === r.start ? '0 0 8px hsla(43, 96%, 56%, 0.3)' : 'none',
+                textShadow: timeRange === r.start ? '0 0 10px hsla(43, 96%, 56%, 0.4)' : 'none',
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -137,47 +147,79 @@ export default function TracesPage() {
           <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
             <CartesianGrid
               strokeDasharray={isWonder ? '4 6' : '2 4'}
-              stroke="hsla(220, 12%, 70%, 0.07)"
-              vertical={false}
+              stroke="hsla(220, 14%, 70%, 0.09)"
+              vertical={true}
+              horizontalCoordinatesGenerator={undefined}
             />
             <XAxis
               dataKey="year"
-              stroke="hsl(220, 14%, 55%)"
+              stroke="hsl(220, 14%, 62%)"
               fontSize={10}
               fontFamily="Space Mono"
-              tickLine={false}
-              axisLine={{ stroke: 'hsla(220, 14%, 70%, 0.22)', strokeWidth: 1 }}
+              tickLine={{ stroke: 'hsla(220, 14%, 70%, 0.15)', strokeWidth: 1 }}
+              axisLine={{
+                stroke: 'hsla(220, 14%, 80%, 0.3)',
+                strokeWidth: 1.5,
+              }}
+              tick={{
+                fill: 'hsl(220, 14%, 62%)',
+                fontFamily: 'Space Mono',
+                fontSize: 10,
+              }}
             />
             <YAxis
-              stroke="hsl(220, 14%, 55%)"
+              stroke="hsl(220, 14%, 62%)"
               fontSize={10}
               fontFamily="Space Mono"
-              tickLine={false}
-              axisLine={{ stroke: 'hsla(220, 14%, 70%, 0.22)', strokeWidth: 1 }}
+              tickLine={{ stroke: 'hsla(220, 14%, 70%, 0.15)', strokeWidth: 1 }}
+              axisLine={{
+                stroke: 'hsla(220, 14%, 80%, 0.3)',
+                strokeWidth: 1.5,
+              }}
               domain={[0, 1.3]}
+              tick={{
+                fill: 'hsl(220, 14%, 62%)',
+                fontFamily: 'Space Mono',
+                fontSize: 10,
+              }}
             />
             <Tooltip
               contentStyle={{
                 ...glassPanelStrong,
-                border: '1px solid hsla(43, 96%, 56%, 0.22)',
+                border: '1px solid hsla(43, 96%, 56%, 0.25)',
                 borderRadius: '12px',
                 fontFamily: 'Space Mono',
                 fontSize: '10px',
+                boxShadow: '0 0 32px -8px hsla(43, 96%, 56%, 0.15), 0 8px 24px -4px hsla(232, 30%, 2%, 0.8)',
               }}
-              labelStyle={{ color: 'hsl(43, 96%, 56%)', fontFamily: 'DM Sans', fontWeight: 600, fontSize: '11px' }}
+              labelStyle={{
+                color: 'hsl(43, 96%, 56%)',
+                fontFamily: 'DM Sans',
+                fontWeight: 700,
+                fontSize: '11px',
+                textShadow: '0 0 8px hsla(43, 96%, 56%, 0.3)',
+              }}
               itemStyle={{ fontFamily: 'Space Mono', fontSize: '10px' }}
+              cursor={{
+                stroke: 'hsla(43, 96%, 56%, 0.3)',
+                strokeWidth: 1,
+                strokeDasharray: '4 4',
+              }}
             />
             <ReferenceLine
               x={2025}
-              stroke="hsla(43, 96%, 56%, 0.5)"
-              strokeDasharray="6 4"
-              strokeWidth={2}
+              stroke="hsla(43, 96%, 56%, 0.65)"
+              strokeDasharray="0"
+              strokeWidth={2.5}
               label={{
                 value: '▸ NOW',
                 fill: 'hsl(43, 96%, 56%)',
                 fontSize: 9,
                 fontFamily: 'Space Mono',
                 fontWeight: 700,
+              }}
+              style={{
+                filter: 'drop-shadow(0 0 12px hsla(43, 96%, 56%, 0.6)) drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))',
               }}
             />
             {allDomains.map(d => (
@@ -190,29 +232,36 @@ export default function TracesPage() {
                   strokeWidth={isWonder ? 3 : 2.5}
                   dot={{ r: isWonder ? 2.5 : 1.5, fill: domainColors[d], strokeWidth: 0 }}
                   activeDot={{
-                    r: 7,
+                    r: 8,
                     stroke: domainColors[d],
-                    strokeWidth: 2,
+                    strokeWidth: 2.5,
                     fill: 'hsl(232, 30%, 2%)',
-                    style: { filter: `drop-shadow(0 0 12px ${domainGlows[d]})` },
+                    style: {
+                      filter: `drop-shadow(0 0 16px ${domainGlows[d]}) drop-shadow(0 0 6px ${domainColors[d]})`,
+                    },
                   }}
                   name={domainLabels[d]}
-                  style={{ filter: `drop-shadow(0 0 8px ${domainGlows[d]})` }}
+                  style={{ filter: `drop-shadow(0 0 10px ${domainGlows[d]}) drop-shadow(0 0 3px ${domainColors[d]})` }}
                 />
               )
             ))}
           </LineChart>
         </ResponsiveContainer>
 
-        {/* Legend */}
+        {/* Legend — chrome/gold metallic */}
         <div className="flex items-center justify-center gap-5 mt-3 pt-3 relative z-10" style={{ borderTop: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
           {allDomains.filter(d => activeDomains.has(d)).map(d => (
             <div key={d} className="flex items-center gap-1.5">
-              <div className="w-3 h-0.5 rounded-full" style={{
-                background: domainColors[d],
-                boxShadow: `0 0 10px ${domainGlows[d]}, 0 0 3px ${domainColors[d]}`,
+              <div className="w-4 h-[3px] rounded-full" style={{
+                background: `linear-gradient(90deg, ${domainColors[d]}, ${domainColors[d].replace('hsl', 'hsla').replace(')', ', 0.4)')})`,
+                boxShadow: `0 0 12px ${domainGlows[d]}, 0 0 4px ${domainColors[d]}`,
               }} />
-              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">{domainLabels[d]}</span>
+              <span className="text-[9px] font-mono uppercase tracking-wider" style={{
+                background: 'linear-gradient(135deg, hsl(220, 10%, 55%), hsl(220, 14%, 78%), hsl(220, 16%, 90%))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>{domainLabels[d]}</span>
             </div>
           ))}
         </div>

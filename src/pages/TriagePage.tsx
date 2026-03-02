@@ -7,6 +7,7 @@ import { useMode } from '@/contexts/ModeContext';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import type { Milestone } from '@/data/milestones';
 import { ChevronDown, FileText, Filter } from 'lucide-react';
+import { specularReflection } from '@/lib/glass-styles';
 
 const domains: (Domain | 'all')[] = ['all', 'compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
 
@@ -17,6 +18,14 @@ const domainPillColors: Record<string, { bg: string; border: string; text: strin
   connectivity: { bg: 'hsla(268, 90%, 68%, 0.08)', border: 'hsla(268, 90%, 68%, 0.22)', text: 'hsl(268, 90%, 68%)', glow: 'hsla(268, 90%, 68%, 0.15)' },
   manufacturing: { bg: 'hsla(342, 82%, 62%, 0.08)', border: 'hsla(342, 82%, 62%, 0.22)', text: 'hsl(342, 82%, 62%)', glow: 'hsla(342, 82%, 62%, 0.15)' },
   biology: { bg: 'hsla(155, 82%, 48%, 0.08)', border: 'hsla(155, 82%, 48%, 0.22)', text: 'hsl(155, 82%, 48%)', glow: 'hsla(155, 82%, 48%, 0.15)' },
+};
+
+const goldGradientStyle = {
+  background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
+  backgroundSize: '200% 100%',
+  WebkitBackgroundClip: 'text' as const,
+  WebkitTextFillColor: 'transparent' as const,
+  backgroundClip: 'text' as const,
 };
 
 const INITIAL_COUNT = 15;
@@ -64,18 +73,32 @@ export default function TriagePage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold btn-gold shine-sweep relative overflow-hidden"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shine-sweep relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, hsl(38, 88%, 32%), hsl(43, 96%, 48%), hsl(48, 100%, 68%), hsl(50, 100%, 82%), hsl(48, 100%, 66%), hsl(43, 96%, 46%))',
+              color: 'hsl(232, 30%, 2%)',
+              boxShadow: [
+                '0 2px 16px -2px hsla(43, 96%, 56%, 0.4)',
+                'inset 0 1px 0 hsla(48, 100%, 85%, 0.5)',
+                'inset 0 -1px 0 hsla(38, 88%, 28%, 0.55)',
+                '0 1px 3px hsla(232, 30%, 2%, 0.3)',
+              ].join(', '),
+              textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.3)',
+            }}
           >
             <FileText className="w-3.5 h-3.5" />
             Export LP Memo
           </button>
-          <div className="font-mono text-[10px] text-chrome tabular-nums">
+          <div className="font-mono text-[10px] tabular-nums font-semibold" style={{
+            ...goldGradientStyle,
+            filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.15))',
+          }}>
             {filtered.length} items
           </div>
         </div>
       </div>
 
-      {/* Domain pills */}
+      {/* Domain pills — chrome reflections */}
       <div className="flex items-center gap-2 mb-5">
         <Filter className="w-3.5 h-3.5 text-muted-foreground mr-1" />
         {domains.map(d => {
@@ -85,15 +108,16 @@ export default function TriagePage() {
             <motion.button
               key={d}
               onClick={() => { setSelectedDomain(d); setVisibleCount(INITIAL_COUNT); }}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-medium font-mono transition-all duration-200"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-medium font-mono transition-all duration-200 relative overflow-hidden shine-sweep"
               style={{
                 background: isActive ? colors.bg : 'hsla(232, 26%, 8%, 0.6)',
                 border: `1px solid ${isActive ? colors.border : 'hsla(220, 12%, 70%, 0.08)'}`,
                 color: isActive ? colors.text : 'hsl(218, 15%, 46%)',
                 backdropFilter: 'blur(16px)',
                 boxShadow: isActive
-                  ? `0 0 18px -6px ${colors.glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.06), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)`
-                  : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.03), inset 0 -1px 0 hsla(232, 30%, 2%, 0.2)',
+                  ? `0 0 18px -6px ${colors.glow}, inset 0 1px 0 hsla(220, 14%, 88%, 0.1), inset 0 -1px 0 hsla(232, 30%, 2%, 0.3)`
+                  : 'inset 0 1px 0 hsla(220, 14%, 88%, 0.04), inset 0 -1px 0 hsla(232, 30%, 2%, 0.2)',
+                textShadow: isActive ? `0 0 8px ${colors.glow}` : 'none',
               }}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
@@ -107,21 +131,48 @@ export default function TriagePage() {
       {/* Column headers — Analyst mode only */}
       {!isWonder && (
         <div
-          className="flex items-center gap-2.5 px-2.5 py-1.5 mb-0.5 rounded-md text-[8px] uppercase tracking-[0.14em] font-mono font-semibold"
+          className="flex items-center gap-2.5 px-2.5 py-1.5 mb-0.5 rounded-md text-[8px] uppercase tracking-[0.14em] font-mono font-semibold relative overflow-hidden"
           style={{
             background: 'hsla(232, 26%, 4%, 0.6)',
             borderBottom: '1px solid hsla(220, 12%, 70%, 0.08)',
-            color: 'hsl(var(--chrome))',
             backdropFilter: 'blur(16px)',
           }}
         >
-          <div className="w-5 text-center">#</div>
-          <div className="w-[30px]">P(x)</div>
-          <div className="flex-1">MILESTONE</div>
-          <div className="w-8 text-right">YR</div>
-          <div className="w-7 text-right">MAG</div>
-          <div className="w-14 text-right">Δ LO</div>
-          <div className="w-8 text-right">TRI</div>
+          <div className="absolute top-0 left-0 right-0 h-[60%] rounded-t-md pointer-events-none" style={specularReflection} />
+          <div className="w-5 text-center" style={{
+            background: 'linear-gradient(135deg, hsl(220, 10%, 50%), hsl(220, 14%, 72%), hsl(220, 16%, 88%))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>#</div>
+          <div className="w-[30px]" style={{
+            background: 'linear-gradient(135deg, hsl(220, 10%, 50%), hsl(220, 14%, 72%), hsl(220, 16%, 88%))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>P(x)</div>
+          <div className="flex-1" style={{
+            background: 'linear-gradient(135deg, hsl(220, 10%, 50%), hsl(220, 14%, 72%), hsl(220, 16%, 88%))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>MILESTONE</div>
+          <div className="w-8 text-right" style={{
+            ...goldGradientStyle,
+            filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
+          }}>YR</div>
+          <div className="w-7 text-right" style={{
+            ...goldGradientStyle,
+            filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
+          }}>MAG</div>
+          <div className="w-14 text-right" style={{
+            ...goldGradientStyle,
+            filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
+          }}>Δ LO</div>
+          <div className="w-8 text-right" style={{
+            ...goldGradientStyle,
+            filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
+          }}>TRI</div>
         </div>
       )}
 
