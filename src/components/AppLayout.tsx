@@ -2,13 +2,46 @@ import { Outlet } from 'react-router-dom';
 import { NavItem } from '@/components/NavItem';
 import { ModeToggle } from '@/components/ModeToggle';
 import { Target, LineChart, BarChart3, Eye } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 
 export default function AppLayout() {
+  const mainRef = useRef<HTMLDivElement>(null);
+  const { scrollY } = useScroll();
+  
+  // Parallax transforms — background layers move slower than content
+  const nebula1Y = useTransform(scrollY, [0, 1000], [0, -60]);
+  const nebula2Y = useTransform(scrollY, [0, 1000], [0, -30]);
+  const starsY = useTransform(scrollY, [0, 1000], [0, -15]);
+  const constellation1Y = useTransform(scrollY, [0, 1000], [0, -45]);
+  const constellation2Y = useTransform(scrollY, [0, 1000], [0, -20]);
+
   return (
-    <div className="min-h-screen nebula-bg stars-bg flex flex-col relative">
-      {/* Constellation particles overlay */}
-      <div className="constellation-particles" />
+    <div className="min-h-screen flex flex-col relative" style={{ backgroundColor: '#06060c' }}>
+      
+      {/* ═══ PARALLAX NEBULA LAYERS ═══ */}
+      {/* Layer 0: Static base nebula */}
+      <div className="fixed inset-0 z-0 nebula-bg" />
+      
+      {/* Layer 1: Slow parallax starfield */}
+      <motion.div 
+        className="fixed inset-0 z-0 stars-bg"
+        style={{ y: starsY }}
+      />
+      
+      {/* Layer 2: Breathing nebula (via ::before and ::after on nebula-bg, handled by CSS) */}
+      
+      {/* Layer 3: Constellation particles — slow drift */}
+      <motion.div 
+        className="constellation-particles"
+        style={{ y: constellation1Y }}
+      />
+      
+      {/* Layer 4: Constellation particles layer 2 — faster, offset */}
+      <motion.div 
+        className="constellation-particles-2"
+        style={{ y: constellation2Y }}
+      />
 
       {/* ═══════ PREMIUM HEADER ═══════ */}
       <header
@@ -43,7 +76,7 @@ export default function AppLayout() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/* Logo icon – layered gold/cyan glass */}
+            {/* Logo icon */}
             <div
               className="relative w-10 h-10 rounded-xl flex items-center justify-center"
               style={{
@@ -57,7 +90,6 @@ export default function AppLayout() {
                 ].join(', '),
               }}
             >
-              {/* Inner glow ring */}
               <div
                 className="absolute inset-0.5 rounded-[10px]"
                 style={{
@@ -65,7 +97,6 @@ export default function AppLayout() {
                   background: 'radial-gradient(circle at 30% 30%, hsla(43, 96%, 56%, 0.08), transparent 70%)',
                 }}
               />
-              {/* Cyan rim glow */}
               <div
                 className="absolute inset-[-2px] rounded-[14px] pointer-events-none"
                 style={{
@@ -83,7 +114,6 @@ export default function AppLayout() {
 
             {/* Wordmark */}
             <div className="flex items-baseline">
-              {/* ÆTH – HERO metallic gold with specular + chrome bevel + cyan rim */}
               <span
                 className="font-display font-bold text-[24px] tracking-tight relative"
                 style={{
@@ -104,7 +134,6 @@ export default function AppLayout() {
                 ÆTH
               </span>
 
-              {/* Separator dot */}
               <span
                 className="mx-2 w-1.5 h-1.5 rounded-full inline-block relative top-[-1px]"
                 style={{
@@ -113,7 +142,6 @@ export default function AppLayout() {
                 }}
               />
 
-              {/* OBSERVATORY – polished chrome with specular */}
               <span
                 className="font-display font-medium text-[11px] tracking-[0.18em] uppercase"
                 style={{
@@ -167,14 +195,14 @@ export default function AppLayout() {
         />
       </header>
 
-      {/* Content */}
-      <main className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6">
+      {/* ═══ CONTENT — floats above nebula with z-index ═══ */}
+      <main ref={mainRef} className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6 relative z-10">
         <Outlet />
       </main>
 
       {/* ═══════ BRANDED FOOTER ═══════ */}
       <footer
-        className="relative mt-auto"
+        className="relative mt-auto z-10"
         style={{
           borderTop: '1px solid hsla(220, 10%, 72%, 0.06)',
           background: 'linear-gradient(180deg, hsla(230, 22%, 4%, 0.6) 0%, hsla(230, 22%, 3%, 0.9) 100%)',
