@@ -381,6 +381,14 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           </TabsContent>
 
           <TabsContent value="why">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isWonder ? 'wonder' : 'analyst'}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+              >
             {loading ? (
               <WhyItChangedSkeleton />
             ) : liveData?.bayes ? (
@@ -453,6 +461,8 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 />
               </>
             )}
+              </motion.div>
+            </AnimatePresence>
           </TabsContent>
 
           <TabsContent value="evidence" className="space-y-3">

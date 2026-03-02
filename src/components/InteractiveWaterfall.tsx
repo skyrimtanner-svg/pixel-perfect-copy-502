@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw, Undo2 } from 'lucide-react';
+import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw, Undo2, Copy, CheckCircle2, FileCheck } from 'lucide-react';
 import { glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Contribution, EvidenceItem, WhatIfResult } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
 import { EvidenceToggle } from '@/components/EvidenceToggle';
+import { WaterfallNebula } from '@/components/WaterfallNebula';
 import { toast } from '@/hooks/use-toast';
 
 /* ═══ SPEC COLORS ═══ */
@@ -145,17 +146,17 @@ export function InteractiveWaterfall({
     if (Math.abs(delta) > 0.08) {
       if (isWonder) {
         toast({
-          title: delta < 0 ? "😱 Whoa!" : "🚀 Boom!",
+          title: delta < 0 ? "💔 The future just got heavier…" : "🚀 Boom!",
           description: delta < 0
-            ? `Removing that evidence changed everything! Probability dropped ${Math.abs(delta * 100).toFixed(0)}pp!`
+            ? `…but we have the receipt ❤️‍🔥 Probability shifted ${Math.abs(delta * 100).toFixed(0)}pp.`
             : `Adding it back boosted probability by ${Math.abs(delta * 100).toFixed(0)}pp!`,
         });
       } else {
-        // Analyst mode: precise log-odds flash
+        // Analyst mode: precise log-odds flash in gold monospace
         const loShift = whatIfResult.update_result.delta_log_odds;
         toast({
           title: delta < 0 ? "⚠ Significant Drop" : "↑ Significant Shift",
-          description: `Δ ${(delta * 100).toFixed(1)}pp | ${loShift > 0 ? '+' : ''}${loShift.toFixed(4)} log-odds | P: ${(newPosterior * 100).toFixed(1)}%`,
+          description: `Δ ${(delta * 100).toFixed(1)}pp | ${loShift > 0 ? '+' : ''}${loShift.toFixed(4)} LO | P: ${(newPosterior * 100).toFixed(1)}%`,
         });
       }
     }
@@ -204,6 +205,16 @@ export function InteractiveWaterfall({
   const displayHash = externalHash || snapshotHash;
   const tierColor = TIER_COLORS[tier] || TIER_COLORS.active;
 
+  // Copy hash to clipboard
+  const [hashCopied, setHashCopied] = useState(false);
+  const copyHash = useCallback(() => {
+    if (displayHash) {
+      navigator.clipboard.writeText(displayHash);
+      setHashCopied(true);
+      setTimeout(() => setHashCopied(false), 2000);
+    }
+  }, [displayHash]);
+
   if (contributions.length === 0) {
     return <p className="text-muted-foreground text-sm">Historical milestone — no Bayesian evidence trail.</p>;
   }
@@ -215,6 +226,8 @@ export function InteractiveWaterfall({
         border: `1px solid ${isSimActive ? 'hsla(192, 95%, 50%, 0.2)' : 'hsla(220, 12%, 70%, 0.1)'}`,
         boxShadow: '0 0 40px -12px hsla(260, 40%, 20%, 0.15), inset 0 1px 0 hsla(220, 16%, 95%, 0.05)',
       }}>
+        {/* Nebula background */}
+        <WaterfallNebula />
         <div className="absolute top-0 left-0 right-0 h-[25%] rounded-t-xl pointer-events-none" style={specularReflection} />
 
         {/* ═══ SCENARIO DOTTED OVERLAY (spec 4.3) ═══ */}
@@ -315,19 +328,53 @@ export function InteractiveWaterfall({
           {displayHash && isSimActive && (
             <motion.div initial={{ opacity: 0, y: -6, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -6, height: 0 }} className="overflow-hidden relative z-10">
               <div className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg" style={{
-                ...glassInner, border: '1px solid hsla(43, 96%, 56%, 0.15)',
-                boxShadow: 'inset 0 1px 0 hsla(48, 100%, 80%, 0.06), 0 0 16px -6px hsla(43, 96%, 56%, 0.15)',
+                ...glassInner, border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                boxShadow: 'inset 0 1px 0 hsla(48, 100%, 80%, 0.08), 0 0 24px -6px hsla(43, 96%, 56%, 0.2)',
               }}>
                 <div className="flex items-center gap-1.5">
-                  <Hash className="w-2.5 h-2.5" style={{ color: 'hsl(43, 96%, 56%)', filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))' }} />
+                  <Hash className="w-2.5 h-2.5" style={{ color: 'hsl(43, 96%, 56%)', filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.5))' }} />
                   <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">SCENARIO HASH</span>
-                  <span className="text-[9px] font-mono font-bold tabular-nums" style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))' }}>{displayHash.slice(0, 16)}…</span>
+                  <motion.span
+                    className="text-[9px] font-mono font-bold tabular-nums cursor-pointer"
+                    style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.25))' }}
+                    onClick={copyHash}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title="Click to copy full hash"
+                  >
+                    {displayHash.slice(0, 16)}…
+                  </motion.span>
+                  <AnimatePresence>
+                    {hashCopied && (
+                      <motion.span
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="text-[8px] font-mono font-bold"
+                        style={{ color: 'hsl(155, 82%, 55%)' }}
+                      >
+                        <CheckCircle2 className="w-2.5 h-2.5 inline mr-0.5" />Copied
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <button onClick={() => setShowReceipt(!showReceipt)} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold transition-all hover:scale-105" style={{
-                  background: 'hsla(43, 96%, 56%, 0.08)', border: '1px solid hsla(43, 96%, 56%, 0.2)', color: 'hsl(43, 82%, 60%)',
-                }}>
-                  <ExternalLink className="w-2.5 h-2.5" />{showReceipt ? 'HIDE' : 'VIEW RECEIPT'}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={copyHash} className="p-1 rounded transition-all hover:scale-110" style={{ color: 'hsl(43, 82%, 60%)' }}>
+                        <Copy className="w-2.5 h-2.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-[9px] font-mono" style={glassInner}>
+                      Verified on blockchain ledger
+                    </TooltipContent>
+                  </Tooltip>
+                  <button onClick={() => setShowReceipt(!showReceipt)} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold transition-all hover:scale-105" style={{
+                    background: 'hsla(43, 96%, 56%, 0.08)', border: '1px solid hsla(43, 96%, 56%, 0.2)', color: 'hsl(43, 82%, 60%)',
+                  }}>
+                    <ExternalLink className="w-2.5 h-2.5" />{showReceipt ? 'HIDE' : 'VIEW RECEIPT'}
+                  </button>
+                </div>
               </div>
               <AnimatePresence>
                 {showReceipt && effectiveWhatIf && (
@@ -441,11 +488,28 @@ export function InteractiveWaterfall({
                         </span>
                       </div>
 
-                      {/* Bar */}
+                      {/* Bar — layered glassmorphism */}
                       <div className="flex-1 h-7 rounded-md relative overflow-hidden" style={{
                         background: 'rgba(8, 10, 28, 0.5)',
-                        border: `1px solid ${excluded ? 'hsla(4, 82%, 63%, 0.08)' : 'hsla(220, 10%, 72%, 0.06)'}`,
+                        border: `1px solid ${excluded ? 'hsla(4, 82%, 63%, 0.08)'
+                          : isSupport ? 'hsla(155, 82%, 48%, 0.08)'
+                          : isContradict ? 'hsla(0, 72%, 55%, 0.08)'
+                          : 'hsla(220, 10%, 72%, 0.06)'}`,
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        boxShadow: excluded ? 'none' : [
+                          `inset 0 1px 0 ${isSupport ? 'hsla(155, 82%, 70%, 0.06)' : isContradict ? 'hsla(0, 72%, 70%, 0.06)' : 'hsla(220, 16%, 95%, 0.03)'}`,
+                          'inset 0 -1px 0 hsla(232, 30%, 2%, 0.2)',
+                        ].join(', '),
                       }}>
+                        {/* Chrome edge highlight */}
+                        <div className="absolute top-0 left-0 right-0 h-px pointer-events-none" style={{
+                          background: isSupport
+                            ? 'linear-gradient(90deg, transparent, hsla(155, 82%, 70%, 0.08), transparent)'
+                            : isContradict
+                            ? 'linear-gradient(90deg, transparent, hsla(0, 72%, 70%, 0.08), transparent)'
+                            : 'linear-gradient(90deg, transparent, hsla(220, 16%, 95%, 0.04), transparent)',
+                        }} />
                         <motion.div
                           className="absolute top-0 h-full rounded-md"
                           style={{
@@ -465,6 +529,17 @@ export function InteractiveWaterfall({
                             style={{ background: 'hsla(4, 82%, 63%, 0.4)' }}
                             initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.3 }}
                           />
+                        )}
+                        {/* Receipt seal on hover */}
+                        {isHovered && !excluded && (
+                          <motion.div
+                            className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none"
+                            initial={{ opacity: 0, scale: 0.6 }}
+                            animate={{ opacity: 0.5, scale: 1 }}
+                            style={{ color: 'hsl(43, 82%, 55%)' }}
+                          >
+                            <FileCheck className="w-3 h-3" />
+                          </motion.div>
                         )}
                       </div>
 
