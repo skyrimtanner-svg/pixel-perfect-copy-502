@@ -390,6 +390,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                   contributions={liveData.bayes.contributions}
                   evidence={liveData.evidence}
                   milestoneId={milestone.id}
+                  tier={milestone.tier}
                   onWhatIf={runWhatIf}
                   whatIfResult={whatIfResult}
                   whatIfLoading={whatIfLoading}
@@ -434,6 +435,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                     date: ev.date, summary: ev.summary,
                   }))}
                   milestoneId={milestone.id}
+                  tier={milestone.tier}
                   onWhatIf={runWhatIf}
                   whatIfResult={whatIfResult}
                   whatIfLoading={whatIfLoading}
