@@ -1,14 +1,13 @@
-import { useEffect, useState, useId } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Milestone } from '@/data/milestones';
 import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
 import { ProbabilityRing } from '@/components/ProbabilityRing';
 import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
-import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
@@ -34,6 +33,9 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   const { isWonder } = useMode();
   const { loading, detail, whatIfResult, whatIfLoading, fetchMilestone, runWhatIf } = useMilestoneAPI();
   const [ledgerHash, setLedgerHash] = useState<string | null>(null);
+  const [isNegativeShift, setIsNegativeShift] = useState(false);
+  const [simPosterior, setSimPosterior] = useState<number | null>(null);
+  const [tagFlip, setTagFlip] = useState<{ from: string; to: string } | null>(null);
 
   // Fetch live data on open
   useEffect(() => {
@@ -43,8 +45,32 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           setLedgerHash(null);
         }
       });
+      setIsNegativeShift(false);
+      setSimPosterior(null);
+      setTagFlip(null);
     }
   }, [open, milestone?.id, fetchMilestone]);
+
+  // Handle negative shift callback from waterfall
+  const handleNegativeShift = useCallback((negative: boolean, posterior: number) => {
+    setIsNegativeShift(negative);
+    setSimPosterior(posterior);
+    
+    // Determine tag flip based on threshold crossing
+    if (milestone && negative) {
+      const origArchetype = milestone.archetype;
+      // If a breakthrough drops significantly, it becomes a bottleneck
+      if (origArchetype === 'breakthrough' && posterior < milestone.prior) {
+        setTagFlip({ from: 'Breakthrough', to: 'Bottleneck' });
+      } else if (origArchetype === 'sleeper' && posterior < milestone.prior * 0.7) {
+        setTagFlip({ from: 'Sleeper', to: 'Bottleneck' });
+      } else {
+        setTagFlip(null);
+      }
+    } else {
+      setTagFlip(null);
+    }
+  }, [milestone]);
 
   if (!milestone) return null;
 
@@ -55,8 +81,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   const delta = livePosterior - livePrior;
   const isPositive = delta >= 0;
 
-  const isNegativeShift = whatIfResult && whatIfResult.update_result.posterior < livePrior;
-  const displayPosterior = whatIfResult?.update_result.posterior ?? livePosterior;
+  const displayPosterior = simPosterior ?? whatIfResult?.update_result.posterior ?? livePosterior;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -67,7 +92,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           border: `1px solid ${isNegativeShift ? 'hsla(0, 72%, 55%, 0.3)' : 'hsla(220, 10%, 72%, 0.2)'}`,
           boxShadow: [
             '0 0 120px -20px hsla(230, 25%, 3%, 0.95)',
-            isNegativeShift ? '0 0 80px -10px hsla(0, 72%, 55%, 0.2)' : '0 0 80px -10px hsla(43, 96%, 56%, 0.12)',
+            isNegativeShift ? '0 0 80px -10px hsla(0, 72%, 55%, 0.25)' : '0 0 80px -10px hsla(43, 96%, 56%, 0.12)',
             'inset 0 1px 0 hsla(220, 16%, 95%, 0.14)',
             'inset 0 -1px 0 hsla(232, 30%, 2%, 0.6)',
           ].join(', '),
@@ -78,30 +103,30 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         <AnimatePresence>
           {isNegativeShift && (
             <>
-              {[...Array(8)].map((_, i) => (
+              {[...Array(12)].map((_, i) => (
                 <motion.div
                   key={`red-particle-${i}`}
                   className="absolute rounded-full pointer-events-none"
                   style={{
-                    width: 3 + Math.random() * 4,
-                    height: 3 + Math.random() * 4,
+                    width: 3 + Math.random() * 5,
+                    height: 3 + Math.random() * 5,
                     background: `radial-gradient(circle, hsla(0, 72%, 60%, ${0.4 + Math.random() * 0.4}), transparent)`,
-                    boxShadow: '0 0 8px hsla(0, 72%, 55%, 0.5)',
+                    boxShadow: '0 0 10px hsla(0, 72%, 55%, 0.6)',
                   }}
                   initial={{
                     x: 100 + Math.random() * 400,
                     y: 50 + Math.random() * 200,
-                    opacity: 0.8,
+                    opacity: 0.9,
                     scale: 1,
                   }}
                   animate={{
-                    y: [null, 50 + Math.random() * 300],
-                    x: [null, 80 + Math.random() * 440],
-                    opacity: [0.8, 0],
-                    scale: [1, 0.3],
+                    y: [null, 50 + Math.random() * 350],
+                    x: [null, 60 + Math.random() * 480],
+                    opacity: [0.9, 0],
+                    scale: [1, 0.2],
                   }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 2 + Math.random() * 2, ease: 'easeOut', delay: i * 0.15 }}
+                  transition={{ duration: 2 + Math.random() * 2.5, ease: 'easeOut', delay: i * 0.12 }}
                 />
               ))}
             </>
@@ -111,7 +136,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         {/* Top gold/red rim */}
         <div className="absolute top-0 left-6 right-6 h-px transition-all duration-500" style={
           isNegativeShift
-            ? { background: 'linear-gradient(90deg, transparent, hsla(0, 72%, 55%, 0.3), hsla(0, 72%, 65%, 0.15), hsla(0, 72%, 55%, 0.3), transparent)' }
+            ? { background: 'linear-gradient(90deg, transparent, hsla(0, 72%, 55%, 0.4), hsla(0, 72%, 65%, 0.2), hsla(0, 72%, 55%, 0.4), transparent)' }
             : goldChromeLine
         } />
         <div className="absolute top-0 left-0 right-0 h-[25%] rounded-t-lg" style={{
@@ -124,7 +149,40 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           <div className="flex items-center gap-2 mb-2">
             <DomainBadge domain={milestone.domain} />
             <StatusBadge status={milestone.status} />
-            <ArchetypeBadge archetype={milestone.archetype} />
+            {/* Animated archetype tag flip */}
+            <AnimatePresence mode="wait">
+              {tagFlip ? (
+                <motion.div
+                  key="flipped-tag"
+                  initial={{ rotateX: -90, opacity: 0, scale: 0.8 }}
+                  animate={{ rotateX: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotateX: 90, opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold"
+                  style={{
+                    background: 'hsla(0, 72%, 55%, 0.15)',
+                    border: '1px solid hsla(0, 72%, 55%, 0.3)',
+                    color: 'hsl(0, 72%, 60%)',
+                    boxShadow: '0 0 16px -4px hsla(0, 72%, 55%, 0.4)',
+                  }}
+                >
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  <span className="line-through opacity-50">{tagFlip.from}</span>
+                  <span className="mx-0.5">→</span>
+                  <span>{tagFlip.to}</span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="normal-tag"
+                  initial={{ rotateX: 90, opacity: 0 }}
+                  animate={{ rotateX: 0, opacity: 1 }}
+                  exit={{ rotateX: -90, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ArchetypeBadge archetype={milestone.archetype} />
+                </motion.div>
+              )}
+            </AnimatePresence>
             {loading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
           </div>
           <DialogTitle className={`font-display text-xl font-bold flex items-center gap-4 ${isWonder ? 'text-gold' : 'text-foreground'}`}>
@@ -134,32 +192,15 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             >
-              {/* Ring with red glow for negative shift */}
-              <div className="relative">
-                <ProbabilityRing
-                  value={displayPosterior}
-                  size={56}
-                  strokeWidth={5}
-                  domainColor={isNegativeShift ? 'hsl(0, 72%, 55%)' : domainHsl[milestone.domain]}
-                  useGold={!isNegativeShift}
-                />
-                {/* Red glow ring overlay */}
-                <AnimatePresence>
-                  {isNegativeShift && (
-                    <motion.div
-                      className="absolute inset-[-6px] rounded-full pointer-events-none"
-                      initial={{ opacity: 0, scale: 1.2 }}
-                      animate={{ opacity: [0, 0.6, 0.3], scale: [1.2, 1, 1.05] }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 1.2, ease: 'easeOut' }}
-                      style={{
-                        boxShadow: '0 0 30px 8px hsla(0, 72%, 55%, 0.4), inset 0 0 20px hsla(0, 72%, 55%, 0.2)',
-                        border: '1px solid hsla(0, 72%, 55%, 0.3)',
-                      }}
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
+              <ProbabilityRing
+                value={displayPosterior}
+                size={56}
+                strokeWidth={5}
+                domainColor={isNegativeShift ? 'hsl(0, 72%, 55%)' : domainHsl[milestone.domain]}
+                useGold={!isNegativeShift}
+                isNegativeShift={isNegativeShift}
+                previousValue={livePosterior}
+              />
             </motion.div>
           </DialogTitle>
           <div className="flex items-center gap-4 mt-3 font-mono text-[10px] text-muted-foreground flex-wrap">
@@ -182,6 +223,33 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               </span>
             </span>
           </div>
+
+          {/* Warning banner for dramatic negative shift */}
+          <AnimatePresence>
+            {tagFlip && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                className="rounded-lg px-3 py-2 flex items-center gap-2 overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, hsla(0, 72%, 55%, 0.12), rgba(8, 10, 28, 0.8))',
+                  border: '1px solid hsla(0, 72%, 55%, 0.25)',
+                  boxShadow: '0 0 24px -6px hsla(0, 72%, 55%, 0.3), inset 0 1px 0 hsla(0, 72%, 70%, 0.08)',
+                }}
+              >
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, -10, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: 'hsl(0, 72%, 60%)', filter: 'drop-shadow(0 0 8px hsla(0, 72%, 55%, 0.6))' }} />
+                </motion.div>
+                <span className="text-[10px] font-mono font-bold" style={{ color: 'hsl(0, 72%, 65%)' }}>
+                  THRESHOLD CROSSED: Classification shifted from {tagFlip.from} → {tagFlip.to}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </DialogHeader>
 
         {/* Tabs */}
@@ -301,9 +369,9 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 whatIfResult={whatIfResult}
                 whatIfLoading={whatIfLoading}
                 ledgerHash={ledgerHash ?? undefined}
+                onNegativeShift={handleNegativeShift}
               />
             ) : (
-              // Fallback to static data
               <InteractiveWaterfall
                 prior={milestone.prior}
                 contributions={milestone.evidence.map(ev => ({
@@ -327,6 +395,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 onWhatIf={runWhatIf}
                 whatIfResult={whatIfResult}
                 whatIfLoading={whatIfLoading}
+                onNegativeShift={handleNegativeShift}
               />
             )}
           </TabsContent>

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Shield, Clock, Users, Crosshair, ToggleLeft, ToggleRight, Beaker, Hash } from 'lucide-react';
+import { Shield, Clock, Users, Crosshair, ToggleLeft, ToggleRight, Beaker, Hash, ExternalLink } from 'lucide-react';
 import { glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Contribution, EvidenceItem, WhatIfResult } from '@/hooks/useMilestoneAPI';
 
@@ -30,18 +30,31 @@ interface InteractiveWaterfallProps {
   whatIfResult: WhatIfResult | null;
   whatIfLoading: boolean;
   ledgerHash?: string;
+  onNegativeShift?: (isNegative: boolean, posterior: number) => void;
 }
 
 function logOddsToProb(lo: number): number {
   return 1 / (1 + Math.exp(-lo));
 }
 
+/** Generate a simple SHA-256-style hash for trust ledger display */
+async function generateSnapshotHash(data: object): Promise<string> {
+  const encoder = new TextEncoder();
+  const dataStr = JSON.stringify(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(dataStr));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export function InteractiveWaterfall({
   prior, contributions, evidence, milestoneId,
-  onWhatIf, whatIfResult, whatIfLoading, ledgerHash,
+  onWhatIf, whatIfResult, whatIfLoading, ledgerHash: externalHash,
+  onNegativeShift,
 }: InteractiveWaterfallProps) {
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [simMode, setSimMode] = useState(false);
+  const [snapshotHash, setSnapshotHash] = useState<string | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   const toggleEvidence = useCallback((evidenceId: string) => {
     setExcludedIds(prev => {
@@ -64,6 +77,22 @@ export function InteractiveWaterfall({
     }, 150);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [excludedIds, simMode, milestoneId, onWhatIf]);
+
+  // Generate Trust Ledger snapshot hash when whatIf result changes
+  useEffect(() => {
+    if (whatIfResult) {
+      generateSnapshotHash({
+        milestone_id: milestoneId,
+        timestamp: new Date().toISOString(),
+        prior: whatIfResult.update_result.prior,
+        posterior: whatIfResult.update_result.posterior,
+        excluded: Array.from(excludedIds),
+        delta_log_odds: whatIfResult.update_result.delta_log_odds,
+      }).then(setSnapshotHash);
+    } else {
+      setSnapshotHash(null);
+    }
+  }, [whatIfResult, milestoneId, excludedIds]);
 
   // Use whatif contributions or original
   const activeContribs = whatIfResult?.update_result.contributions ?? contributions;
@@ -93,6 +122,13 @@ export function InteractiveWaterfall({
   const maxAbsDelta = Math.max(...activeContribs.map(c => Math.abs(c.delta_log_odds)), 0.5);
   const posteriorDelta = finalPosterior - prior;
   const isDropping = whatIfResult && (whatIfResult.update_result.posterior < prior);
+
+  // Notify parent of negative shift
+  useEffect(() => {
+    onNegativeShift?.(!!isDropping, finalPosterior);
+  }, [isDropping, finalPosterior, onNegativeShift]);
+
+  const displayHash = externalHash || snapshotHash;
 
   if (contributions.length === 0) {
     return <p className="text-muted-foreground text-sm">Historical milestone — no Bayesian evidence trail.</p>;
@@ -138,20 +174,72 @@ export function InteractiveWaterfall({
         </button>
       </div>
 
-      {/* Trust Ledger hash */}
-      {ledgerHash && (
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{
-          ...glassInner,
-          border: '1px solid hsla(43, 96%, 56%, 0.12)',
-        }}>
-          <Hash className="w-2.5 h-2.5" style={{ color: 'hsl(43, 96%, 56%)', filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))' }} />
-          <span className="text-[9px] font-mono text-muted-foreground">LEDGER</span>
-          <span className="text-[9px] font-mono font-bold tabular-nums" style={{
-            ...goldGradientStyle,
-            filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
-          }}>{ledgerHash.slice(0, 16)}…</span>
-        </div>
-      )}
+      {/* Trust Ledger hash with View Receipt */}
+      <AnimatePresence>
+        {displayHash && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -6, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg" style={{
+              ...glassInner,
+              border: '1px solid hsla(43, 96%, 56%, 0.15)',
+              boxShadow: 'inset 0 1px 0 hsla(48, 100%, 80%, 0.06), 0 0 16px -6px hsla(43, 96%, 56%, 0.15)',
+            }}>
+              <div className="flex items-center gap-1.5">
+                <Hash className="w-2.5 h-2.5" style={{ color: 'hsl(43, 96%, 56%)', filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))' }} />
+                <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">TRUST LEDGER</span>
+                <span className="text-[9px] font-mono font-bold tabular-nums" style={{
+                  ...goldGradientStyle,
+                  filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
+                }}>{displayHash.slice(0, 16)}…</span>
+              </div>
+              <button
+                onClick={() => setShowReceipt(!showReceipt)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold transition-all hover:scale-105"
+                style={{
+                  background: 'hsla(43, 96%, 56%, 0.08)',
+                  border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                  color: 'hsl(43, 82%, 60%)',
+                }}
+              >
+                <ExternalLink className="w-2.5 h-2.5" />
+                {showReceipt ? 'HIDE' : 'VIEW RECEIPT'}
+              </button>
+            </div>
+            {/* Expanded receipt */}
+            <AnimatePresence>
+              {showReceipt && whatIfResult && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-1.5 rounded-lg p-3 space-y-1.5 overflow-hidden"
+                  style={{
+                    ...glassInner,
+                    border: '1px solid hsla(43, 96%, 56%, 0.12)',
+                  }}
+                >
+                  <div className="text-[9px] font-mono text-muted-foreground space-y-1">
+                    <div>SHA-256: <span className="font-bold tabular-nums break-all" style={goldGradientStyle}>{displayHash}</span></div>
+                    <div>Timestamp: <span className="font-bold tabular-nums" style={goldGradientStyle}>{new Date().toISOString()}</span></div>
+                    <div>Prior: <span className="font-bold tabular-nums" style={goldGradientStyle}>{(whatIfResult.update_result.prior * 100).toFixed(2)}%</span></div>
+                    <div>Posterior: <span className="font-bold tabular-nums" style={isDropping ? {
+                      color: 'hsl(0, 72%, 58%)', textShadow: '0 0 8px hsla(0, 72%, 55%, 0.4)',
+                    } : goldGradientStyle}>{(whatIfResult.update_result.posterior * 100).toFixed(2)}%</span></div>
+                    <div>Excluded: <span className="font-bold" style={goldGradientStyle}>{excludedIds.size} evidence items</span></div>
+                    <div>Δ Log-Odds: <span className="font-bold tabular-nums" style={isDropping ? {
+                      color: 'hsl(0, 72%, 58%)',
+                    } : goldGradientStyle}>{whatIfResult.update_result.delta_log_odds.toFixed(4)}</span></div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Prior bar */}
       <div className="flex items-center gap-3 py-1.5">
