@@ -55,6 +55,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   const delta = livePosterior - livePrior;
   const isPositive = delta >= 0;
 
+  const isNegativeShift = whatIfResult && whatIfResult.update_result.posterior < livePrior;
   const displayPosterior = whatIfResult?.update_result.posterior ?? livePosterior;
 
   return (
