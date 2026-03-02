@@ -39,11 +39,15 @@ export function ProbabilityRing({
 
   // Dramatic drop detection
   const dropMagnitude = previousValue !== undefined ? previousValue - value : 0;
+  const shiftMagnitude = previousValue !== undefined ? Math.abs(previousValue - value) : 0;
   const isDramaticDrop = dropMagnitude > 0.05;
   const isSignificantDrop = dropMagnitude > 0.08;
+  const isSignificantShift = shiftMagnitude > 0.05;
 
   // Spark trigger state
   const [sparkActive, setSparkActive] = useState(false);
+  const [goldPulse, setGoldPulse] = useState(false);
+
   useEffect(() => {
     if (isSignificantDrop && showRed) {
       setSparkActive(true);
@@ -51,6 +55,15 @@ export function ProbabilityRing({
       return () => clearTimeout(t);
     }
   }, [isSignificantDrop, showRed, value]);
+
+  // Gold pulse on any >5pp shift
+  useEffect(() => {
+    if (isSignificantShift && !showRed) {
+      setGoldPulse(true);
+      const t = setTimeout(() => setGoldPulse(false), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [isSignificantShift, showRed, value]);
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
@@ -200,6 +213,47 @@ export function ProbabilityRing({
         intensity={Math.min(1, dropMagnitude * 5)}
         containerSize={size}
       />
+
+      {/* Ultra-subtle gold inner glow pulse on >5pp shift */}
+      <AnimatePresence>
+        {goldPulse && showGold && (
+          <motion.div
+            className="absolute inset-[2px] rounded-full pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.6, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+            style={{
+              background: 'radial-gradient(circle, hsla(43, 96%, 56%, 0.12), transparent 70%)',
+              boxShadow: 'inset 0 0 12px 2px hsla(43, 96%, 56%, 0.2)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Lens-flare highlight on shift */}
+      <AnimatePresence>
+        {(goldPulse || sparkActive) && (
+          <motion.div
+            className="absolute pointer-events-none"
+            style={{
+              width: size * 0.3,
+              height: size * 0.15,
+              top: '15%',
+              left: '55%',
+              borderRadius: '50%',
+              background: showRed
+                ? 'radial-gradient(ellipse, hsla(0, 72%, 80%, 0.3), transparent)'
+                : 'radial-gradient(ellipse, hsla(48, 100%, 90%, 0.35), transparent)',
+              filter: 'blur(2px)',
+            }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.8] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          />
+        )}
+      </AnimatePresence>
 
       <motion.span
         className={`absolute font-mono font-bold tabular-nums ${!showGold && !showRed ? 'text-foreground' : ''}`}
