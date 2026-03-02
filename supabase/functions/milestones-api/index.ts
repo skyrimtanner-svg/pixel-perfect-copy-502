@@ -398,17 +398,15 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
-    // Expect: milestones-api / {id} or milestones-api / {id} / {action}
-    // Edge function path: /milestones-api/... 
-    // pathParts after function name: [milestoneId] or [milestoneId, action]
     
     let milestoneId: string | null = null;
     let action: string | null = null;
     
-    // Path: /functions/v1/milestones-api/{id} or /functions/v1/milestones-api/{id}/{action}
     // Find "milestones-api" in path, then take segments after it
     const fnIdx = pathParts.indexOf("milestones-api");
     const afterFn = fnIdx >= 0 ? pathParts.slice(fnIdx + 1) : pathParts;
+    
+    
     
     if (afterFn.length >= 1) {
       milestoneId = afterFn[0];
