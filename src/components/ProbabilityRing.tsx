@@ -1,6 +1,7 @@
-import { useId } from 'react';
+import { useId, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMode } from '@/contexts/ModeContext';
+import { NegativeDropSparks } from '@/components/NegativeDropSparks';
 
 interface ProbabilityRingProps {
   value: number;
@@ -39,6 +40,17 @@ export function ProbabilityRing({
   // Dramatic drop detection
   const dropMagnitude = previousValue !== undefined ? previousValue - value : 0;
   const isDramaticDrop = dropMagnitude > 0.05;
+  const isSignificantDrop = dropMagnitude > 0.08;
+
+  // Spark trigger state
+  const [sparkActive, setSparkActive] = useState(false);
+  useEffect(() => {
+    if (isSignificantDrop && showRed) {
+      setSparkActive(true);
+      const t = setTimeout(() => setSparkActive(false), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [isSignificantDrop, showRed, value]);
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
@@ -182,6 +194,13 @@ export function ProbabilityRing({
           />
         )}
       </svg>
+      {/* Negative drop sparks */}
+      <NegativeDropSparks
+        active={sparkActive}
+        intensity={Math.min(1, dropMagnitude * 5)}
+        containerSize={size}
+      />
+
       <motion.span
         className={`absolute font-mono font-bold tabular-nums ${!showGold && !showRed ? 'text-foreground' : ''}`}
         style={{

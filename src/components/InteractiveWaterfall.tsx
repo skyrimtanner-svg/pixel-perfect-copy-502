@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw } from 'lucide-react';
+import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw, Undo2 } from 'lucide-react';
 import { glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Contribution, EvidenceItem, WhatIfResult } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
@@ -102,6 +102,15 @@ export function InteractiveWaterfall({
     setShowReceipt(false);
   }, []);
 
+  // Undo: re-call whatif with empty exclude list to restore canonical
+  const handleUndo = useCallback(async () => {
+    setExcludedIds(new Set());
+    setSnapshotHash(null);
+    setShowReceipt(false);
+    // Call whatif with empty list to confirm canonical state
+    await onWhatIf(milestoneId, []);
+  }, [milestoneId, onWhatIf]);
+
   // Auto-trigger whatif when excludedIds change
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
@@ -125,21 +134,30 @@ export function InteractiveWaterfall({
     } else { setSnapshotHash(null); }
   }, [whatIfResult, milestoneId, excludedIds]);
 
-  // Wonder mode toast on significant shift
+  // Mode-aware toast on significant shift
   useEffect(() => {
-    if (!whatIfResult || !isWonder) return;
+    if (!whatIfResult) return;
     const newPosterior = whatIfResult.update_result.posterior;
     const canonicalPosterior = contributions.reduce((acc, c) => acc + c.delta_log_odds, Math.log(prior / (1 - prior)));
     const canonicalP = 1 / (1 + Math.exp(-canonicalPosterior));
     const baseline = prevPosteriorRef.current ?? canonicalP;
     const delta = newPosterior - baseline;
     if (Math.abs(delta) > 0.08) {
-      toast({
-        title: delta < 0 ? "🌊 Whoa!" : "🚀 Boom!",
-        description: delta < 0
-          ? `Removing that evidence changed everything! Probability dropped ${Math.abs(delta * 100).toFixed(0)}pp!`
-          : `Adding it back boosted probability by ${Math.abs(delta * 100).toFixed(0)}pp!`,
-      });
+      if (isWonder) {
+        toast({
+          title: delta < 0 ? "😱 Whoa!" : "🚀 Boom!",
+          description: delta < 0
+            ? `Removing that evidence changed everything! Probability dropped ${Math.abs(delta * 100).toFixed(0)}pp!`
+            : `Adding it back boosted probability by ${Math.abs(delta * 100).toFixed(0)}pp!`,
+        });
+      } else {
+        // Analyst mode: precise log-odds flash
+        const loShift = whatIfResult.update_result.delta_log_odds;
+        toast({
+          title: delta < 0 ? "⚠ Significant Drop" : "↑ Significant Shift",
+          description: `Δ ${(delta * 100).toFixed(1)}pp | ${loShift > 0 ? '+' : ''}${loShift.toFixed(4)} log-odds | P: ${(newPosterior * 100).toFixed(1)}%`,
+        });
+      }
     }
     prevPosteriorRef.current = newPosterior;
   }, [whatIfResult, isWonder, prior, contributions]);
@@ -253,24 +271,41 @@ export function InteractiveWaterfall({
               )}
             </AnimatePresence>
           </div>
-          {/* Reset to Canonical button */}
+          {/* Reset + Undo buttons */}
           <AnimatePresence>
             {isSimActive && (
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                onClick={resetToCanonical}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all duration-300 hover:scale-105"
-                style={{
-                  ...glassInner,
-                  border: '1px solid hsla(43, 96%, 56%, 0.25)',
-                  boxShadow: '0 0 12px -4px hsla(43, 96%, 56%, 0.2)',
-                }}
+                className="flex items-center gap-1.5"
               >
-                <RotateCcw className="w-3 h-3" style={{ color: 'hsl(43, 96%, 56%)' }} />
-                <span style={{ color: 'hsl(43, 82%, 60%)' }}>Reset to Canonical</span>
-              </motion.button>
+                <button
+                  onClick={handleUndo}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-mono font-bold transition-all duration-300 hover:scale-105"
+                  style={{
+                    ...glassInner,
+                    border: '1px solid hsla(220, 10%, 70%, 0.2)',
+                    color: 'hsl(220, 12%, 65%)',
+                  }}
+                  title="Undo all exclusions and restore canonical"
+                >
+                  <Undo2 className="w-2.5 h-2.5" />
+                  Undo
+                </button>
+                <button
+                  onClick={resetToCanonical}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all duration-300 hover:scale-105"
+                  style={{
+                    ...glassInner,
+                    border: '1px solid hsla(43, 96%, 56%, 0.25)',
+                    boxShadow: '0 0 12px -4px hsla(43, 96%, 56%, 0.2)',
+                  }}
+                >
+                  <RotateCcw className="w-3 h-3" style={{ color: 'hsl(43, 96%, 56%)' }} />
+                  <span style={{ color: 'hsl(43, 82%, 60%)' }}>Reset to Canonical</span>
+                </button>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
