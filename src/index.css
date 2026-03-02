@@ -190,8 +190,33 @@
   }
 
   .text-gold-num {
-    color: hsl(43, 82%, 60%);
-    text-shadow: 0 0 10px hsla(43, 96%, 56%, 0.25);
+    font-family: 'Space Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    color: hsl(43, 78%, 58%);
+    text-shadow: 0 0 8px hsla(43, 96%, 56%, 0.18);
+  }
+
+  /* ═══ METALLIC NUMERIC READOUT — targeted accent ═══ */
+  .metallic-num {
+    font-family: 'Space Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(135deg, hsl(40, 70%, 42%), hsl(43, 85%, 56%), hsl(48, 90%, 68%), hsl(43, 85%, 54%));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.2));
+  }
+
+  /* Chrome numeric — secondary readouts */
+  .chrome-num {
+    font-family: 'Space Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(135deg, hsl(220, 10%, 52%), hsl(220, 14%, 72%), hsl(220, 16%, 86%), hsl(220, 12%, 66%));
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   /* ═══════════ BORDERS ═══════════ */
@@ -311,24 +336,26 @@
 .nebula-bg {
   background-color: #06060c;
   background-image:
-    radial-gradient(ellipse at 8% 85%, hsla(268, 65%, 16%, 0.22) 0%, transparent 50%),
-    radial-gradient(ellipse at 92% 12%, hsla(192, 85%, 18%, 0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, hsla(43, 50%, 8%, 0.1) 0%, transparent 60%),
-    radial-gradient(ellipse at 75% 60%, hsla(342, 50%, 14%, 0.1) 0%, transparent 45%),
-    radial-gradient(ellipse at 20% 30%, hsla(250, 60%, 12%, 0.16) 0%, transparent 50%),
-    radial-gradient(ellipse at 60% 85%, hsla(280, 45%, 10%, 0.12) 0%, transparent 40%),
-    radial-gradient(ellipse at 35% 15%, hsla(220, 60%, 8%, 0.14) 0%, transparent 55%);
+    radial-gradient(ellipse at 8% 85%, hsla(268, 55%, 14%, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 92% 12%, hsla(240, 60%, 14%, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsla(260, 40%, 8%, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 75% 60%, hsla(280, 40%, 12%, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 20% 30%, hsla(250, 50%, 10%, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 85%, hsla(270, 35%, 10%, 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse at 35% 15%, hsla(230, 50%, 8%, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 45% 70%, hsla(255, 45%, 12%, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 40%, hsla(240, 50%, 10%, 0.06) 0%, transparent 45%);
 }
 
 /* ═══════════ BREATHING NEBULA LAYERS ═══════════ */
 @keyframes nebula-breathe-1 {
-  0%, 100% { opacity: 0.14; transform: scale(1) translate(0, 0); }
-  33% { opacity: 0.22; transform: scale(1.06) translate(8px, -5px); }
-  66% { opacity: 0.16; transform: scale(1.03) translate(-4px, 3px); }
+  0%, 100% { opacity: 0.1; transform: scale(1) translate(0, 0); }
+  33% { opacity: 0.16; transform: scale(1.04) translate(6px, -4px); }
+  66% { opacity: 0.12; transform: scale(1.02) translate(-3px, 2px); }
 }
 @keyframes nebula-breathe-2 {
-  0%, 100% { opacity: 0.1; transform: scale(1.02) translate(0, 0); }
-  50% { opacity: 0.2; transform: scale(1.08) translate(-10px, 6px); }
+  0%, 100% { opacity: 0.08; transform: scale(1.01) translate(0, 0); }
+  50% { opacity: 0.14; transform: scale(1.05) translate(-8px, 5px); }
 }
 
 .nebula-bg::before {
@@ -338,10 +365,10 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 15% 80%, hsla(268, 55%, 20%, 0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 20%, hsla(192, 75%, 22%, 0.14) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 60%, hsla(280, 40%, 15%, 0.1) 0%, transparent 55%);
-  animation: nebula-breathe-1 16s ease-in-out infinite;
+    radial-gradient(ellipse at 15% 80%, hsla(260, 45%, 16%, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 20%, hsla(240, 55%, 18%, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 60%, hsla(270, 35%, 14%, 0.08) 0%, transparent 55%);
+  animation: nebula-breathe-1 20s ease-in-out infinite;
 }
 
 .nebula-bg::after {
@@ -351,43 +378,44 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 70% 75%, hsla(250, 50%, 18%, 0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 25% 25%, hsla(220, 65%, 15%, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 55% 10%, hsla(43, 60%, 12%, 0.08) 0%, transparent 40%);
-  animation: nebula-breathe-2 22s ease-in-out infinite;
+    radial-gradient(ellipse at 70% 75%, hsla(250, 40%, 14%, 0.1) 0%, transparent 45%),
+    radial-gradient(ellipse at 25% 25%, hsla(235, 50%, 12%, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 55% 10%, hsla(260, 35%, 10%, 0.06) 0%, transparent 40%);
+  animation: nebula-breathe-2 28s ease-in-out infinite;
 }
 
-/* ═══════════ GOLD-TINTED STARFIELD ═══════════ */
+/* ═══════════ FAINT STARFIELD ═══════════ */
 .stars-bg {
   background-image:
-    radial-gradient(1.8px 1.8px at 15px 25px, hsla(210, 40%, 93%, 0.14), transparent),
-    radial-gradient(1.2px 1.2px at 45px 72px, hsla(43, 96%, 56%, 0.1), transparent),
-    radial-gradient(1.4px 1.4px at 95px 38px, hsla(210, 40%, 93%, 0.12), transparent),
-    radial-gradient(0.8px 0.8px at 135px 82px, hsla(43, 96%, 56%, 0.12), transparent),
-    radial-gradient(1px 1px at 165px 28px, hsla(192, 100%, 52%, 0.08), transparent),
-    radial-gradient(0.6px 0.6px at 175px 58px, hsla(43, 96%, 56%, 0.09), transparent),
-    radial-gradient(0.5px 0.5px at 55px 95px, hsla(48, 100%, 70%, 0.1), transparent),
-    radial-gradient(1.1px 1.1px at 115px 12px, hsla(43, 96%, 56%, 0.07), transparent),
-    radial-gradient(0.7px 0.7px at 185px 48px, hsla(210, 40%, 93%, 0.08), transparent),
-    radial-gradient(0.4px 0.4px at 75px 60px, hsla(268, 60%, 70%, 0.06), transparent),
-    radial-gradient(0.6px 0.6px at 25px 80px, hsla(192, 80%, 60%, 0.05), transparent),
-    radial-gradient(1px 1px at 145px 45px, hsla(43, 96%, 56%, 0.05), transparent);
-  background-size: 200px 100px;
+    radial-gradient(1px 1px at 15px 25px, hsla(220, 30%, 85%, 0.09), transparent),
+    radial-gradient(0.8px 0.8px at 45px 72px, hsla(220, 25%, 80%, 0.06), transparent),
+    radial-gradient(1px 1px at 95px 38px, hsla(230, 20%, 78%, 0.08), transparent),
+    radial-gradient(0.6px 0.6px at 135px 82px, hsla(220, 30%, 82%, 0.07), transparent),
+    radial-gradient(0.7px 0.7px at 165px 28px, hsla(240, 25%, 75%, 0.05), transparent),
+    radial-gradient(0.5px 0.5px at 175px 58px, hsla(220, 20%, 80%, 0.06), transparent),
+    radial-gradient(0.4px 0.4px at 55px 95px, hsla(230, 25%, 85%, 0.07), transparent),
+    radial-gradient(0.8px 0.8px at 115px 12px, hsla(220, 30%, 78%, 0.05), transparent),
+    radial-gradient(0.5px 0.5px at 185px 48px, hsla(225, 20%, 82%, 0.06), transparent),
+    radial-gradient(0.3px 0.3px at 75px 60px, hsla(250, 30%, 75%, 0.04), transparent),
+    radial-gradient(0.4px 0.4px at 25px 80px, hsla(240, 25%, 72%, 0.04), transparent),
+    radial-gradient(0.6px 0.6px at 145px 45px, hsla(220, 20%, 80%, 0.03), transparent),
+    radial-gradient(0.3px 0.3px at 200px 90px, hsla(260, 20%, 78%, 0.04), transparent),
+    radial-gradient(0.5px 0.5px at 230px 35px, hsla(220, 30%, 82%, 0.05), transparent),
+    radial-gradient(0.4px 0.4px at 260px 65px, hsla(235, 25%, 76%, 0.04), transparent);
+  background-size: 280px 110px;
 }
 
-/* ═══════════ CONSTELLATION PARTICLES — LAYER 1 (slow, large) ═══════════ */
+/* ═══════════ CONSTELLATION PARTICLES — LAYER 1 (very slow, subtle) ═══════════ */
 @keyframes constellation-drift-1 {
-  0% { transform: translateY(0) translateX(0); opacity: 0.05; }
-  25% { opacity: 0.1; }
-  50% { transform: translateY(-40px) translateX(20px); opacity: 0.06; }
-  75% { opacity: 0.11; }
-  100% { transform: translateY(-80px) translateX(-15px); opacity: 0.05; }
+  0% { transform: translateY(0) translateX(0); opacity: 0.03; }
+  50% { transform: translateY(-25px) translateX(12px); opacity: 0.06; }
+  100% { transform: translateY(-50px) translateX(-8px); opacity: 0.03; }
 }
 
 @keyframes constellation-drift-2 {
-  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.04; }
-  50% { transform: translateY(25px) translateX(-18px) rotate(1deg); opacity: 0.09; }
-  100% { transform: translateY(-20px) translateX(10px) rotate(-0.5deg); opacity: 0.04; }
+  0% { transform: translateY(0) translateX(0); opacity: 0.02; }
+  50% { transform: translateY(15px) translateX(-10px); opacity: 0.05; }
+  100% { transform: translateY(-12px) translateX(6px); opacity: 0.02; }
 }
 
 .constellation-particles {
@@ -396,31 +424,31 @@
   z-index: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(1.2px 1.2px at 10% 20%, hsla(43, 96%, 56%, 0.14), transparent),
-    radial-gradient(0.8px 0.8px at 30% 60%, hsla(43, 96%, 56%, 0.09), transparent),
-    radial-gradient(1px 1px at 55% 35%, hsla(192, 100%, 52%, 0.07), transparent),
-    radial-gradient(0.5px 0.5px at 70% 80%, hsla(43, 96%, 56%, 0.12), transparent),
-    radial-gradient(0.8px 0.8px at 85% 15%, hsla(268, 90%, 68%, 0.07), transparent),
-    radial-gradient(0.5px 0.5px at 45% 90%, hsla(43, 96%, 56%, 0.08), transparent);
+    radial-gradient(0.8px 0.8px at 10% 20%, hsla(220, 30%, 82%, 0.08), transparent),
+    radial-gradient(0.5px 0.5px at 30% 60%, hsla(240, 25%, 78%, 0.05), transparent),
+    radial-gradient(0.6px 0.6px at 55% 35%, hsla(250, 30%, 75%, 0.04), transparent),
+    radial-gradient(0.4px 0.4px at 70% 80%, hsla(220, 25%, 80%, 0.06), transparent),
+    radial-gradient(0.5px 0.5px at 85% 15%, hsla(260, 30%, 72%, 0.04), transparent),
+    radial-gradient(0.3px 0.3px at 45% 90%, hsla(230, 20%, 78%, 0.05), transparent);
   background-size: 400px 300px;
-  animation: constellation-drift-1 30s ease-in-out infinite;
+  animation: constellation-drift-1 40s ease-in-out infinite;
 }
 
-/* ═══════════ CONSTELLATION PARTICLES — LAYER 2 (faster, smaller, offset) ═══════════ */
+/* ═══════════ CONSTELLATION PARTICLES — LAYER 2 (slower, fainter) ═══════════ */
 .constellation-particles-2 {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(0.6px 0.6px at 22% 42%, hsla(268, 60%, 70%, 0.08), transparent),
-    radial-gradient(0.4px 0.4px at 68% 18%, hsla(192, 80%, 60%, 0.06), transparent),
-    radial-gradient(0.7px 0.7px at 40% 75%, hsla(43, 96%, 56%, 0.07), transparent),
-    radial-gradient(0.5px 0.5px at 88% 55%, hsla(220, 40%, 80%, 0.06), transparent),
-    radial-gradient(0.3px 0.3px at 15% 65%, hsla(43, 96%, 56%, 0.05), transparent),
-    radial-gradient(0.5px 0.5px at 75% 35%, hsla(268, 50%, 65%, 0.05), transparent);
+    radial-gradient(0.4px 0.4px at 22% 42%, hsla(255, 25%, 72%, 0.04), transparent),
+    radial-gradient(0.3px 0.3px at 68% 18%, hsla(240, 20%, 68%, 0.03), transparent),
+    radial-gradient(0.5px 0.5px at 40% 75%, hsla(220, 25%, 76%, 0.04), transparent),
+    radial-gradient(0.3px 0.3px at 88% 55%, hsla(230, 20%, 78%, 0.03), transparent),
+    radial-gradient(0.2px 0.2px at 15% 65%, hsla(250, 20%, 74%, 0.03), transparent),
+    radial-gradient(0.4px 0.4px at 75% 35%, hsla(260, 20%, 70%, 0.03), transparent);
   background-size: 350px 250px;
-  animation: constellation-drift-2 20s ease-in-out infinite;
+  animation: constellation-drift-2 30s ease-in-out infinite;
 }
 
 /* ═══════════ GOLD BUTTON ═══════════ */
