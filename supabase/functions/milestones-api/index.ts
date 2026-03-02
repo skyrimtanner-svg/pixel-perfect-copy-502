@@ -405,13 +405,14 @@ Deno.serve(async (req) => {
     let milestoneId: string | null = null;
     let action: string | null = null;
     
-    // Parse path - handle both /milestones-api/ID and /ID patterns
-    if (pathParts.length >= 2) {
-      // /milestones-api/{id} or /milestones-api/{id}/{action}
-      milestoneId = pathParts[pathParts.length === 2 ? 1 : pathParts.length - 2] || null;
-      action = pathParts.length >= 3 ? pathParts[pathParts.length - 1] : null;
-    } else if (pathParts.length === 1) {
-      milestoneId = pathParts[0];
+    // Path: /functions/v1/milestones-api/{id} or /functions/v1/milestones-api/{id}/{action}
+    // Find "milestones-api" in path, then take segments after it
+    const fnIdx = pathParts.indexOf("milestones-api");
+    const afterFn = fnIdx >= 0 ? pathParts.slice(fnIdx + 1) : pathParts;
+    
+    if (afterFn.length >= 1) {
+      milestoneId = afterFn[0];
+      action = afterFn.length >= 2 ? afterFn[1] : null;
     }
 
     if (!milestoneId) {
