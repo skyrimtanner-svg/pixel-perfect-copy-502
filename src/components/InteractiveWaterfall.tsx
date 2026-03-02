@@ -1,15 +1,17 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Shield, Clock, Users, Crosshair, ToggleLeft, ToggleRight, Beaker, Hash, ExternalLink, Sparkles } from 'lucide-react';
+import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw } from 'lucide-react';
 import { glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Contribution, EvidenceItem, WhatIfResult } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
+import { EvidenceToggle } from '@/components/EvidenceToggle';
+import { toast } from '@/hooks/use-toast';
 
 /* ═══ SPEC COLORS ═══ */
 const COLORS = {
-  supports: 'hsl(123, 38%, 57%)',     // #66bb6a
-  contradicts: 'hsl(4, 82%, 63%)',     // #ef5350
+  supports: 'hsl(123, 38%, 57%)',
+  contradicts: 'hsl(4, 82%, 63%)',
   ambiguous: 'hsl(220, 10%, 45%)',
   supportsBg: 'hsla(123, 38%, 57%, 0.55)',
   contradictsBg: 'hsla(4, 82%, 63%, 0.55)',
@@ -61,7 +63,6 @@ async function generateSnapshotHash(data: object): Promise<string> {
   return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** Shorten title to maxLen chars */
 function shorten(s: string, maxLen = 28): string {
   return s.length > maxLen ? s.slice(0, maxLen - 1) + '…' : s;
 }
@@ -73,31 +74,47 @@ export function InteractiveWaterfall({
 }: InteractiveWaterfallProps) {
   const { isWonder } = useMode();
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
-  const [simMode, setSimMode] = useState(false);
   const [snapshotHash, setSnapshotHash] = useState<string | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [particleBurst, setParticleBurst] = useState<string | null>(null);
+  const prevPosteriorRef = useRef<number | null>(null);
+
+  const isSimActive = excludedIds.size > 0;
 
   const toggleEvidence = useCallback((evidenceId: string) => {
     setExcludedIds(prev => {
       const next = new Set(prev);
-      if (next.has(evidenceId)) next.delete(evidenceId); else next.add(evidenceId);
+      const wasExcluded = next.has(evidenceId);
+      if (wasExcluded) next.delete(evidenceId); else next.add(evidenceId);
+      // Trigger particle burst in Wonder mode when excluding
+      if (!wasExcluded && isWonder) {
+        setParticleBurst(evidenceId);
+        setTimeout(() => setParticleBurst(null), 800);
+      }
       return next;
     });
+  }, [isWonder]);
+
+  const resetToCanonical = useCallback(() => {
+    setExcludedIds(new Set());
+    setSnapshotHash(null);
+    setShowReceipt(false);
   }, []);
 
-  // Auto-trigger whatif
+  // Auto-trigger whatif when excludedIds change
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
-    if (!simMode) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      if (excludedIds.size > 0) onWhatIf(milestoneId, Array.from(excludedIds));
-    }, 150);
+    if (excludedIds.size > 0) {
+      debounceRef.current = setTimeout(() => {
+        onWhatIf(milestoneId, Array.from(excludedIds));
+      }, 150);
+    }
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [excludedIds, simMode, milestoneId, onWhatIf]);
+  }, [excludedIds, milestoneId, onWhatIf]);
 
-  // Generate Trust Ledger hash
+  // Generate snapshot hash (sandbox only — no Trust Ledger snapshot)
   useEffect(() => {
     if (whatIfResult) {
       generateSnapshotHash({
@@ -108,17 +125,37 @@ export function InteractiveWaterfall({
     } else { setSnapshotHash(null); }
   }, [whatIfResult, milestoneId, excludedIds]);
 
+  // Wonder mode toast on significant shift
+  useEffect(() => {
+    if (!whatIfResult || !isWonder) return;
+    const newPosterior = whatIfResult.update_result.posterior;
+    const prevP = prevPosteriorRef.current;
+    if (prevP !== null && Math.abs(newPosterior - prevP) > 0.08) {
+      const delta = newPosterior - prevP;
+      toast({
+        title: delta < 0 ? "🌊 Whoa!" : "🚀 Boom!",
+        description: delta < 0
+          ? `Removing that evidence changed everything! Probability dropped ${Math.abs(delta * 100).toFixed(0)}pp!`
+          : `Adding it back boosted probability by ${Math.abs(delta * 100).toFixed(0)}pp!`,
+      });
+    }
+    prevPosteriorRef.current = newPosterior;
+  }, [whatIfResult, isWonder]);
+
+  // Reset prevPosterior when no whatif
+  useEffect(() => {
+    if (!whatIfResult) prevPosteriorRef.current = null;
+  }, [whatIfResult]);
+
   const activeContribs = whatIfResult?.update_result.contributions ?? contributions;
   const activePrior = whatIfResult?.update_result.prior ?? prior;
   const activePosterior = whatIfResult?.update_result.posterior ?? null;
 
-  // Sort by |delta_log_odds| descending per spec
   const sortedContribs = useMemo(() =>
     [...activeContribs].sort((a, b) => Math.abs(b.delta_log_odds) - Math.abs(a.delta_log_odds)),
     [activeContribs]
   );
 
-  // Compute waterfall blocks (cumulative from prior, in sorted order)
   const blocks = useMemo(() => {
     let cumLO = Math.log(activePrior / (1 - activePrior));
     return sortedContribs.map(c => {
@@ -154,55 +191,98 @@ export function InteractiveWaterfall({
     <TooltipProvider delayDuration={200}>
       <div className="space-y-2 rounded-xl p-4 relative overflow-hidden" style={{
         ...glassInner,
-        border: '1px solid hsla(220, 12%, 70%, 0.1)',
+        border: `1px solid ${isSimActive ? 'hsla(192, 95%, 50%, 0.2)' : 'hsla(220, 12%, 70%, 0.1)'}`,
         boxShadow: '0 0 40px -12px hsla(260, 40%, 20%, 0.15), inset 0 1px 0 hsla(220, 16%, 95%, 0.05)',
       }}>
         <div className="absolute top-0 left-0 right-0 h-[25%] rounded-t-xl pointer-events-none" style={specularReflection} />
 
-        {/* ═══ SIM HEADER ═══ */}
-        <div className="flex items-center justify-between mb-1">
+        {/* ═══ SCENARIO DOTTED OVERLAY (spec 4.3) ═══ */}
+        <AnimatePresence>
+          {isSimActive && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 pointer-events-none z-0 rounded-xl"
+              style={{
+                backgroundImage: 'radial-gradient(circle, hsla(192, 95%, 55%, 0.06) 1px, transparent 1px)',
+                backgroundSize: '8px 8px',
+                border: '2px dashed hsla(192, 95%, 55%, 0.2)',
+                borderRadius: 'inherit',
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* ═══ HEADER ═══ */}
+        <div className="flex items-center justify-between mb-1 relative z-10">
           <div className="flex items-center gap-2">
             <Beaker className="w-3.5 h-3.5" style={{
-              color: simMode ? 'hsl(192, 95%, 55%)' : 'hsl(220, 10%, 55%)',
-              filter: simMode ? 'drop-shadow(0 0 8px hsla(192, 95%, 50%, 0.5))' : 'none',
+              color: isSimActive ? 'hsl(192, 95%, 55%)' : 'hsl(220, 10%, 55%)',
+              filter: isSimActive ? 'drop-shadow(0 0 8px hsla(192, 95%, 50%, 0.5))' : 'none',
               transition: 'all 0.3s',
             }} />
             <span className="text-[10px] uppercase tracking-[0.12em] font-mono font-bold" style={
-              simMode ? {
+              isSimActive ? {
                 background: 'linear-gradient(135deg, hsl(192, 90%, 45%), hsl(192, 95%, 65%))',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               } : chromeGradientStyle
             }>
-              {simMode ? '⚡ WHAT-IF SIMULATION' : 'EVIDENCE WATERFALL'}
+              {isSimActive ? '⚡ SCENARIO MODE' : 'EVIDENCE WATERFALL'}
             </span>
+            {/* SCENARIO badge */}
+            <AnimatePresence>
+              {isSimActive && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider"
+                  style={{
+                    background: 'hsla(192, 95%, 55%, 0.1)',
+                    border: '1px dashed hsla(192, 95%, 55%, 0.3)',
+                    color: 'hsl(192, 95%, 65%)',
+                  }}
+                >
+                  SANDBOX
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
-          <button
-            onClick={() => { setSimMode(!simMode); if (simMode) setExcludedIds(new Set()); }}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all duration-300 hover:scale-105"
-            style={{
-              ...glassInner,
-              border: simMode ? '1px solid hsla(192, 95%, 50%, 0.3)' : '1px solid hsla(220, 12%, 70%, 0.12)',
-              boxShadow: simMode ? '0 0 16px -4px hsla(192, 95%, 50%, 0.3)' : 'none',
-            }}
-          >
-            {simMode ? <ToggleRight className="w-3 h-3" style={{ color: 'hsl(192, 95%, 55%)' }} /> : <ToggleLeft className="w-3 h-3" style={{ color: 'hsl(220, 10%, 55%)' }} />}
-            <span style={simMode ? { color: 'hsl(192, 95%, 65%)' } : { color: 'hsl(220, 10%, 55%)' }}>
-              {simMode ? 'EXIT SIM' : 'WHAT-IF'}
-            </span>
-          </button>
+          {/* Reset to Canonical button */}
+          <AnimatePresence>
+            {isSimActive && (
+              <motion.button
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                onClick={resetToCanonical}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all duration-300 hover:scale-105"
+                style={{
+                  ...glassInner,
+                  border: '1px solid hsla(43, 96%, 56%, 0.25)',
+                  boxShadow: '0 0 12px -4px hsla(43, 96%, 56%, 0.2)',
+                }}
+              >
+                <RotateCcw className="w-3 h-3" style={{ color: 'hsl(43, 96%, 56%)' }} />
+                <span style={{ color: 'hsl(43, 82%, 60%)' }}>Reset to Canonical</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* ═══ TRUST LEDGER HASH ═══ */}
+        {/* ═══ TRUST LEDGER HASH (sandbox — no real snapshot) ═══ */}
         <AnimatePresence>
-          {displayHash && (
-            <motion.div initial={{ opacity: 0, y: -6, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -6, height: 0 }} className="overflow-hidden">
+          {displayHash && isSimActive && (
+            <motion.div initial={{ opacity: 0, y: -6, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -6, height: 0 }} className="overflow-hidden relative z-10">
               <div className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg" style={{
                 ...glassInner, border: '1px solid hsla(43, 96%, 56%, 0.15)',
                 boxShadow: 'inset 0 1px 0 hsla(48, 100%, 80%, 0.06), 0 0 16px -6px hsla(43, 96%, 56%, 0.15)',
               }}>
                 <div className="flex items-center gap-1.5">
                   <Hash className="w-2.5 h-2.5" style={{ color: 'hsl(43, 96%, 56%)', filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.4))' }} />
-                  <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">TRUST LEDGER</span>
+                  <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">SCENARIO HASH</span>
                   <span className="text-[9px] font-mono font-bold tabular-nums" style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))' }}>{displayHash.slice(0, 16)}…</span>
                 </div>
                 <button onClick={() => setShowReceipt(!showReceipt)} className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-mono font-bold transition-all hover:scale-105" style={{
@@ -221,6 +301,7 @@ export function InteractiveWaterfall({
                       <div>Posterior: <span className="font-bold tabular-nums" style={isDropping ? { color: 'hsl(4, 82%, 63%)', textShadow: '0 0 8px hsla(4, 82%, 63%, 0.4)' } : goldGradientStyle}>{(whatIfResult.update_result.posterior * 100).toFixed(2)}%</span></div>
                       <div>Excluded: <span className="font-bold" style={goldGradientStyle}>{excludedIds.size} evidence items</span></div>
                       <div>Δ Log-Odds: <span className="font-bold tabular-nums" style={isDropping ? { color: 'hsl(4, 82%, 63%)' } : goldGradientStyle}>{whatIfResult.update_result.delta_log_odds.toFixed(4)}</span></div>
+                      <div className="text-[8px] italic text-muted-foreground pt-1" style={{ opacity: 0.6 }}>⚠ Sandbox only — not committed to Trust Ledger</div>
                     </div>
                   </motion.div>
                 )}
@@ -230,7 +311,7 @@ export function InteractiveWaterfall({
         </AnimatePresence>
 
         {/* ═══ 1. PRIOR BAR — tier-colored ═══ */}
-        <div className="flex items-center gap-3 py-1.5">
+        <div className="flex items-center gap-3 py-1.5 relative z-10">
           <div className="w-28 text-[10px] font-mono font-bold truncate uppercase tracking-wider" style={{ color: tierColor }}>
             Prior <span className="text-[8px] opacity-70">({tier})</span>
           </div>
@@ -254,7 +335,7 @@ export function InteractiveWaterfall({
           </div>
         </div>
 
-        {/* ═══ 2. EVIDENCE BLOCKS — sorted by |delta_log_odds| ═══ */}
+        {/* ═══ 2. EVIDENCE BLOCKS with iOS toggles ═══ */}
         <AnimatePresence mode="popLayout">
           {blocks.map((block, i) => {
             const meta = block.contribution.evidence_meta;
@@ -263,6 +344,7 @@ export function InteractiveWaterfall({
             const excluded = block.excluded;
             const widthPct = Math.min((Math.abs(block.contribution.delta_log_odds) / maxAbsDelta) * 65, 85);
             const isHovered = hoveredId === block.contribution.evidence_id;
+            const isBursting = particleBurst === block.contribution.evidence_id;
 
             const barColor = excluded ? 'hsla(220, 10%, 50%, 0.15)'
               : isSupport ? COLORS.supportsBg
@@ -278,7 +360,6 @@ export function InteractiveWaterfall({
             const deltaStr = `${block.contribution.delta_log_odds > 0 ? '+' : ''}${block.contribution.delta_log_odds.toFixed(2)}`;
             const evTitle = shorten(block.ev?.source || block.contribution.evidence_id);
 
-            // Mode-specific tooltip
             const tooltipText = isWonder
               ? isSupport
                 ? `This green magnet pulled confidence up by ${Math.abs(block.contribution.delta_log_odds * 100 / 2.3).toFixed(0)}% — like a rocket boost! 🚀`
@@ -296,33 +377,21 @@ export function InteractiveWaterfall({
                     animate={{ opacity: excluded ? 0.35 : 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
                     transition={{ delay: 0.03 + i * 0.03, duration: 0.3 }}
-                    className="group relative cursor-pointer"
-                    onClick={() => {
-                      if (simMode) toggleEvidence(block.contribution.evidence_id);
-                      else onEvidenceClick?.(block.contribution.evidence_id);
-                    }}
+                    className="group relative cursor-pointer z-10"
+                    onClick={() => onEvidenceClick?.(block.contribution.evidence_id)}
                     onMouseEnter={() => setHoveredId(block.contribution.evidence_id)}
                     onMouseLeave={() => setHoveredId(null)}
                   >
                     <div className="flex items-center gap-2 py-0.5">
-                      {/* Sim toggle */}
-                      {simMode && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleEvidence(block.contribution.evidence_id); }}
-                          className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all"
-                          style={{
-                            background: excluded ? 'hsla(4, 82%, 50%, 0.2)' : 'hsla(123, 38%, 48%, 0.15)',
-                            border: `1px solid ${excluded ? 'hsla(4, 82%, 63%, 0.3)' : 'hsla(123, 38%, 57%, 0.25)'}`,
-                          }}
-                        >
-                          <span className="text-[7px] font-bold" style={{ color: excluded ? COLORS.contradicts : COLORS.supports }}>
-                            {excluded ? '✕' : '✓'}
-                          </span>
-                        </button>
-                      )}
+                      {/* iOS-style glowing toggle */}
+                      <EvidenceToggle
+                        enabled={!excluded}
+                        onToggle={() => toggleEvidence(block.contribution.evidence_id)}
+                        direction={meta.direction as 'supports' | 'contradicts' | 'ambiguous'}
+                      />
 
                       {/* Evidence label */}
-                      <div className={`${simMode ? 'w-24' : 'w-28'} text-[9px] text-muted-foreground truncate font-mono leading-tight`} title={block.ev?.source}>
+                      <div className="w-24 text-[9px] text-muted-foreground truncate font-mono leading-tight" title={block.ev?.source}>
                         <span className="block truncate">{evTitle}</span>
                         <span className="block font-bold tabular-nums" style={{
                           color: excluded ? 'hsl(220, 10%, 40%)'
@@ -361,6 +430,17 @@ export function InteractiveWaterfall({
                         )}
                       </div>
 
+                      {/* Analyst mode: inline log-odds delta */}
+                      {!isWonder && (
+                        <span className="hidden sm:inline text-[9px] font-mono font-bold tabular-nums shrink-0" style={{
+                          color: excluded ? 'hsl(220, 10%, 40%)'
+                            : isSupport ? COLORS.supports : isContradict ? COLORS.contradicts : COLORS.ambiguous,
+                          fontFamily: "'Space Mono', monospace",
+                        }}>
+                          {deltaStr}
+                        </span>
+                      )}
+
                       {/* Provenance micro-badges */}
                       <div className="hidden sm:flex items-center gap-1 shrink-0">
                         <MicroBadge value={meta.credibility} color={COLORS.supports} />
@@ -368,8 +448,36 @@ export function InteractiveWaterfall({
                       </div>
                     </div>
 
+                    {/* Wonder mode particle burst on toggle-off */}
+                    {isBursting && (
+                      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                        {[...Array(10)].map((_, si) => (
+                          <motion.div
+                            key={`burst-${si}`}
+                            className="absolute rounded-full"
+                            style={{
+                              width: 3 + Math.random() * 4,
+                              height: 3 + Math.random() * 4,
+                              background: `radial-gradient(circle, hsla(192, 95%, 65%, ${0.6 + Math.random() * 0.3}), transparent)`,
+                              left: `${20 + Math.random() * 60}%`,
+                              top: `${20 + Math.random() * 60}%`,
+                              boxShadow: '0 0 8px hsla(192, 95%, 55%, 0.5)',
+                            }}
+                            initial={{ scale: 1, opacity: 0.9 }}
+                            animate={{
+                              x: (Math.random() - 0.5) * 60,
+                              y: (Math.random() - 0.5) * 40,
+                              scale: 0,
+                              opacity: 0,
+                            }}
+                            transition={{ duration: 0.5 + Math.random() * 0.3, ease: 'easeOut', delay: si * 0.03 }}
+                          />
+                        ))}
+                      </div>
+                    )}
+
                     {/* Wonder mode sparkle particles on hover */}
-                    {isWonder && isHovered && !excluded && (
+                    {isWonder && isHovered && !excluded && !isBursting && (
                       <div className="absolute inset-0 pointer-events-none overflow-hidden">
                         {[...Array(6)].map((_, si) => (
                           <motion.div
@@ -439,9 +547,9 @@ export function InteractiveWaterfall({
           })}
         </AnimatePresence>
 
-        {/* ═══ 3. POSTERIOR BAR — glowing, animated number ═══ */}
+        {/* ═══ 3. POSTERIOR BAR ═══ */}
         <motion.div
-          className="flex items-center gap-3 py-1.5 mt-1 pt-3"
+          className="flex items-center gap-3 py-1.5 mt-1 pt-3 relative z-10"
           style={{ borderTop: `1px solid ${isDropping ? 'hsla(4, 82%, 63%, 0.2)' : 'hsla(43, 96%, 56%, 0.15)'}` }}
           animate={whatIfResult ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.4 }}
@@ -452,7 +560,7 @@ export function InteractiveWaterfall({
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             } : { ...goldGradientStyle, filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))' }),
           }}>
-            {whatIfResult ? 'SIM POSTERIOR' : 'Posterior'}
+            {isSimActive ? 'SIM POSTERIOR' : 'Posterior'}
           </div>
           <div className="flex-1 h-9 rounded-lg relative overflow-hidden" style={{
             background: 'rgba(8, 10, 28, 0.6)',
@@ -495,10 +603,10 @@ export function InteractiveWaterfall({
           </div>
         </motion.div>
 
-        {/* WhatIf delta */}
+        {/* Scenario delta summary */}
         {whatIfResult && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between px-3 py-2 rounded-xl"
+            className="flex items-center justify-between px-3 py-2 rounded-xl relative z-10"
             style={{ ...glassInner, border: `1px solid ${isDropping ? 'hsla(4, 82%, 63%, 0.2)' : 'hsla(192, 95%, 50%, 0.2)'}` }}
           >
             <span className="text-[10px] font-mono text-muted-foreground">
@@ -508,13 +616,18 @@ export function InteractiveWaterfall({
               color: 'hsl(4, 82%, 63%)', textShadow: '0 0 12px hsla(4, 82%, 63%, 0.5)',
             } : { color: 'hsl(123, 38%, 57%)', textShadow: '0 0 8px hsla(123, 38%, 57%, 0.3)' }}>
               Δ {posteriorDelta > 0 ? '+' : ''}{(posteriorDelta * 100).toFixed(1)}pp
+              {!isWonder && (
+                <span className="ml-2 text-[9px] text-muted-foreground" style={{ fontFamily: "'Space Mono', monospace" }}>
+                  ({whatIfResult.update_result.delta_log_odds > 0 ? '+' : ''}{whatIfResult.update_result.delta_log_odds.toFixed(4)} LO)
+                </span>
+              )}
             </span>
           </motion.div>
         )}
 
         {/* Loading bar */}
         {whatIfLoading && (
-          <motion.div className="h-0.5 rounded-full overflow-hidden" style={{ background: 'hsla(192, 95%, 50%, 0.1)' }}>
+          <motion.div className="h-0.5 rounded-full overflow-hidden relative z-10" style={{ background: 'hsla(192, 95%, 50%, 0.1)' }}>
             <motion.div className="h-full" style={{ background: 'linear-gradient(90deg, hsl(192, 95%, 50%), hsl(43, 96%, 56%))' }}
               animate={{ x: ['-100%', '100%'] }} transition={{ duration: 0.8, repeat: Infinity }} />
           </motion.div>
@@ -525,7 +638,6 @@ export function InteractiveWaterfall({
 }
 
 function MicroBadge({ value, color }: { value: number; color: string }) {
-  const w = Math.max(value * 14, 3);
   return (
     <div className="w-4 h-3 rounded-sm flex items-end overflow-hidden" style={{ background: 'hsla(220, 10%, 30%, 0.3)' }}>
       <div style={{ width: '100%', height: `${value * 100}%`, background: `${color}88`, borderRadius: '1px 1px 0 0' }} />
