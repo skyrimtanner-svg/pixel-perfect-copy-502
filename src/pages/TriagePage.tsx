@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { milestones, Domain, domainLabels } from '@/data/milestones';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { milestones as staticMilestones, Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
 import { TriageStrip } from '@/components/TriageStrip';
@@ -8,6 +8,7 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import type { Milestone } from '@/data/milestones';
 import { ChevronDown, FileText, Filter } from 'lucide-react';
 import { specularReflection } from '@/lib/glass-styles';
+import { supabase } from '@/integrations/supabase/client';
 
 const domains: (Domain | 'all')[] = ['all', 'compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
 
@@ -36,6 +37,42 @@ export default function TriagePage() {
   const [selectedDomain, setSelectedDomain] = useState<Domain | 'all'>('all');
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+  const [realtimeOverrides, setRealtimeOverrides] = useState<Record<string, Partial<Milestone>>>({});
+
+  // Subscribe to real-time milestone updates (posterior, delta_log_odds changes)
+  useEffect(() => {
+    const channel = supabase
+      .channel('milestone-triage-updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'milestones' },
+        (payload) => {
+          const updated = payload.new as any;
+          if (updated?.id) {
+            setRealtimeOverrides(prev => ({
+              ...prev,
+              [updated.id]: {
+                posterior: updated.posterior,
+                prior: updated.prior,
+                delta_log_odds: updated.delta_log_odds,
+              },
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Merge static milestones with realtime overrides
+  const milestones = useMemo(() => {
+    return staticMilestones.map(m => {
+      const override = realtimeOverrides[m.id];
+      if (!override) return m;
+      return { ...m, ...override };
+    });
+  }, [realtimeOverrides]);
 
   const filtered = useMemo(() => {
     const list = selectedDomain === 'all' ? milestones : milestones.filter(m => m.domain === selectedDomain);

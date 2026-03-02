@@ -9,6 +9,7 @@ import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
+import { useHysteresis } from '@/hooks/useHysteresis';
 import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
@@ -34,6 +35,7 @@ interface MilestoneModalProps {
 export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps) {
   const { isWonder } = useMode();
   const { loading, detail, whatIfResult, whatIfLoading, fetchMilestone, runWhatIf } = useMilestoneAPI();
+  const hysteresis = useHysteresis();
   const [ledgerHash, setLedgerHash] = useState<string | null>(null);
   const [snapshotTimestamp, setSnapshotTimestamp] = useState<string | null>(null);
   const [isNegativeShift, setIsNegativeShift] = useState(false);
@@ -48,6 +50,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
       setIsNegativeShift(false);
       setSimPosterior(null);
       setTagFlip(null);
+      hysteresis.reset();
       setActiveTab('overview');
       hasFetchedWhyRef.current = null;
       setLedgerHash(null);
@@ -73,11 +76,18 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
     setIsNegativeShift(negative);
     setSimPosterior(posterior);
     
-    // Determine tag flip based on threshold crossing
+    if (milestone) {
+      // Record update for hysteresis tracking
+      hysteresis.recordUpdate(posterior, milestone.prior, milestone.archetype);
+    }
+    
+    // Determine tag flip based on threshold crossing or hysteresis demotion
     if (milestone && negative) {
       const origArchetype = milestone.archetype;
-      // If a breakthrough drops significantly, it becomes a bottleneck
-      if (origArchetype === 'breakthrough' && posterior < milestone.prior) {
+      if (hysteresis.shouldDemote && hysteresis.demotedArchetype) {
+        // Hysteresis-triggered demotion (3 consecutive drops)
+        setTagFlip({ from: origArchetype.charAt(0).toUpperCase() + origArchetype.slice(1), to: 'Bottleneck' });
+      } else if (origArchetype === 'breakthrough' && posterior < milestone.prior) {
         setTagFlip({ from: 'Breakthrough', to: 'Bottleneck' });
       } else if (origArchetype === 'sleeper' && posterior < milestone.prior * 0.7) {
         setTagFlip({ from: 'Sleeper', to: 'Bottleneck' });
@@ -87,7 +97,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
     } else {
       setTagFlip(null);
     }
-  }, [milestone]);
+  }, [milestone, hysteresis]);
 
   if (!milestone) return null;
 
