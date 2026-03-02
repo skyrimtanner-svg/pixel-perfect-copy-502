@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Shield, Clock, Users, Crosshair, ToggleLeft, ToggleRight, Beaker, Hash } from 'lucide-react';
@@ -52,12 +52,18 @@ export function InteractiveWaterfall({
     });
   }, []);
 
-  // Trigger whatif when exclusions change
-  const runSim = useCallback(() => {
-    if (excludedIds.size > 0) {
-      onWhatIf(milestoneId, Array.from(excludedIds));
-    }
-  }, [excludedIds, milestoneId, onWhatIf]);
+  // Auto-trigger whatif when exclusions change
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (!simMode) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (excludedIds.size > 0) {
+        onWhatIf(milestoneId, Array.from(excludedIds));
+      }
+    }, 150);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [excludedIds, simMode, milestoneId, onWhatIf]);
 
   // Use whatif contributions or original
   const activeContribs = whatIfResult?.update_result.contributions ?? contributions;
@@ -209,16 +215,7 @@ export function InteractiveWaterfall({
                 {/* Toggle button (sim mode) */}
                 {simMode && (
                   <button
-                    onClick={() => {
-                      toggleEvidence(block.contribution.evidence_id);
-                      // Trigger whatif after toggle
-                      setTimeout(() => {
-                        const newSet = new Set(excludedIds);
-                        if (newSet.has(block.contribution.evidence_id)) newSet.delete(block.contribution.evidence_id);
-                        else newSet.add(block.contribution.evidence_id);
-                        if (newSet.size > 0) onWhatIf(milestoneId, Array.from(newSet));
-                      }, 50);
-                    }}
+                    onClick={() => toggleEvidence(block.contribution.evidence_id)}
                     className="w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all duration-200"
                     style={{
                       background: excluded
