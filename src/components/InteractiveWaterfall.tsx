@@ -129,9 +129,11 @@ export function InteractiveWaterfall({
   useEffect(() => {
     if (!whatIfResult || !isWonder) return;
     const newPosterior = whatIfResult.update_result.posterior;
-    const prevP = prevPosteriorRef.current;
-    if (prevP !== null && Math.abs(newPosterior - prevP) > 0.08) {
-      const delta = newPosterior - prevP;
+    const canonicalPosterior = contributions.reduce((acc, c) => acc + c.delta_log_odds, Math.log(prior / (1 - prior)));
+    const canonicalP = 1 / (1 + Math.exp(-canonicalPosterior));
+    const baseline = prevPosteriorRef.current ?? canonicalP;
+    const delta = newPosterior - baseline;
+    if (Math.abs(delta) > 0.08) {
       toast({
         title: delta < 0 ? "🌊 Whoa!" : "🚀 Boom!",
         description: delta < 0
@@ -140,7 +142,7 @@ export function InteractiveWaterfall({
       });
     }
     prevPosteriorRef.current = newPosterior;
-  }, [whatIfResult, isWonder]);
+  }, [whatIfResult, isWonder, prior, contributions]);
 
   // Reset prevPosterior when no whatif
   useEffect(() => {
