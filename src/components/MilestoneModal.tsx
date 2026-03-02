@@ -1,10 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Milestone } from '@/data/milestones';
 import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
 import { ProbabilityRing } from '@/components/ProbabilityRing';
 import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
+import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
+import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
 import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle } from 'lucide-react';
@@ -33,23 +35,38 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   const { isWonder } = useMode();
   const { loading, detail, whatIfResult, whatIfLoading, fetchMilestone, runWhatIf } = useMilestoneAPI();
   const [ledgerHash, setLedgerHash] = useState<string | null>(null);
+  const [snapshotTimestamp, setSnapshotTimestamp] = useState<string | null>(null);
   const [isNegativeShift, setIsNegativeShift] = useState(false);
   const [simPosterior, setSimPosterior] = useState<number | null>(null);
   const [tagFlip, setTagFlip] = useState<{ from: string; to: string } | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const hasFetchedWhyRef = useRef<string | null>(null);
 
-  // Fetch live data on open
+  // Reset state on modal open/close
   useEffect(() => {
     if (open && milestone) {
-      fetchMilestone(milestone.id).then(result => {
-        if (result?.bayes) {
-          setLedgerHash(null);
-        }
-      });
       setIsNegativeShift(false);
       setSimPosterior(null);
       setTagFlip(null);
+      setActiveTab('overview');
+      hasFetchedWhyRef.current = null;
+      setLedgerHash(null);
+      setSnapshotTimestamp(null);
     }
-  }, [open, milestone?.id, fetchMilestone]);
+  }, [open, milestone?.id]);
+
+  // Lazy-load: fetch only when "why" tab is selected
+  useEffect(() => {
+    if (activeTab === 'why' && milestone && hasFetchedWhyRef.current !== milestone.id) {
+      hasFetchedWhyRef.current = milestone.id;
+      fetchMilestone(milestone.id).then(result => {
+        if (result?.bayes) {
+          // Extract snapshot hash from trust ledger if available
+          setSnapshotTimestamp(new Date().toISOString());
+        }
+      });
+    }
+  }, [activeTab, milestone?.id, fetchMilestone]);
 
   // Handle negative shift callback from waterfall
   const handleNegativeShift = useCallback((negative: boolean, posterior: number) => {
@@ -253,7 +270,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         </DialogHeader>
 
         {/* Tabs */}
-        <Tabs defaultValue="overview" className="p-6 pt-4 relative z-10">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="p-6 pt-4 relative z-10">
           <TabsList className="mb-4 rounded-xl p-1 relative overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
             <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl pointer-events-none" style={specularReflection} />
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">Overview</TabsTrigger>
@@ -355,48 +372,74 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
 
           <TabsContent value="why">
             {loading ? (
-              <div className="flex items-center justify-center py-12 gap-3">
-                <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'hsl(43, 96%, 56%)' }} />
-                <span className="text-sm text-muted-foreground font-mono">Loading Bayesian engine...</span>
-              </div>
+              <WhyItChangedSkeleton />
             ) : liveData?.bayes ? (
-              <InteractiveWaterfall
-                prior={liveData.bayes.prior}
-                contributions={liveData.bayes.contributions}
-                evidence={liveData.evidence}
-                milestoneId={milestone.id}
-                onWhatIf={runWhatIf}
-                whatIfResult={whatIfResult}
-                whatIfLoading={whatIfLoading}
-                ledgerHash={ledgerHash ?? undefined}
-                onNegativeShift={handleNegativeShift}
-              />
+              <>
+                <WhyItChangedHeader
+                  posterior={displayPosterior}
+                  prior={livePrior}
+                  snapshotHash={ledgerHash}
+                  snapshotTimestamp={snapshotTimestamp}
+                  evidence={liveData.evidence}
+                  domainColor={isNegativeShift ? 'hsl(0, 72%, 55%)' : domainHsl[milestone.domain] || 'hsl(var(--primary))'}
+                  isNegativeShift={isNegativeShift}
+                  previousValue={livePosterior}
+                />
+                <InteractiveWaterfall
+                  prior={liveData.bayes.prior}
+                  contributions={liveData.bayes.contributions}
+                  evidence={liveData.evidence}
+                  milestoneId={milestone.id}
+                  onWhatIf={runWhatIf}
+                  whatIfResult={whatIfResult}
+                  whatIfLoading={whatIfLoading}
+                  ledgerHash={ledgerHash ?? undefined}
+                  onNegativeShift={handleNegativeShift}
+                />
+              </>
             ) : (
-              <InteractiveWaterfall
-                prior={milestone.prior}
-                contributions={milestone.evidence.map(ev => ({
-                  evidence_id: ev.id,
-                  evidence_meta: {
-                    type: ev.type, credibility: ev.credibility, recency: ev.recency,
-                    decay: ev.recency, consensus: ev.consensus, direction: ev.direction,
-                    criteria_match: ev.criteria_match,
-                  },
-                  composite: ev.composite,
-                  delta_log_odds: ev.delta_log_odds,
-                }))}
-                evidence={milestone.evidence.map(ev => ({
-                  id: ev.id, milestone_id: milestone.id, source: ev.source,
-                  type: ev.type, direction: ev.direction, credibility: ev.credibility,
-                  recency: ev.recency, consensus: ev.consensus, criteria_match: ev.criteria_match,
-                  composite: ev.composite, delta_log_odds: ev.delta_log_odds,
-                  date: ev.date, summary: ev.summary,
-                }))}
-                milestoneId={milestone.id}
-                onWhatIf={runWhatIf}
-                whatIfResult={whatIfResult}
-                whatIfLoading={whatIfLoading}
-                onNegativeShift={handleNegativeShift}
-              />
+              <>
+                <WhyItChangedHeader
+                  posterior={milestone.posterior}
+                  prior={milestone.prior}
+                  snapshotHash={null}
+                  snapshotTimestamp={null}
+                  evidence={milestone.evidence.map(ev => ({
+                    id: ev.id, milestone_id: milestone.id, source: ev.source,
+                    type: ev.type, direction: ev.direction, credibility: ev.credibility,
+                    recency: ev.recency, consensus: ev.consensus, criteria_match: ev.criteria_match,
+                    composite: ev.composite, delta_log_odds: ev.delta_log_odds,
+                    date: ev.date, summary: ev.summary,
+                  }))}
+                  domainColor={domainHsl[milestone.domain] || 'hsl(var(--primary))'}
+                  isNegativeShift={false}
+                />
+                <InteractiveWaterfall
+                  prior={milestone.prior}
+                  contributions={milestone.evidence.map(ev => ({
+                    evidence_id: ev.id,
+                    evidence_meta: {
+                      type: ev.type, credibility: ev.credibility, recency: ev.recency,
+                      decay: ev.recency, consensus: ev.consensus, direction: ev.direction,
+                      criteria_match: ev.criteria_match,
+                    },
+                    composite: ev.composite,
+                    delta_log_odds: ev.delta_log_odds,
+                  }))}
+                  evidence={milestone.evidence.map(ev => ({
+                    id: ev.id, milestone_id: milestone.id, source: ev.source,
+                    type: ev.type, direction: ev.direction, credibility: ev.credibility,
+                    recency: ev.recency, consensus: ev.consensus, criteria_match: ev.criteria_match,
+                    composite: ev.composite, delta_log_odds: ev.delta_log_odds,
+                    date: ev.date, summary: ev.summary,
+                  }))}
+                  milestoneId={milestone.id}
+                  onWhatIf={runWhatIf}
+                  whatIfResult={whatIfResult}
+                  whatIfLoading={whatIfLoading}
+                  onNegativeShift={handleNegativeShift}
+                />
+              </>
             )}
           </TabsContent>
 
