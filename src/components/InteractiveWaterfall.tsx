@@ -149,9 +149,10 @@ export function InteractiveWaterfall({
     if (!whatIfResult) prevPosteriorRef.current = null;
   }, [whatIfResult]);
 
-  const activeContribs = whatIfResult?.update_result.contributions ?? contributions;
-  const activePrior = whatIfResult?.update_result.prior ?? prior;
-  const activePosterior = whatIfResult?.update_result.posterior ?? null;
+  const effectiveWhatIf = isSimActive ? whatIfResult : null;
+  const activeContribs = effectiveWhatIf?.update_result.contributions ?? contributions;
+  const activePrior = effectiveWhatIf?.update_result.prior ?? prior;
+  const activePosterior = effectiveWhatIf?.update_result.posterior ?? null;
 
   const sortedContribs = useMemo(() =>
     [...activeContribs].sort((a, b) => Math.abs(b.delta_log_odds) - Math.abs(a.delta_log_odds)),
@@ -178,7 +179,7 @@ export function InteractiveWaterfall({
   const finalPosterior = activePosterior ?? (blocks.length > 0 ? blocks[blocks.length - 1].endProb : prior);
   const maxAbsDelta = Math.max(...sortedContribs.map(c => Math.abs(c.delta_log_odds)), 0.5);
   const posteriorDelta = finalPosterior - prior;
-  const isDropping = whatIfResult && (whatIfResult.update_result.posterior < prior);
+  const isDropping = effectiveWhatIf && (effectiveWhatIf.update_result.posterior < prior);
 
   useEffect(() => { onNegativeShift?.(!!isDropping, finalPosterior); }, [isDropping, finalPosterior, onNegativeShift]);
 
@@ -294,15 +295,15 @@ export function InteractiveWaterfall({
                 </button>
               </div>
               <AnimatePresence>
-                {showReceipt && whatIfResult && (
+                {showReceipt && effectiveWhatIf && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                     className="mt-1.5 rounded-lg p-3 space-y-1 overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(43, 96%, 56%, 0.12)' }}>
                     <div className="text-[9px] font-mono text-muted-foreground space-y-1">
                       <div>SHA-256: <span className="font-bold tabular-nums break-all" style={goldGradientStyle}>{displayHash}</span></div>
-                      <div>Prior: <span className="font-bold tabular-nums" style={goldGradientStyle}>{(whatIfResult.update_result.prior * 100).toFixed(2)}%</span></div>
-                      <div>Posterior: <span className="font-bold tabular-nums" style={isDropping ? { color: 'hsl(4, 82%, 63%)', textShadow: '0 0 8px hsla(4, 82%, 63%, 0.4)' } : goldGradientStyle}>{(whatIfResult.update_result.posterior * 100).toFixed(2)}%</span></div>
+                      <div>Prior: <span className="font-bold tabular-nums" style={goldGradientStyle}>{(effectiveWhatIf.update_result.prior * 100).toFixed(2)}%</span></div>
+                      <div>Posterior: <span className="font-bold tabular-nums" style={isDropping ? { color: 'hsl(4, 82%, 63%)', textShadow: '0 0 8px hsla(4, 82%, 63%, 0.4)' } : goldGradientStyle}>{(effectiveWhatIf.update_result.posterior * 100).toFixed(2)}%</span></div>
                       <div>Excluded: <span className="font-bold" style={goldGradientStyle}>{excludedIds.size} evidence items</span></div>
-                      <div>Δ Log-Odds: <span className="font-bold tabular-nums" style={isDropping ? { color: 'hsl(4, 82%, 63%)' } : goldGradientStyle}>{whatIfResult.update_result.delta_log_odds.toFixed(4)}</span></div>
+                      <div>Δ Log-Odds: <span className="font-bold tabular-nums" style={isDropping ? { color: 'hsl(4, 82%, 63%)' } : goldGradientStyle}>{effectiveWhatIf.update_result.delta_log_odds.toFixed(4)}</span></div>
                       <div className="text-[8px] italic text-muted-foreground pt-1" style={{ opacity: 0.6 }}>⚠ Sandbox only — not committed to Trust Ledger</div>
                     </div>
                   </motion.div>
@@ -553,7 +554,7 @@ export function InteractiveWaterfall({
         <motion.div
           className="flex items-center gap-3 py-1.5 mt-1 pt-3 relative z-10"
           style={{ borderTop: `1px solid ${isDropping ? 'hsla(4, 82%, 63%, 0.2)' : 'hsla(43, 96%, 56%, 0.15)'}` }}
-          animate={whatIfResult ? { scale: [1, 1.02, 1] } : {}}
+          animate={effectiveWhatIf ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.4 }}
         >
           <div className="w-28 text-[10px] font-mono font-bold uppercase tracking-wider" style={{
