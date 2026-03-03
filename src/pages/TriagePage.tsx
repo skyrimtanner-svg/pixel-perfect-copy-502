@@ -3,8 +3,10 @@ import { milestones as staticMilestones, Domain, domainLabels } from '@/data/mil
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
 import { LPMemoExport } from '@/components/LPMemoExport';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
+import { useEntitlement } from '@/hooks/useEntitlement';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import type { Milestone } from '@/data/milestones';
 import { ChevronDown, FileText, Filter } from 'lucide-react';
@@ -35,11 +37,13 @@ const LOAD_MORE_COUNT = 8;
 
 export default function TriagePage() {
   const { isWonder } = useMode();
+  const { canExportMemo } = useEntitlement();
   const [selectedDomain, setSelectedDomain] = useState<Domain | 'all'>('all');
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
   const [realtimeOverrides, setRealtimeOverrides] = useState<Record<string, Partial<Milestone>>>({});
   const [memoMilestone, setMemoMilestone] = useState<Milestone | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   // Subscribe to real-time milestone updates (posterior, delta_log_odds changes)
   useEffect(() => {
@@ -113,7 +117,7 @@ export default function TriagePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
-              // Open memo for top milestone in current filter
+              if (!canExportMemo) { setShowUpgrade(true); return; }
               if (filtered.length > 0) setMemoMilestone(filtered[0]);
             }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shine-sweep relative overflow-hidden group"
@@ -268,6 +272,13 @@ export default function TriagePage() {
           onClose={() => setMemoMilestone(null)}
         />
       )}
+
+      <UpgradePrompt
+        open={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature="Export LP Memo"
+        requiredTier="Pro+"
+      />
     </motion.div>
   );
 }

@@ -8,8 +8,10 @@ import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
 import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
 import { LPMemoExport } from '@/components/LPMemoExport';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
+import { useEntitlement } from '@/hooks/useEntitlement';
 import { useHysteresis } from '@/hooks/useHysteresis';
 import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle, FileText, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +37,7 @@ interface MilestoneModalProps {
 
 export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps) {
   const { isWonder } = useMode();
+  const { canExportMemo } = useEntitlement();
   const { loading, detail, whatIfResult, whatIfLoading, fetchMilestone, runWhatIf } = useMilestoneAPI();
   const [commitInProgress, setCommitInProgress] = useState(false);
   const hysteresis = useHysteresis();
@@ -45,6 +48,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   const [tagFlip, setTagFlip] = useState<{ from: string; to: string } | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [showMemoExport, setShowMemoExport] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const hasFetchedWhyRef = useRef<string | null>(null);
 
   // Reset state on modal open/close
@@ -543,7 +547,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           {/* Export LP Memo button */}
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
             <motion.button
-              onClick={() => setShowMemoExport(true)}
+              onClick={() => {
+                if (!canExportMemo) { setShowUpgrade(true); return; }
+                setShowMemoExport(true);
+              }}
               className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl text-xs font-semibold relative overflow-hidden shine-sweep"
               style={{
                 background: 'linear-gradient(135deg, hsl(38, 88%, 32%), hsl(43, 96%, 48%), hsl(48, 100%, 68%), hsl(50, 100%, 82%), hsl(48, 100%, 66%), hsl(43, 96%, 46%))',
@@ -576,6 +583,13 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           ledgerHash={ledgerHash}
         />
       )}
+
+      <UpgradePrompt
+        open={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature="Export LP Memo"
+        requiredTier="Pro+"
+      />
     </Dialog>
   );
 }
