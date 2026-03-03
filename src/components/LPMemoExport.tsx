@@ -258,16 +258,18 @@ export function LPMemoExport({ milestone, open, onClose, simPosterior, ledgerHas
     pdf.setLineWidth(0.5);
     pdf.line(margin, footerY, W - margin, footerY);
 
-    // Hash
+    // Hash as clickable link
+    const verifyUrl = `${window.location.origin}/verify/${hash}`;
     pdf.setFontSize(6);
     pdf.setTextColor(218, 175, 60);
     pdf.setFont('helvetica', 'bold');
-    pdf.text(`SHA-256: ${hash.slice(0, 32)}…${hash.slice(-8)}`, margin, footerY + 5);
+    const hashText = `SHA-256: ${hash.slice(0, 32)}…${hash.slice(-8)}`;
+    pdf.textWithLink(hashText, margin, footerY + 5, { url: verifyUrl });
 
-    // Verification text
+    // Verification text with link
     pdf.setFontSize(7);
     pdf.setTextColor(218, 165, 32);
-    pdf.text('This forecast is immutable and auditable forever — verified on the Trust Ledger', margin, footerY + 10);
+    pdf.textWithLink('This forecast is immutable and auditable forever — verified on the Trust Ledger ↗', margin, footerY + 10, { url: verifyUrl });
 
     // Timestamp
     pdf.setFontSize(6);
@@ -467,6 +469,13 @@ export function LPMemoExport({ milestone, open, onClose, simPosterior, ledgerHas
                   <div className="flex items-center gap-1.5 mt-2 text-[9px] font-mono text-muted-foreground">
                     <Hash className="w-2.5 h-2.5" style={{ color: 'hsl(43, 96%, 56%)' }} />
                     <span style={goldGradientStyle}>{memoHash.slice(0, 24)}…</span>
+                    <button
+                      onClick={() => window.open(`/verify/${memoHash}`, '_blank')}
+                      className="ml-1.5 flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold transition-colors hover:bg-white/5"
+                      style={{ color: 'hsl(43, 96%, 56%)', border: '1px solid hsla(43, 96%, 56%, 0.25)' }}
+                    >
+                      <ExternalLink className="w-2.5 h-2.5" /> View Receipt
+                    </button>
                   </div>
                 )}
               </motion.div>

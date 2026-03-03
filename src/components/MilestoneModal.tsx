@@ -11,7 +11,7 @@ import { LPMemoExport } from '@/components/LPMemoExport';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
 import { useHysteresis } from '@/hooks/useHysteresis';
-import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle, FileText } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle, FileText, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
@@ -519,6 +519,27 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               ))
             )}
           </TabsContent>
+          {/* View Receipt button after commit */}
+          {ledgerHash && (
+            <div className="mt-3 flex items-center justify-center">
+              <motion.button
+                onClick={() => window.open(`/verify/${ledgerHash}`, '_blank')}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-mono font-bold transition-all"
+                style={{
+                  background: 'hsla(43, 40%, 10%, 0.5)',
+                  border: '1px solid hsla(43, 96%, 56%, 0.3)',
+                  color: 'hsl(43, 96%, 56%)',
+                  boxShadow: '0 0 20px -6px hsla(43, 96%, 56%, 0.2)',
+                }}
+                whileHover={{ scale: 1.03, boxShadow: '0 0 28px -4px hsla(43, 96%, 56%, 0.35)' }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                View Receipt on Trust Ledger
+                <ExternalLink className="w-3 h-3 opacity-60" />
+              </motion.button>
+            </div>
+          )}
           {/* Export LP Memo button */}
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
             <motion.button
