@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { ModeProvider } from "@/contexts/ModeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
@@ -17,7 +17,7 @@ import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoutes() {
+function ProtectedRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -30,16 +30,7 @@ function ProtectedRoutes() {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<TriagePage />} />
-        <Route path="/traces" element={<TracesPage />} />
-        <Route path="/calibration" element={<CalibrationPage />} />
-        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-      </Route>
-    </Routes>
-  );
+  return <Outlet />;
 }
 
 const App = () => (
@@ -53,7 +44,16 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/verify/:hash" element={<VerifyPage />} />
-              <Route path="*" element={<ProtectedRoutes />} />
+
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={<TriagePage />} />
+                  <Route path="/traces" element={<TracesPage />} />
+                  <Route path="/calibration" element={<CalibrationPage />} />
+                  <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Route>
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
