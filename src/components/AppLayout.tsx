@@ -1,13 +1,18 @@
 import { Outlet } from 'react-router-dom';
 import { NavItem } from '@/components/NavItem';
 import { ModeToggle } from '@/components/ModeToggle';
-import { Target, LineChart, BarChart3, Eye } from 'lucide-react';
+import { OnboardingTutorial } from '@/components/OnboardingTutorial';
+import { Target, LineChart, BarChart3, Eye, LogOut, Shield } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function AppLayout() {
   const mainRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
+  const { signOut, isAdmin, profile } = useAuth();
+  const navigate = useNavigate();
   
   // Parallax transforms — background layers move slower than content
   const nebula1Y = useTransform(scrollY, [0, 1000], [0, -60]);
@@ -177,12 +182,37 @@ export default function AppLayout() {
 
           {/* ── Right controls ── */}
           <motion.div
-            className="flex items-center gap-3"
+            className="flex items-center gap-2"
             initial={{ opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           >
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/admin/analytics')}
+                className="p-2 rounded-lg transition-colors hover:bg-accent"
+                title="Admin Analytics"
+              >
+                <Shield className="w-4 h-4 text-muted-foreground" />
+              </button>
+            )}
             <ModeToggle />
+            {profile && (
+              <span className="text-[9px] font-mono text-muted-foreground/60 tracking-wider uppercase px-2 py-1 rounded" style={{
+                background: 'hsla(232, 26%, 8%, 0.5)',
+                border: '1px solid hsla(43, 96%, 56%, 0.15)',
+                color: 'hsl(43, 96%, 56%)',
+              }}>
+                {profile.tier}
+              </span>
+            )}
+            <button
+              onClick={signOut}
+              className="p-2 rounded-lg transition-colors hover:bg-accent"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4 text-muted-foreground" />
+            </button>
           </motion.div>
         </div>
 
@@ -198,6 +228,7 @@ export default function AppLayout() {
       {/* ═══ CONTENT — floats above nebula with z-index ═══ */}
       <main ref={mainRef} className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6 relative z-10">
         <Outlet />
+        <OnboardingTutorial />
       </main>
 
       {/* ═══════ BRANDED FOOTER ═══════ */}
