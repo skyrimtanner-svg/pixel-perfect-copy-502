@@ -1,4 +1,5 @@
-import { milestones, archetypeConfig } from '@/data/milestones';
+import { archetypeConfig } from '@/data/milestones';
+import type { Milestone } from '@/data/milestones';
 import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
 import { Zap, AlertTriangle, TrendingUp } from 'lucide-react';
@@ -20,7 +21,11 @@ const chromeGradientText = {
   backgroundClip: 'text' as const,
 };
 
-export function TriageStrip() {
+interface TriageStripProps {
+  milestones: Milestone[];
+}
+
+export function TriageStrip({ milestones }: TriageStripProps) {
   const { isWonder } = useMode();
   const sorted = [...milestones].sort((a, b) => b.triageScore - a.triageScore);
   
@@ -34,13 +39,10 @@ export function TriageStrip() {
       className="rounded-xl p-2.5 mb-5 relative overflow-hidden"
       style={glassPanelGold}
     >
-      {/* Top gold chrome line */}
       <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
-      {/* Specular top reflection */}
       <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl" style={specularReflection} />
 
       <div className="flex items-center gap-3 overflow-x-auto">
-        {/* Label */}
         <div className="flex items-center gap-1.5 shrink-0 pl-1">
           <TrendingUp className="w-3 h-3" style={{
             color: 'hsl(43, 96%, 56%)',
@@ -78,11 +80,9 @@ export function TriageStrip() {
               WebkitBackdropFilter: 'blur(28px)',
             }}
           >
-            {/* Specular sheen */}
             <div className="absolute top-0 left-0 right-0 h-[45%] rounded-t-lg pointer-events-none" style={{
               background: 'linear-gradient(180deg, hsla(155, 82%, 80%, 0.08) 0%, transparent 100%)',
             }} />
-            {/* Chrome bevel edge */}
             <div className="absolute bottom-0 left-2 right-2 h-px pointer-events-none" style={{
               background: 'linear-gradient(90deg, transparent, hsla(155, 82%, 70%, 0.12), transparent)',
             }} />
@@ -149,7 +149,7 @@ export function TriageStrip() {
             <span className="font-mono text-[9px] font-semibold uppercase tracking-wider" style={{
               ...chromeGradientText,
               filter: 'drop-shadow(0 1px 0 hsla(220, 10%, 25%, 0.5))',
-            }}>{archetypeConfig[m.archetype].label}</span>
+            }}>{archetypeConfig[m.archetype]?.label || m.archetype}</span>
           </motion.div>
         ))}
       </div>
