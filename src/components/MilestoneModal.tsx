@@ -7,10 +7,11 @@ import { ProbabilityRing } from '@/components/ProbabilityRing';
 import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
 import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
+import { LPMemoExport } from '@/components/LPMemoExport';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
 import { useHysteresis } from '@/hooks/useHysteresis';
-import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
@@ -43,6 +44,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   const [simPosterior, setSimPosterior] = useState<number | null>(null);
   const [tagFlip, setTagFlip] = useState<{ from: string; to: string } | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showMemoExport, setShowMemoExport] = useState(false);
   const hasFetchedWhyRef = useRef<string | null>(null);
 
   // Reset state on modal open/close
@@ -517,8 +519,42 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               ))
             )}
           </TabsContent>
+          {/* Export LP Memo button */}
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
+            <motion.button
+              onClick={() => setShowMemoExport(true)}
+              className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl text-xs font-semibold relative overflow-hidden shine-sweep"
+              style={{
+                background: 'linear-gradient(135deg, hsl(38, 88%, 32%), hsl(43, 96%, 48%), hsl(48, 100%, 68%), hsl(50, 100%, 82%), hsl(48, 100%, 66%), hsl(43, 96%, 46%))',
+                color: 'hsl(232, 30%, 2%)',
+                boxShadow: [
+                  '0 2px 16px -2px hsla(43, 96%, 56%, 0.4)',
+                  'inset 0 1px 0 hsla(48, 100%, 85%, 0.5)',
+                  'inset 0 -1px 0 hsla(38, 88%, 28%, 0.55)',
+                  '0 1px 3px hsla(232, 30%, 2%, 0.3)',
+                ].join(', '),
+                textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.3)',
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <FileText className="w-4 h-4" />
+              {isWonder ? '✦ Export LP Memo' : 'Export LP Memo'}
+            </motion.button>
+          </div>
         </Tabs>
       </DialogContent>
+
+      {/* LP Memo Export Dialog */}
+      {milestone && (
+        <LPMemoExport
+          milestone={milestone}
+          open={showMemoExport}
+          onClose={() => setShowMemoExport(false)}
+          simPosterior={simPosterior}
+          ledgerHash={ledgerHash}
+        />
+      )}
     </Dialog>
   );
 }

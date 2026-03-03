@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { milestones as staticMilestones, Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
+import { LPMemoExport } from '@/components/LPMemoExport';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
@@ -38,6 +39,7 @@ export default function TriagePage() {
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
   const [realtimeOverrides, setRealtimeOverrides] = useState<Record<string, Partial<Milestone>>>({});
+  const [memoMilestone, setMemoMilestone] = useState<Milestone | null>(null);
 
   // Subscribe to real-time milestone updates (posterior, delta_log_odds changes)
   useEffect(() => {
@@ -110,7 +112,11 @@ export default function TriagePage() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shine-sweep relative overflow-hidden"
+            onClick={() => {
+              // Open memo for top milestone in current filter
+              if (filtered.length > 0) setMemoMilestone(filtered[0]);
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shine-sweep relative overflow-hidden group"
             style={{
               background: 'linear-gradient(135deg, hsl(38, 88%, 32%), hsl(43, 96%, 48%), hsl(48, 100%, 68%), hsl(50, 100%, 82%), hsl(48, 100%, 66%), hsl(43, 96%, 46%))',
               color: 'hsl(232, 30%, 2%)',
@@ -254,6 +260,14 @@ export default function TriagePage() {
         open={!!selectedMilestone}
         onClose={() => setSelectedMilestone(null)}
       />
+
+      {memoMilestone && (
+        <LPMemoExport
+          milestone={memoMilestone}
+          open={!!memoMilestone}
+          onClose={() => setMemoMilestone(null)}
+        />
+      )}
     </motion.div>
   );
 }
