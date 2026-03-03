@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Milestone } from '@/data/milestones';
 import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
@@ -131,8 +131,8 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
       });
       if (res.ok) {
         const result = await res.json();
-        if (result?.snapshot_hash) {
-          setLedgerHash(result.snapshot_hash);
+        if (result?.trust_ledger?.sha256_hash) {
+          setLedgerHash(result.trust_ledger.sha256_hash);
           setSnapshotTimestamp(new Date().toISOString());
         }
         // Refresh milestone data
@@ -259,6 +259,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             </AnimatePresence>
             {loading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
           </div>
+          <DialogDescription className="sr-only">Details for {milestone.title} milestone including overview, evidence waterfall, and analysis</DialogDescription>
           <DialogTitle className={`font-display text-xl font-bold flex items-center gap-4 ${isWonder ? 'text-gold' : 'text-foreground'}`}>
             {milestone.title}
             <motion.div
@@ -576,7 +577,15 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
       {/* LP Memo Export Dialog */}
       {milestone && (
         <LPMemoExport
-          milestone={milestone}
+          milestone={{
+            ...milestone,
+            evidence: (liveData?.evidence ?? milestone.evidence).map((ev: any) => ({
+              id: ev.id, source: ev.source, type: ev.type, direction: ev.direction,
+              credibility: ev.credibility, recency: ev.recency, consensus: ev.consensus,
+              criteria_match: ev.criteria_match, composite: ev.composite,
+              delta_log_odds: ev.delta_log_odds, date: ev.date, summary: ev.summary || '',
+            })),
+          }}
           open={showMemoExport}
           onClose={() => setShowMemoExport(false)}
           simPosterior={simPosterior}
