@@ -413,6 +413,95 @@ Deno.serve(async (req) => {
       action = afterFn.length >= 2 ? afterFn[1] : null;
     }
 
+    // ─── POST /milestones-api/recalculate-all ───
+    if (milestoneId === "recalculate-all" && req.method === "POST") {
+      const { data: allMilestones } = await supabase.from("milestones").select("*").neq("tier", "historical");
+      if (!allMilestones || allMilestones.length === 0) {
+        return new Response(JSON.stringify({ error: "No milestones found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const results: any[] = [];
+      for (const milestone of allMilestones) {
+        const { data: evidence } = await supabase.from("evidence").select("*").eq("milestone_id", milestone.id);
+        if (!evidence || evidence.length === 0) { results.push({ id: milestone.id, skipped: true }); continue; }
+
+        const { data: latent } = await supabase.from("latent_states").select("*").eq("milestone_id", milestone.id).single();
+        const currentLatent = latent ? { mu: latent.mu, sigma: latent.sigma } : initLatentState(milestone);
+
+        // Reset milestone to prior for clean recalculation
+        const resetMilestone = { ...milestone, posterior: milestone.prior };
+        const updateResult = runV3Update(resetMilestone, evidence, initLatentState(milestone), allMilestones);
+
+        // Update milestone
+        await supabase.from("milestones").update({
+          prior: milestone.prior,
+          posterior: updateResult.posterior,
+          delta_log_odds: updateResult.delta_log_odds,
+        }).eq("id", milestone.id);
+
+        // Upsert latent state
+        await supabase.from("latent_states").upsert({
+          milestone_id: milestone.id,
+          mu: updateResult.latent.mu,
+          sigma: updateResult.latent.sigma,
+        });
+
+        // Create trust ledger snapshot
+        const calibration = computeCalibrationSnapshot(milestone, updateResult.latent);
+        const fullState = {
+          milestone_id: milestone.id,
+          prior: milestone.prior,
+          posterior: updateResult.posterior,
+          prior_log_odds: updateResult.prior_log_odds,
+          posterior_log_odds: updateResult.posterior_log_odds,
+          delta_log_odds: updateResult.delta_log_odds,
+          contributions: updateResult.contributions,
+          propagation: updateResult.propagation,
+          latent: updateResult.latent,
+          signal_dominance: updateResult.signal_dominance,
+          calibration,
+          timestamp: new Date().toISOString(),
+        };
+
+        const hash = await sha256(JSON.stringify(fullState));
+
+        const { data: prevSnapshot } = await supabase
+          .from("trust_ledger").select("sha256_hash").eq("milestone_id", milestone.id)
+          .order("created_at", { ascending: false }).limit(1).single();
+
+        await supabase.from("trust_ledger").insert({
+          milestone_id: milestone.id,
+          snapshot_type: "bulk_recalculate",
+          prior: milestone.prior,
+          posterior: updateResult.posterior,
+          prior_log_odds: updateResult.prior_log_odds,
+          posterior_log_odds: updateResult.posterior_log_odds,
+          delta_log_odds: updateResult.delta_log_odds,
+          contributions: updateResult.contributions,
+          propagation: updateResult.propagation,
+          calibration_snapshot: calibration,
+          full_state: fullState,
+          sha256_hash: hash,
+          prev_hash: prevSnapshot?.sha256_hash || null,
+        });
+
+        results.push({
+          id: milestone.id,
+          title: milestone.title,
+          prior: milestone.prior,
+          posterior: updateResult.posterior,
+          delta_log_odds: updateResult.delta_log_odds,
+          hash,
+        });
+      }
+
+      return new Response(JSON.stringify({ recalculated: results.length, results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!milestoneId) {
       return new Response(JSON.stringify({ error: "Milestone ID required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
