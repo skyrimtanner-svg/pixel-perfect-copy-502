@@ -200,9 +200,15 @@ export function InteractiveWaterfall({
   }, [sortedContribs, activePrior, excludedIds, evidence]);
 
   const finalPosterior = activePosterior ?? (blocks.length > 0 ? blocks[blocks.length - 1].endProb : prior);
+  // Canonical posterior = what the posterior would be with all evidence included (no exclusions)
+  const canonicalPosterior = useMemo(() => {
+    let cumLO = Math.log(prior / (1 - prior));
+    for (const c of contributions) cumLO += c.delta_log_odds;
+    return logOddsToProb(cumLO);
+  }, [prior, contributions]);
   const maxAbsDelta = Math.max(...sortedContribs.map(c => Math.abs(c.delta_log_odds)), 0.5);
   const posteriorDelta = finalPosterior - prior;
-  const isDropping = effectiveWhatIf && (effectiveWhatIf.update_result.posterior < prior);
+  const isDropping = effectiveWhatIf && (effectiveWhatIf.update_result.posterior < canonicalPosterior);
 
   useEffect(() => { onNegativeShift?.(!!isDropping, finalPosterior); }, [isDropping, finalPosterior, onNegativeShift]);
 
