@@ -11,6 +11,8 @@ import TracesPage from "@/pages/TracesPage";
 import CalibrationPage from "@/pages/CalibrationPage";
 import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
 import AuthPage from "@/pages/AuthPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 import VerifyPage from "./pages/VerifyPage";
 import { Loader2 } from "lucide-react";
@@ -43,6 +45,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/verify/:hash" element={<VerifyPage />} />
 
               <Route element={<ProtectedRoute />}>

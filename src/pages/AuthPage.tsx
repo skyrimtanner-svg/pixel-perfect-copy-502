@@ -1,26 +1,52 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { motion } from 'framer-motion';
-import { Eye, Mail, Loader2, CheckCircle, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, Mail, Loader2, CheckCircle, Sparkles, Lock, ArrowLeft } from 'lucide-react';
 import { glassPanelStrong, specularReflection, goldChromeLine } from '@/lib/glass-styles';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+
+type AuthMode = 'magic-link' | 'sign-in' | 'sign-up';
+
+const inputStyle = {
+  background: 'hsla(232, 26%, 8%, 0.8)',
+  border: '1px solid hsla(220, 12%, 70%, 0.12)',
+};
 
 export default function AuthPage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mode, setMode] = useState<AuthMode>('sign-in');
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/', { replace: true });
+    }
+  }, [authLoading, user, navigate]);
+
+  if (!authLoading && user) return null;
+
+  const switchMode = (newMode: AuthMode) => {
+    setMode(newMode);
+    setError('');
+    setPassword('');
+    setConfirmPassword('');
+    setSent(false);
+  };
+
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email.trim(),
       options: { emailRedirectTo: window.location.origin },
     });
 
@@ -32,13 +58,62 @@ export default function AuthPage() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      navigate('/', { replace: true });
-    }
-  }, [authLoading, user, navigate]);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-  if (!authLoading && user) return null;
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    }
+    setLoading(false);
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      setLoading(false);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setSent(true);
+    }
+    setLoading(false);
+  };
+
+  const handleSubmit =
+    mode === 'magic-link' ? handleMagicLink :
+    mode === 'sign-in' ? handleSignIn :
+    handleSignUp;
 
   return (
     <div className="min-h-screen flex items-center justify-center nebula-bg stars-bg relative">
@@ -71,65 +146,184 @@ export default function AuthPage() {
           <p className="text-muted-foreground text-xs mt-2 font-mono tracking-wide">Private Beta Access</p>
         </div>
 
-        {sent ? (
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <CheckCircle className="w-10 h-10 mx-auto mb-3" style={{ color: 'hsl(155, 82%, 48%)' }} />
-            <h2 className="font-display font-semibold text-foreground text-lg mb-2">Check your inbox</h2>
-            <p className="text-muted-foreground text-sm">
-              We sent a magic link to <span className="text-foreground font-medium">{email}</span>. Click it to sign in.
-            </p>
-          </motion.div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-xs font-mono text-muted-foreground tracking-wider uppercase mb-2 block">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
-                  style={{
-                    background: 'hsla(232, 26%, 8%, 0.8)',
-                    border: '1px solid hsla(220, 12%, 70%, 0.12)',
-                  }}
-                />
-              </div>
-            </div>
-
-            {error && (
-              <p className="text-xs" style={{ color: 'hsl(0, 72%, 55%)' }}>{error}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-lg text-sm font-semibold btn-gold flex items-center justify-center gap-2 disabled:opacity-60"
+        <AnimatePresence mode="wait">
+          {sent ? (
+            <motion.div
+              key="sent"
+              className="text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Send Magic Link
-                </>
-              )}
-            </button>
+              <CheckCircle className="w-10 h-10 mx-auto mb-3" style={{ color: 'hsl(155, 82%, 48%)' }} />
+              <h2 className="font-display font-semibold text-foreground text-lg mb-2">Check your inbox</h2>
+              <p className="text-muted-foreground text-sm">
+                {mode === 'sign-up'
+                  ? <>We sent a confirmation email to <span className="text-foreground font-medium">{email}</span>. Verify your email to sign in.</>
+                  : <>We sent a magic link to <span className="text-foreground font-medium">{email}</span>. Click it to sign in.</>
+                }
+              </p>
+              <button
+                onClick={() => switchMode('sign-in')}
+                className="mt-4 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
+              >
+                ← Back to sign in
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email field — always shown */}
+                <div>
+                  <label className="text-xs font-mono text-muted-foreground tracking-wider uppercase mb-2 block">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      maxLength={255}
+                      placeholder="you@example.com"
+                      className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
 
-            <p className="text-[10px] text-muted-foreground/60 text-center font-mono">
-              No password needed · Link expires in 1 hour
-            </p>
-          </form>
-        )}
+                {/* Password field — sign-in & sign-up */}
+                {(mode === 'sign-in' || mode === 'sign-up') && (
+                  <div>
+                    <label className="text-xs font-mono text-muted-foreground tracking-wider uppercase mb-2 block">Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        maxLength={128}
+                        placeholder="••••••••"
+                        className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Confirm password — sign-up only */}
+                {mode === 'sign-up' && (
+                  <div>
+                    <label className="text-xs font-mono text-muted-foreground tracking-wider uppercase mb-2 block">Confirm Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        maxLength={128}
+                        placeholder="••••••••"
+                        className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {error && (
+                  <p className="text-xs" style={{ color: 'hsl(0, 72%, 55%)' }}>{error}</p>
+                )}
+
+                {/* Forgot password link */}
+                {mode === 'sign-in' && (
+                  <div className="text-right">
+                    <Link
+                      to="/forgot-password"
+                      className="text-[11px] font-mono text-muted-foreground hover:text-gold transition-colors"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                )}
+
+                {/* Submit button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 rounded-lg text-sm font-semibold btn-gold flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : mode === 'magic-link' ? (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Send Magic Link
+                    </>
+                  ) : mode === 'sign-in' ? (
+                    <>
+                      <Lock className="w-4 h-4" />
+                      Sign In
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Create Account
+                    </>
+                  )}
+                </button>
+
+                {/* Mode switching links */}
+                <div className="space-y-2 pt-1">
+                  {mode === 'sign-in' && (
+                    <>
+                      <p className="text-[11px] text-muted-foreground/60 text-center font-mono">
+                        <button type="button" onClick={() => switchMode('magic-link')} className="text-muted-foreground hover:text-gold transition-colors underline underline-offset-2">
+                          Use magic link instead
+                        </button>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/60 text-center font-mono">
+                        Don't have an account?{' '}
+                        <button type="button" onClick={() => switchMode('sign-up')} className="text-muted-foreground hover:text-gold transition-colors underline underline-offset-2">
+                          Sign up
+                        </button>
+                      </p>
+                    </>
+                  )}
+                  {mode === 'sign-up' && (
+                    <p className="text-[11px] text-muted-foreground/60 text-center font-mono">
+                      Already have an account?{' '}
+                      <button type="button" onClick={() => switchMode('sign-in')} className="text-muted-foreground hover:text-gold transition-colors underline underline-offset-2">
+                        Sign in
+                      </button>
+                    </p>
+                  )}
+                  {mode === 'magic-link' && (
+                    <>
+                      <p className="text-[10px] text-muted-foreground/60 text-center font-mono">
+                        No password needed · Link expires in 1 hour
+                      </p>
+                      <p className="text-[11px] text-muted-foreground/60 text-center font-mono">
+                        <button type="button" onClick={() => switchMode('sign-in')} className="text-muted-foreground hover:text-gold transition-colors underline underline-offset-2">
+                          Sign in with password
+                        </button>
+                      </p>
+                    </>
+                  )}
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
 }
-
