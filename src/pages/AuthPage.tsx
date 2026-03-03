@@ -3,12 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Eye, Mail, Loader2, CheckCircle, Sparkles } from 'lucide-react';
 import { glassPanelStrong, specularReflection, goldChromeLine } from '@/lib/glass-styles';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { user, loading: authLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +30,10 @@ export default function AuthPage() {
     }
     setLoading(false);
   };
+
+  if (!authLoading && user) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center nebula-bg stars-bg relative">
@@ -120,3 +127,4 @@ export default function AuthPage() {
     </div>
   );
 }
+
