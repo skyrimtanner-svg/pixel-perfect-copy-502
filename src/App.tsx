@@ -9,6 +9,7 @@ import TriagePage from "@/pages/TriagePage";
 import TracesPage from "@/pages/TracesPage";
 import CalibrationPage from "@/pages/CalibrationPage";
 import NotFound from "./pages/NotFound";
+import VerifyPage from "./pages/VerifyPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
               <Route path="/traces" element={<TracesPage />} />
               <Route path="/calibration" element={<CalibrationPage />} />
             </Route>
+            <Route path="/verify/:hash" element={<VerifyPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
