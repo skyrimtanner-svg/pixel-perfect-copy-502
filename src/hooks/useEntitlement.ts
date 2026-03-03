@@ -1,17 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type UserTier = 'free' | 'starter' | 'pro' | 'vc_alpha';
 
 const EXPORT_ALLOWED_TIERS: UserTier[] = ['pro', 'vc_alpha'];
 
 /**
- * Entitlement hook — checks user tier for gated features.
- * Currently uses a local default (expandable to Supabase auth profile later).
- * Set tier via setTier() for testing; defaults to 'free'.
+ * Entitlement hook — reads tier from auth profile.
+ * Falls back to 'free' if not authenticated.
  */
 export function useEntitlement() {
-  // In production, this would come from Supabase auth + profiles table
-  const [tier, setTier] = useState<UserTier>('free');
+  const { profile } = useAuth();
+  const tier = (profile?.tier as UserTier) || 'free';
 
   const canExportMemo = EXPORT_ALLOWED_TIERS.includes(tier);
   const canSendToLP = tier === 'vc_alpha';
@@ -25,7 +24,6 @@ export function useEntitlement() {
 
   return {
     tier,
-    setTier,
     canExportMemo,
     canSendToLP,
     tierLabel: tierLabel[tier],
