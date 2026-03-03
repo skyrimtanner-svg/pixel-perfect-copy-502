@@ -516,6 +516,9 @@ export default function VerifyPage() {
             </div>
           </motion.div>
 
+          {/* ═══ HASH CHAIN TIMELINE ═══ */}
+          <HashChainTimeline milestoneId={snapshot.milestone_id} currentHash={hash!} isWonder={isWonder} />
+
           {/* ═══ FOOTER ═══ */}
           <motion.div
             className="text-center space-y-4 py-8"
@@ -545,5 +548,93 @@ export default function VerifyPage() {
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+/* ═══ HASH CHAIN TIMELINE ═══ */
+function HashChainTimeline({ milestoneId, currentHash, isWonder }: { milestoneId: string; currentHash: string; isWonder: boolean }) {
+  const { data: chain } = useQuery({
+    queryKey: ['hash-chain', milestoneId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('trust_ledger')
+        .select('sha256_hash, created_at, prior, posterior, delta_log_odds, snapshot_type')
+        .eq('milestone_id', milestoneId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      return data || [];
+    },
+    enabled: !!milestoneId,
+  });
+
+  if (!chain || chain.length < 2) return null;
+
+  return (
+    <motion.div
+      className="rounded-2xl p-6 space-y-4"
+      style={glassPanelStrong}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.75 }}
+    >
+      <h3 className="text-sm font-mono tracking-widest text-muted-foreground uppercase">
+        Hash Chain • Recent Snapshots
+      </h3>
+      <div className="relative pl-6">
+        {/* Vertical line */}
+        <div className="absolute left-[9px] top-2 bottom-2 w-px" style={{ background: 'linear-gradient(180deg, hsla(43, 96%, 56%, 0.4), hsla(43, 96%, 56%, 0.08))' }} />
+
+        {chain.map((snap, i) => {
+          const isCurrent = snap.sha256_hash === currentHash;
+          const delta = (snap.posterior - snap.prior) * 100;
+          return (
+            <motion.div
+              key={snap.sha256_hash}
+              className="relative flex items-start gap-4 pb-5 last:pb-0"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 + i * 0.08 }}
+            >
+              {/* Node */}
+              <div
+                className="absolute left-[-15px] w-[12px] h-[12px] rounded-full shrink-0 mt-1"
+                style={{
+                  background: isCurrent
+                    ? 'radial-gradient(circle, hsl(43, 96%, 68%), hsl(43, 96%, 42%))'
+                    : 'radial-gradient(circle, hsla(43, 96%, 56%, 0.4), hsla(43, 96%, 56%, 0.15))',
+                  boxShadow: isCurrent ? '0 0 12px hsla(43, 96%, 56%, 0.6)' : 'none',
+                  border: isCurrent ? '2px solid hsl(43, 96%, 56%)' : '1px solid hsla(43, 96%, 56%, 0.3)',
+                }}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {isCurrent && (
+                    <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded" style={{
+                      background: 'hsla(43, 96%, 56%, 0.15)',
+                      border: '1px solid hsla(43, 96%, 56%, 0.3)',
+                      color: 'hsl(43, 96%, 56%)',
+                    }}>CURRENT</span>
+                  )}
+                  <Link
+                    to={`/verify/${snap.sha256_hash}`}
+                    className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors truncate"
+                  >
+                    {snap.sha256_hash.slice(0, 16)}…
+                  </Link>
+                </div>
+                <div className="flex items-center gap-3 mt-1 text-[10px] font-mono text-muted-foreground">
+                  <span>{new Date(snap.created_at).toLocaleDateString()}</span>
+                  <span className="metallic-num">{(snap.posterior * 100).toFixed(1)}%</span>
+                  <span style={{ color: delta >= 0 ? 'hsl(155, 82%, 48%)' : 'hsl(0, 72%, 55%)' }}>
+                    {delta >= 0 ? '+' : ''}{delta.toFixed(1)}pp
+                  </span>
+                  {isWonder && isCurrent && <span>✨</span>}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
   );
 }
