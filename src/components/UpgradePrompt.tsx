@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
 import { Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { glassPanelStrong, specularReflection, goldChromeLine } from '@/lib/glass-styles';
@@ -32,6 +32,8 @@ export function UpgradePrompt({ open, onClose, feature, requiredTier }: UpgradeP
           boxShadow: '0 0 80px -16px hsla(43, 96%, 56%, 0.2), 0 0 40px -8px hsla(232, 30%, 2%, 0.9)',
         }}
       >
+        <DialogTitle className="sr-only">Upgrade Required for {feature}</DialogTitle>
+        <DialogDescription className="sr-only">This feature requires {requiredTier} tier</DialogDescription>
         <div className="absolute top-0 left-6 right-6 h-px" style={goldChromeLine} />
         <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-lg pointer-events-none" style={specularReflection} />
 
