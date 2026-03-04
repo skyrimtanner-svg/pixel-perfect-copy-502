@@ -50,13 +50,20 @@ export default function TriagePage() {
   const [selectedDomain, setSelectedDomain] = useState<Domain | 'all'>('all');
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
-  
+  const [memoSearch, setMemoSearch] = useState('');
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const filtered = useMemo(() => {
     const list = selectedDomain === 'all' ? milestones : milestones.filter(m => m.domain === selectedDomain);
     return [...list].sort((a, b) => b.triageScore - a.triageScore);
   }, [selectedDomain, milestones]);
+
+  const memoFiltered = useMemo(() => {
+    const list = filtered.slice(0, 20);
+    if (!memoSearch.trim()) return list;
+    const q = memoSearch.toLowerCase();
+    return list.filter(m => m.title.toLowerCase().includes(q));
+  }, [filtered, memoSearch]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
@@ -123,32 +130,49 @@ export default function TriagePage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="max-h-80 overflow-y-auto w-72"
+              className="w-72"
               style={{
                 background: 'hsl(232, 26%, 6%)',
                 border: '1px solid hsla(220, 12%, 70%, 0.12)',
                 backdropFilter: 'blur(24px)',
               }}
+              onCloseAutoFocus={() => setMemoSearch('')}
             >
-              {filtered.slice(0, 20).map((m) => (
-                <DropdownMenuItem
-                  key={m.id}
-                  onClick={() => {
-                    if (!canExportMemo) { setShowUpgrade(true); return; }
-                    setSelectedMilestone(m);
-                  }}
-                  className="flex items-center gap-2 cursor-pointer text-xs font-mono py-2"
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ background: domainPillColors[m.domain]?.text || 'hsl(220, 10%, 50%)' }}
-                  />
-                  <span className="truncate text-foreground">{m.title}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground tabular-nums shrink-0">
-                    {Math.round(m.posterior * 100)}%
-                  </span>
-                </DropdownMenuItem>
-              ))}
+              <div className="p-2 border-b border-border/20">
+                <input
+                  type="text"
+                  placeholder="Search milestones…"
+                  value={memoSearch}
+                  onChange={(e) => setMemoSearch(e.target.value)}
+                  className="w-full bg-transparent border border-border/30 rounded-md px-2.5 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {memoFiltered.length === 0 ? (
+                  <div className="px-3 py-4 text-xs text-muted-foreground text-center font-mono">No matches</div>
+                ) : (
+                  memoFiltered.map((m) => (
+                    <DropdownMenuItem
+                      key={m.id}
+                      onClick={() => {
+                        if (!canExportMemo) { setShowUpgrade(true); return; }
+                        setSelectedMilestone(m);
+                      }}
+                      className="flex items-center gap-2 cursor-pointer text-xs font-mono py-2"
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ background: domainPillColors[m.domain]?.text || 'hsl(220, 10%, 50%)' }}
+                      />
+                      <span className="truncate text-foreground">{m.title}</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground tabular-nums shrink-0">
+                        {Math.round(m.posterior * 100)}%
+                      </span>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="font-mono text-[10px] tabular-nums font-semibold" style={{
