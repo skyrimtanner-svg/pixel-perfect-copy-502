@@ -548,8 +548,13 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           {/* Export LP Memo button */}
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
             <motion.button
-              onClick={() => {
+              onClick={async () => {
                 if (!canExportMemo) { setShowUpgrade(true); return; }
+                // Ensure evidence is loaded before opening memo export
+                if (!detail && milestone) {
+                  hasFetchedWhyRef.current = milestone.id;
+                  await fetchMilestone(milestone.id);
+                }
                 setShowMemoExport(true);
               }}
               className="w-full flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl text-xs font-semibold relative overflow-hidden shine-sweep"
