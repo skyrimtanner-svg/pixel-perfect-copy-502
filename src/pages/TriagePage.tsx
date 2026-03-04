@@ -51,6 +51,7 @@ export default function TriagePage() {
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
   const [memoSearch, setMemoSearch] = useState('');
+  const [memoHighlight, setMemoHighlight] = useState(-1);
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const filtered = useMemo(() => {
@@ -136,30 +137,45 @@ export default function TriagePage() {
                 border: '1px solid hsla(220, 12%, 70%, 0.12)',
                 backdropFilter: 'blur(24px)',
               }}
-              onCloseAutoFocus={() => setMemoSearch('')}
+              onCloseAutoFocus={() => { setMemoSearch(''); setMemoHighlight(-1); }}
             >
               <div className="p-2 border-b border-border/20">
                 <input
                   type="text"
                   placeholder="Search milestones…"
                   value={memoSearch}
-                  onChange={(e) => setMemoSearch(e.target.value)}
+                  onChange={(e) => { setMemoSearch(e.target.value); setMemoHighlight(-1); }}
                   className="w-full bg-transparent border border-border/30 rounded-md px-2.5 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                  onKeyDown={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setMemoHighlight(prev => Math.min(prev + 1, memoFiltered.length - 1));
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setMemoHighlight(prev => Math.max(prev - 1, -1));
+                    } else if (e.key === 'Enter' && memoHighlight >= 0 && memoHighlight < memoFiltered.length) {
+                      e.preventDefault();
+                      const m = memoFiltered[memoHighlight];
+                      if (!canExportMemo) { setShowUpgrade(true); return; }
+                      setSelectedMilestone(m);
+                    }
+                  }}
                 />
               </div>
               <div className="max-h-64 overflow-y-auto">
                 {memoFiltered.length === 0 ? (
                   <div className="px-3 py-4 text-xs text-muted-foreground text-center font-mono">No matches</div>
                 ) : (
-                  memoFiltered.map((m) => (
+                  memoFiltered.map((m, idx) => (
                     <DropdownMenuItem
                       key={m.id}
                       onClick={() => {
                         if (!canExportMemo) { setShowUpgrade(true); return; }
                         setSelectedMilestone(m);
                       }}
-                      className="flex items-center gap-2 cursor-pointer text-xs font-mono py-2"
+                      className={`flex items-center gap-2 cursor-pointer text-xs font-mono py-2 ${idx === memoHighlight ? 'bg-accent text-accent-foreground' : ''}`}
+                      onMouseEnter={() => setMemoHighlight(idx)}
                     >
                       <span
                         className="w-1.5 h-1.5 rounded-full shrink-0"
