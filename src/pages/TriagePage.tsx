@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { BetaWelcomeBanner } from '@/components/BetaWelcomeBanner';
 import { Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
@@ -69,6 +70,9 @@ export default function TriagePage() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Beta Welcome Banner */}
+      <BetaWelcomeBanner />
+
       {/* Triage Strip */}
       <TriageStrip milestones={milestones} />
 

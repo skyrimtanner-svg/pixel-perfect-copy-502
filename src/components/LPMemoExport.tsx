@@ -131,13 +131,17 @@ export function LPMemoExport({ milestone, open, onClose, simPosterior, ledgerHas
     // Prior → Posterior
     pdf.setFontSize(10);
     pdf.setTextColor(180, 160, 100);
-    pdf.text(`Prior: ${(milestone.prior * 100).toFixed(1)}%  →  Posterior: ${(displayPosterior * 100).toFixed(1)}%  |  Δ ${delta > 0 ? '+' : ''}${(delta * 100).toFixed(1)}pp`, W / 2 + 10, probY + 8);
+    const priorPctStr = `Prior: ${(milestone.prior * 100).toFixed(1)}%`;
+    const postPctStr = `Posterior: ${(displayPosterior * 100).toFixed(1)}%`;
+    const deltaStr = `${delta > 0 ? '+' : ''}${(delta * 100).toFixed(1)}pp`;
+    pdf.setFontSize(9);
+    pdf.text(`${priorPctStr}  |  ${postPctStr}  |  ${deltaStr}`, W / 2 + 10, probY + 8);
 
     // Log-odds
     pdf.setFontSize(8);
     pdf.setTextColor(140, 140, 160);
-    const lo = isFinite(milestone.delta_log_odds) ? milestone.delta_log_odds.toFixed(4) : '∞';
-    pdf.text(`Δ Log-Odds: ${lo}  |  Magnitude: ${milestone.magnitude}/10`, W / 2 + 10, probY + 15);
+    const lo = isFinite(milestone.delta_log_odds) ? milestone.delta_log_odds.toFixed(4) : 'Inf';
+    pdf.text(`Log-Odds: ${lo}  |  Magnitude: ${milestone.magnitude}/10`, W / 2 + 10, probY + 15);
 
     // Gold line separator
     let y = probY + 32;
@@ -168,7 +172,7 @@ export function LPMemoExport({ milestone, open, onClose, simPosterior, ledgerHas
     pdf.setFontSize(11);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(255, 255, 255);
-    pdf.text(isWonder ? '✦ Why This Changed the Future' : 'ANALYSIS: BELIEF UPDATE RATIONALE', margin, y);
+    pdf.text(isWonder ? 'Why This Changed the Future' : 'ANALYSIS: BELIEF UPDATE RATIONALE', margin, y);
     y += 7;
 
     // Evidence breakdown
@@ -178,7 +182,7 @@ export function LPMemoExport({ milestone, open, onClose, simPosterior, ledgerHas
 
     for (const ev of sortedEv.slice(0, 6)) {
       if (y > H - 50) break;
-      const dir = ev.direction === 'supports' ? '↑' : ev.direction === 'contradicts' ? '↓' : '~';
+      const dir = ev.direction === 'supports' ? '+' : ev.direction === 'contradicts' ? '-' : '~';
       const loStr = `${ev.delta_log_odds > 0 ? '+' : ''}${ev.delta_log_odds.toFixed(2)} LO`;
 
       if (ev.direction === 'supports') pdf.setTextColor(100, 200, 120);
@@ -269,7 +273,7 @@ export function LPMemoExport({ milestone, open, onClose, simPosterior, ledgerHas
     // Verification text with link
     pdf.setFontSize(7);
     pdf.setTextColor(218, 165, 32);
-    pdf.textWithLink('This forecast is immutable and auditable forever — verified on the Trust Ledger ↗', margin, footerY + 10, { url: verifyUrl });
+    pdf.textWithLink('This forecast is immutable and auditable forever -- verified on the Trust Ledger', margin, footerY + 10, { url: verifyUrl });
 
     // Timestamp
     pdf.setFontSize(6);
