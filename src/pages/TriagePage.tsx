@@ -13,6 +13,13 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import type { Milestone } from '@/data/milestones';
 import { ChevronDown, FileText, Filter, Loader2 } from 'lucide-react';
 import { specularReflection } from '@/lib/glass-styles';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { domainColorClass } from '@/lib/domain-styles';
 
 const domains: (Domain | 'all')[] = ['all', 'compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
 
@@ -93,27 +100,57 @@ export default function TriagePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              if (!canExportMemo) { setShowUpgrade(true); return; }
-              if (filtered.length > 0) setSelectedMilestone(filtered[0]);
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shine-sweep relative overflow-hidden group"
-            style={{
-              background: 'linear-gradient(135deg, hsl(38, 88%, 32%), hsl(43, 96%, 48%), hsl(48, 100%, 68%), hsl(50, 100%, 82%), hsl(48, 100%, 66%), hsl(43, 96%, 46%))',
-              color: 'hsl(232, 30%, 2%)',
-              boxShadow: [
-                '0 2px 16px -2px hsla(43, 96%, 56%, 0.4)',
-                'inset 0 1px 0 hsla(48, 100%, 85%, 0.5)',
-                'inset 0 -1px 0 hsla(38, 88%, 28%, 0.55)',
-                '0 1px 3px hsla(232, 30%, 2%, 0.3)',
-              ].join(', '),
-              textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.3)',
-            }}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            Export LP Memo
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shine-sweep relative overflow-hidden group"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(38, 88%, 32%), hsl(43, 96%, 48%), hsl(48, 100%, 68%), hsl(50, 100%, 82%), hsl(48, 100%, 66%), hsl(43, 96%, 46%))',
+                  color: 'hsl(232, 30%, 2%)',
+                  boxShadow: [
+                    '0 2px 16px -2px hsla(43, 96%, 56%, 0.4)',
+                    'inset 0 1px 0 hsla(48, 100%, 85%, 0.5)',
+                    'inset 0 -1px 0 hsla(38, 88%, 28%, 0.55)',
+                    '0 1px 3px hsla(232, 30%, 2%, 0.3)',
+                  ].join(', '),
+                  textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.3)',
+                }}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Export LP Memo
+                <ChevronDown className="w-3 h-3 ml-0.5 opacity-70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="max-h-80 overflow-y-auto w-72"
+              style={{
+                background: 'hsl(232, 26%, 6%)',
+                border: '1px solid hsla(220, 12%, 70%, 0.12)',
+                backdropFilter: 'blur(24px)',
+              }}
+            >
+              {filtered.slice(0, 20).map((m) => (
+                <DropdownMenuItem
+                  key={m.id}
+                  onClick={() => {
+                    if (!canExportMemo) { setShowUpgrade(true); return; }
+                    setSelectedMilestone(m);
+                  }}
+                  className="flex items-center gap-2 cursor-pointer text-xs font-mono py-2"
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: domainPillColors[m.domain]?.text || 'hsl(220, 10%, 50%)' }}
+                  />
+                  <span className="truncate text-foreground">{m.title}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground tabular-nums shrink-0">
+                    {Math.round(m.posterior * 100)}%
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="font-mono text-[10px] tabular-nums font-semibold" style={{
             ...goldGradientStyle,
             filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.15))',
