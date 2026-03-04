@@ -3,7 +3,7 @@ import { BetaWelcomeBanner } from '@/components/BetaWelcomeBanner';
 import { Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
-import { LPMemoExport } from '@/components/LPMemoExport';
+
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
@@ -43,7 +43,7 @@ export default function TriagePage() {
   const [selectedDomain, setSelectedDomain] = useState<Domain | 'all'>('all');
   const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
-  const [memoMilestone, setMemoMilestone] = useState<Milestone | null>(null);
+  
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   const filtered = useMemo(() => {
@@ -96,7 +96,7 @@ export default function TriagePage() {
           <button
             onClick={() => {
               if (!canExportMemo) { setShowUpgrade(true); return; }
-              if (filtered.length > 0) setMemoMilestone(filtered[0]);
+              if (filtered.length > 0) setSelectedMilestone(filtered[0]);
             }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold shine-sweep relative overflow-hidden group"
             style={{
@@ -243,13 +243,6 @@ export default function TriagePage() {
         onClose={() => setSelectedMilestone(null)}
       />
 
-      {memoMilestone && (
-        <LPMemoExport
-          milestone={memoMilestone}
-          open={!!memoMilestone}
-          onClose={() => setMemoMilestone(null)}
-        />
-      )}
 
       <UpgradePrompt
         open={showUpgrade}
