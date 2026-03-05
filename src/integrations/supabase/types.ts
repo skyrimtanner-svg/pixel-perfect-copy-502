@@ -284,6 +284,72 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_evidence: {
+        Row: {
+          composite_score: number
+          consensus: number
+          created_at: string
+          credibility: number
+          criteria_match: number
+          direction: string
+          evidence_type: string
+          id: string
+          milestone_id: string
+          publisher_tier: number
+          raw_snippet: string | null
+          recency: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scout_run_id: string | null
+          source: string
+          source_url: string | null
+          status: string
+          summary: string | null
+        }
+        Insert: {
+          composite_score?: number
+          consensus?: number
+          created_at?: string
+          credibility?: number
+          criteria_match?: number
+          direction?: string
+          evidence_type?: string
+          id?: string
+          milestone_id: string
+          publisher_tier?: number
+          raw_snippet?: string | null
+          recency?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scout_run_id?: string | null
+          source: string
+          source_url?: string | null
+          status?: string
+          summary?: string | null
+        }
+        Update: {
+          composite_score?: number
+          consensus?: number
+          created_at?: string
+          credibility?: number
+          criteria_match?: number
+          direction?: string
+          evidence_type?: string
+          id?: string
+          milestone_id?: string
+          publisher_tier?: number
+          raw_snippet?: string | null
+          recency?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scout_run_id?: string | null
+          source?: string
+          source_url?: string | null
+          status?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -314,6 +380,30 @@ export type Database = {
           tier?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      scout_logs: {
+        Row: {
+          action: string
+          created_at: string
+          detail: Json | null
+          id: string
+          run_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          run_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          run_id?: string
         }
         Relationships: []
       }
