@@ -407,6 +407,41 @@ export type Database = {
         }
         Relationships: []
       }
+      socratic_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          milestone_id: string
+          topic_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          milestone_id: string
+          topic_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          milestone_id?: string
+          topic_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "socratic_comments_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "socratic_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       socratic_topics: {
         Row: {
           created_at: string
