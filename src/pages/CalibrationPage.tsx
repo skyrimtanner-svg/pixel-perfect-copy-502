@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useMode } from '@/contexts/ModeContext';
 import { useMilestones } from '@/hooks/useMilestones';
 import { motion } from 'framer-motion';
-import { Award, Target, CheckCircle2, TrendingDown, Sparkles, Star, Info, Loader2 } from 'lucide-react';
-import { glassPanelGold, glassPanelChrome, glassInner, specularReflection, goldChromeLine, chromeTopLine } from '@/lib/glass-styles';
-import { supabase } from '@/integrations/supabase/client';
+import { Award, Target, CheckCircle2, TrendingDown, Sparkles, Loader2 } from 'lucide-react';
+import { glassPanelGold, glassPanelChrome, specularReflection, goldChromeLine, chromeTopLine } from '@/lib/glass-styles';
 
 const goldGradientStyle = {
   background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
