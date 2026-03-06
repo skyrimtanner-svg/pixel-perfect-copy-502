@@ -52,7 +52,7 @@ export default function AdminAnalyticsPage() {
   const [scoutRunning, setScoutRunning] = useState(false);
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
-  const [_evidenceInflow, setEvidenceInflow] = useState<{ date: string; count: number }[]>([]);
+  const [_evidenceInflow, setEvidenceInflow] = useState<{ date: string; supports: number; contradicts: number; ambiguous: number; total: number; sources: Record<string, number> }[]>([]);
   const [_sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
   const [_domainPortfolio, setDomainPortfolio] = useState<{ name: string; avgPosterior: number; count: number }[]>([]);
   const [_topMovers, setTopMovers] = useState<{ title: string; delta: number; direction: string }[]>([]);
