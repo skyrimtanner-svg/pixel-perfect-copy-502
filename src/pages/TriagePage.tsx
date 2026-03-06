@@ -3,7 +3,7 @@ import { BetaWelcomeBanner } from '@/components/BetaWelcomeBanner';
 import { Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
-import { FreshSignalsBanner as _FreshSignalsBanner } from '@/components/FreshSignalsBanner';
+// FreshSignalsBanner reserved for future scout integration
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
