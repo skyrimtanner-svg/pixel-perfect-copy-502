@@ -335,6 +335,9 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl pointer-events-none" style={specularReflection} />
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">Overview</TabsTrigger>
             <TabsTrigger value="why" className="data-[state=active]:bg-gold/10 data-[state=active]:text-gold-solid rounded-lg text-xs relative z-10">Why It Changed</TabsTrigger>
+            <TabsTrigger value="socratic" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">
+              {isWonder ? '✨ Socratic' : 'Socratic Lens'}
+            </TabsTrigger>
             <TabsTrigger value="evidence" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">
               Evidence ({liveData?.evidence?.length ?? milestone.evidence.length})
             </TabsTrigger>
