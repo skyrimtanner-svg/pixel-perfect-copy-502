@@ -125,6 +125,18 @@ export default function AuthPage() {
     setGoogleLoading(false);
   };
 
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    setError('');
+    const { error } = await lovable.auth.signInWithOAuth('apple', {
+      redirect_uri: window.location.origin,
+    });
+    if (error) {
+      setError(error.message);
+    }
+    setAppleLoading(false);
+  };
+
   const handleSubmit =
     mode === 'magic-link' ? handleMagicLink :
     mode === 'sign-in' ? handleSignIn :
