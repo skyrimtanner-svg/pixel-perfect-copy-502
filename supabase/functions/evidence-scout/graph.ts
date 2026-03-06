@@ -367,58 +367,79 @@ RULES:
 
 Be SELECTIVE. Most articles are NOT relevant to most milestones.${memoryHint}`;
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15s per call
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          { role: "system", content: "You classify evidence for a Bayesian frontier technology observatory. Be precise and selective." },
-          { role: "user", content: prompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "classify_evidence",
-            description: "Classify whether an article is relevant to a milestone and score it using v3.0 rules.",
-            parameters: {
-              type: "object",
-              properties: {
-                relevant: { type: "boolean" },
-                direction: { type: "string", enum: ["supports", "contradicts", "ambiguous"] },
-                evidence_type: { type: "string", enum: ["peer_reviewed", "preprint", "government", "journalism", "trade_press", "press_release", "vendor_blog", "financial", "unknown"] },
-                credibility: { type: "number" },
-                consensus: { type: "number" },
-                criteria_match: { type: "number" },
-                summary: { type: "string" },
-              },
-              required: ["relevant", "direction", "evidence_type", "credibility", "consensus", "criteria_match", "summary"],
-              additionalProperties: false,
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "classify_evidence" } },
-      }),
-    });
-    clearTimeout(timeout);
+  const MAX_RETRIES = 2;
+  const RETRY_DELAYS = [1000, 2000]; // exponential backoff (1s, 2s)
 
-    if (!resp.ok) { await resp.text(); return null; }
-    const data = await resp.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) return null;
-    return JSON.parse(toolCall.function.arguments);
-  } catch { return null; }
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-lite",
+          messages: [
+            { role: "system", content: "You classify evidence for a Bayesian frontier technology observatory. Be precise and selective." },
+            { role: "user", content: prompt },
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "classify_evidence",
+              description: "Classify whether an article is relevant to a milestone and score it using v3.0 rules.",
+              parameters: {
+                type: "object",
+                properties: {
+                  relevant: { type: "boolean" },
+                  direction: { type: "string", enum: ["supports", "contradicts", "ambiguous"] },
+                  evidence_type: { type: "string", enum: ["peer_reviewed", "preprint", "government", "journalism", "trade_press", "press_release", "vendor_blog", "financial", "unknown"] },
+                  credibility: { type: "number" },
+                  consensus: { type: "number" },
+                  criteria_match: { type: "number" },
+                  summary: { type: "string" },
+                },
+                required: ["relevant", "direction", "evidence_type", "credibility", "consensus", "criteria_match", "summary"],
+                additionalProperties: false,
+              },
+            },
+          }],
+          tool_choice: { type: "function", function: { name: "classify_evidence" } },
+        }),
+      });
+      clearTimeout(timeout);
+
+      if (!resp.ok) {
+        const body = await resp.text();
+        // Retry on rate limit (429) or server error (5xx)
+        if ((resp.status === 429 || resp.status >= 500) && attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+          continue;
+        }
+        return null;
+      }
+      const data = await resp.json();
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      if (!toolCall) return null;
+      return JSON.parse(toolCall.function.arguments);
+    } catch {
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
+        continue;
+      }
+      return null;
+    }
+  }
+  return null;
 }
 
-const MAX_AI_CALLS = 15; // Cap to stay within edge function timeout (~60s)
+const MAX_AI_CALLS = 15; // Safe within 60s edge function timeout even with retries
 const PARALLEL_BATCH_SIZE = 5; // Concurrent AI calls per batch
+const BATCH_SPACING_MS = 200; // Delay between batches to avoid rate limiting
 
 const classifyNode: NodeFn = async (state) => {
   const classifications: GraphState["classifications"] = [];
@@ -444,8 +465,9 @@ const classifyNode: NodeFn = async (state) => {
   const capped = pairs.slice(0, MAX_AI_CALLS);
   await logToScout(state, "classify_plan", { totalPairs: pairs.length, capped: capped.length });
 
-  // Process in parallel batches
+  // Process in parallel batches with spacing
   for (let i = 0; i < capped.length; i += PARALLEL_BATCH_SIZE) {
+    if (i > 0) await new Promise(r => setTimeout(r, BATCH_SPACING_MS)); // inter-batch spacing
     const batch = capped.slice(i, i + PARALLEL_BATCH_SIZE);
     const results = await Promise.allSettled(
       batch.map(async ({ article, milestone }) => {
