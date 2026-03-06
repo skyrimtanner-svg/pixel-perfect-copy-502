@@ -4,8 +4,9 @@ import { useMode } from '@/contexts/ModeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { glassPanel, glassInner, specularReflection } from '@/lib/glass-styles';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Brain, MessageCircle, Link2, ChevronDown, Send, Trash2 } from 'lucide-react';
+import { Sparkles, Brain, MessageCircle, Link2, ChevronDown, Send, Trash2, Bot } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface SocraticTopic {
   id: string;
@@ -20,9 +21,10 @@ interface SocraticComment {
   id: string;
   topic_id: string;
   milestone_id: string;
-  user_id: string;
+  user_id: string | null;
   content: string;
   created_at: string;
+  is_ai: boolean;
 }
 
 interface EvidenceItem {
@@ -48,6 +50,16 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
   const [discussTopicId, setDiscussTopicId] = useState<string | null>(null);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check admin role
+  useEffect(() => {
+    if (!user) return;
+    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data }) => {
+      setIsAdmin(!!data);
+    });
+  }, [user]);
 
   useEffect(() => {
     const load = async () => {
@@ -120,6 +132,33 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
     await supabase.from('socratic_comments').delete().eq('id', commentId as any);
   }, []);
 
+  const handleAiRespond = useCallback(async (topic: SocraticTopic, userComment: string) => {
+    if (aiLoading) return;
+    setAiLoading(topic.id);
+    try {
+      const topEvidence = evidence.slice(0, 3);
+      const { data, error } = await supabase.functions.invoke('socratic-ai', {
+        body: {
+          topicTitle: topic.topic_title,
+          socraticQuestion: topic.socratic_question,
+          cynicalLens: topic.cynical_lens,
+          userComment,
+          topicId: topic.id,
+          milestoneId,
+          evidenceSummaries: topEvidence.map(e => e.summary || e.source),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(isWonder ? '✨ Hume speaks…' : 'AI response generated');
+    } catch (err: any) {
+      console.error('AI respond failed:', err);
+      toast.error(err?.message || 'AI response failed');
+    } finally {
+      setAiLoading(null);
+    }
+  }, [aiLoading, evidence, milestoneId, isWonder]);
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -164,6 +203,8 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
             const isExpanded = expandedId === topic.id;
             const isDiscussing = discussTopicId === topic.id;
             const topicComments = getTopicComments(topic.id);
+            const showAiButton = isAdmin || topicComments.filter(c => !c.is_ai).length >= 2;
+            const lastUserComment = [...topicComments].reverse().find(c => !c.is_ai);
 
             return (
               <motion.div
@@ -328,23 +369,57 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
                                       {topicComments.map(comment => (
                                         <motion.div
                                           key={comment.id}
-                                          initial={{ opacity: 0, x: -8 }}
+                                          initial={{ opacity: 0, x: comment.is_ai ? 8 : -8 }}
                                           animate={{ opacity: 1, x: 0 }}
-                                          className="flex items-start gap-2 group/comment"
+                                          className={`flex items-start gap-2 group/comment ${comment.is_ai ? 'pl-3' : ''}`}
                                         >
+                                          {/* Avatar */}
                                           <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[8px] font-bold" style={{
-                                            background: isWonder ? 'hsla(43, 96%, 56%, 0.2)' : 'hsla(192, 100%, 52%, 0.15)',
-                                            color: isWonder ? 'hsl(43, 96%, 56%)' : 'hsl(192, 100%, 52%)',
+                                            background: comment.is_ai
+                                              ? (isWonder ? 'hsla(270, 80%, 60%, 0.25)' : 'hsla(192, 100%, 52%, 0.2)')
+                                              : (isWonder ? 'hsla(43, 96%, 56%, 0.2)' : 'hsla(192, 100%, 52%, 0.15)'),
+                                            color: comment.is_ai
+                                              ? (isWonder ? 'hsl(270, 80%, 70%)' : 'hsl(192, 100%, 65%)')
+                                              : (isWonder ? 'hsl(43, 96%, 56%)' : 'hsl(192, 100%, 52%)'),
                                           }}>
-                                            {isWonder ? '✦' : 'U'}
+                                            {comment.is_ai ? <Bot className="w-3 h-3" /> : (isWonder ? '✦' : 'U')}
                                           </div>
                                           <div className="flex-1 min-w-0">
-                                            <p className="text-[11px] text-foreground leading-relaxed">{comment.content}</p>
+                                            {/* AI badge */}
+                                            {comment.is_ai && (
+                                              <div className="flex items-center gap-1.5 mb-0.5">
+                                                <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded" style={{
+                                                  background: isWonder
+                                                    ? 'linear-gradient(135deg, hsla(270, 80%, 60%, 0.2), hsla(43, 96%, 56%, 0.15))'
+                                                    : 'hsla(192, 100%, 52%, 0.12)',
+                                                  color: isWonder ? 'hsl(270, 80%, 70%)' : 'hsl(192, 100%, 65%)',
+                                                  border: `1px solid ${isWonder ? 'hsla(270, 80%, 60%, 0.25)' : 'hsla(192, 100%, 52%, 0.2)'}`,
+                                                }}>
+                                                  {isWonder ? '🏛️ Hume' : 'HUME·AI'}
+                                                </span>
+                                                {isWonder && (
+                                                  <Sparkles className="w-2.5 h-2.5" style={{ color: 'hsl(270, 80%, 70%)', filter: 'drop-shadow(0 0 4px hsla(270, 80%, 60%, 0.5))' }} />
+                                                )}
+                                                {!isWonder && (
+                                                  <span className="text-[8px] font-mono text-muted-foreground">
+                                                    Δ log-odds ≈ 0.00
+                                                  </span>
+                                                )}
+                                              </div>
+                                            )}
+                                            <p className={`text-[11px] leading-relaxed ${comment.is_ai ? 'italic' : ''}`} style={{
+                                              color: comment.is_ai
+                                                ? (isWonder ? 'hsla(270, 40%, 80%, 0.95)' : 'hsl(220, 10%, 70%)')
+                                                : undefined,
+                                            }}>
+                                              {comment.is_ai ? `"${comment.content}"` : comment.content}
+                                            </p>
                                             <span className="text-[9px] text-muted-foreground font-mono">
                                               {format(new Date(comment.created_at), 'MMM d, HH:mm')}
                                             </span>
                                           </div>
-                                          {user && comment.user_id === user.id && (
+                                          {/* Delete button (own comments only) */}
+                                          {user && !comment.is_ai && comment.user_id === user.id && (
                                             <button
                                               onClick={() => handleDeleteComment(comment.id)}
                                               className="opacity-0 group-hover/comment:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10"
@@ -355,6 +430,37 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
                                         </motion.div>
                                       ))}
                                     </div>
+
+                                    {/* AI Respond button */}
+                                    {showAiButton && lastUserComment && (
+                                      <button
+                                        onClick={() => handleAiRespond(topic, lastUserComment.content)}
+                                        disabled={aiLoading === topic.id}
+                                        className="flex items-center gap-1.5 text-[9px] font-mono font-bold px-2.5 py-1 rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+                                        style={{
+                                          background: isWonder
+                                            ? 'linear-gradient(135deg, hsla(270, 80%, 60%, 0.15), hsla(43, 96%, 56%, 0.1))'
+                                            : 'hsla(192, 100%, 52%, 0.08)',
+                                          border: `1px solid ${isWonder ? 'hsla(270, 80%, 60%, 0.25)' : 'hsla(192, 100%, 52%, 0.15)'}`,
+                                          color: isWonder ? 'hsl(270, 80%, 70%)' : 'hsl(192, 100%, 65%)',
+                                        }}
+                                      >
+                                        {aiLoading === topic.id ? (
+                                          <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                                          >
+                                            <Bot className="w-3 h-3" />
+                                          </motion.div>
+                                        ) : (
+                                          <Bot className="w-3 h-3" />
+                                        )}
+                                        {aiLoading === topic.id
+                                          ? (isWonder ? '✨ Hume is thinking…' : 'GENERATING…')
+                                          : (isWonder ? '🏛️ Ask Hume' : 'AI RESPOND')
+                                        }
+                                      </button>
+                                    )}
 
                                     {/* Comment input */}
                                     {user && (
