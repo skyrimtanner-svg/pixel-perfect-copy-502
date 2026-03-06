@@ -14,7 +14,7 @@ import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
 import { useEntitlement } from '@/hooks/useEntitlement';
 import { useHysteresis } from '@/hooks/useHysteresis';
-import { ArrowUpRight, ArrowDownRight, Shield, Clock, Users, Crosshair, Loader2, Hash, AlertTriangle, FileText, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Loader2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
@@ -34,6 +34,76 @@ interface MilestoneModalProps {
   milestone: Milestone | null;
   open: boolean;
   onClose: () => void;
+}
+
+function CalibMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="text-center">
+      <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider mb-1">{label}</div>
+      <div className="font-mono text-sm font-bold tabular-nums" style={{
+        ...goldGradientStyle,
+        filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))',
+      }}>{(value * 100).toFixed(1)}%</div>
+    </div>
+  );
+}
+
+function EvidenceRow({ ev }: { ev: any }) {
+  const isSupport = ev.direction === 'supports';
+  const isContradict = ev.direction === 'contradicts';
+  const borderColor = isSupport ? 'hsla(155, 82%, 48%, 0.22)' : isContradict ? 'hsla(0, 72%, 55%, 0.22)' : 'hsla(220, 10%, 72%, 0.1)';
+  const accentTint = isSupport ? 'hsla(155, 82%, 48%, 0.08)' : isContradict ? 'hsla(0, 72%, 55%, 0.08)' : 'transparent';
+  const dirLabel = isSupport ? '↑ SUPPORTS' : isContradict ? '↓ CONTRADICTS' : '~ AMBIGUOUS';
+
+  return (
+    <motion.div
+      className="rounded-xl p-4 relative overflow-hidden group shine-sweep"
+      style={{
+        background: `linear-gradient(168deg, ${accentTint}, rgba(8, 10, 28, 0.82))`,
+        border: `1px solid ${borderColor}`,
+        backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
+        boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.07), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 4px 16px -4px hsla(232, 30%, 2%, 0.5)',
+      }}
+      whileHover={{ scale: 1.005, y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    >
+      <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
+      <div className="flex items-start justify-between gap-3 mb-2.5 relative z-10">
+        <div>
+          <p className="text-sm font-medium text-foreground">{ev.source}</p>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {(ev.type || '').replace('_', ' ')} • {ev.date}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className="font-mono text-[9px] font-bold tracking-wider" style={{
+            color: isSupport ? 'hsl(155, 82%, 55%)' : isContradict ? 'hsl(0, 72%, 60%)' : 'hsl(220, 12%, 65%)',
+          }}>{dirLabel}</span>
+          <span className="font-mono text-xs font-bold tabular-nums" style={isSupport ? {
+            background: 'linear-gradient(135deg, hsl(155, 70%, 35%), hsl(155, 82%, 55%))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          } : isContradict ? {
+            background: 'linear-gradient(135deg, hsl(0, 60%, 40%), hsl(0, 72%, 60%))',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          } : { color: 'hsl(220, 10%, 55%)' }}>
+            {ev.delta_log_odds > 0 ? '+' : ''}{Number(ev.delta_log_odds).toFixed(2)} LO
+          </span>
+        </div>
+      </div>
+      <p className="text-xs text-secondary-foreground leading-relaxed mb-3 relative z-10">{ev.summary}</p>
+      <div className="flex gap-2 flex-wrap relative z-10 font-mono text-[10px]">
+        <span className="px-2 py-0.5 rounded-lg" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
+          Cred <span className="font-bold tabular-nums" style={goldGradientStyle}>{Number(ev.credibility).toFixed(2)}</span>
+        </span>
+        <span className="px-2 py-0.5 rounded-lg" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
+          Cons <span className="font-bold tabular-nums" style={goldGradientStyle}>{Number(ev.consensus).toFixed(2)}</span>
+        </span>
+        <span className="px-2 py-0.5 rounded-lg" style={{ background: 'hsla(43, 96%, 56%, 0.1)', border: '1px solid hsla(43, 96%, 56%, 0.22)' }}>
+          <span style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))' }}>E={Number(ev.composite).toFixed(3)}</span>
+        </span>
+      </div>
+    </motion.div>
+  );
 }
 
 export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps) {
@@ -72,28 +142,23 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
       hasFetchedWhyRef.current = milestone.id;
       fetchMilestone(milestone.id).then(result => {
         if (result?.bayes) {
-          // Extract snapshot hash from trust ledger if available
           setSnapshotTimestamp(new Date().toISOString());
         }
       });
     }
   }, [activeTab, milestone?.id, fetchMilestone]);
 
-  // Handle negative shift callback from waterfall
   const handleNegativeShift = useCallback((negative: boolean, posterior: number) => {
     setIsNegativeShift(negative);
     setSimPosterior(posterior);
     
     if (milestone) {
-      // Record update for hysteresis tracking
       hysteresis.recordUpdate(posterior, milestone.prior, milestone.archetype);
     }
     
-    // Determine tag flip based on threshold crossing or hysteresis demotion
     if (milestone && negative) {
       const origArchetype = milestone.archetype;
       if (hysteresis.shouldDemote && hysteresis.demotedArchetype) {
-        // Hysteresis-triggered demotion (3 consecutive drops)
         setTagFlip({ from: origArchetype.charAt(0).toUpperCase() + origArchetype.slice(1), to: 'Bottleneck' });
       } else if (origArchetype === 'breakthrough' && posterior < milestone.prior) {
         setTagFlip({ from: 'Breakthrough', to: 'Bottleneck' });
@@ -107,12 +172,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
     }
   }, [milestone, hysteresis]);
 
-  // Commit negative evidence — triggers full-screen sparks and Trust Ledger snapshot
   const handleCommitNegativeEvidence = useCallback(async (excludedIds: string[], whatIfRes: any) => {
     if (!milestone) return;
     setCommitInProgress(true);
     try {
-      // Call the evidence submission endpoint
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/milestones-api/${milestone.id}/evidence`;
       const res = await fetch(url, {
         method: 'POST',
@@ -136,7 +199,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           setLedgerHash(result.trust_ledger.sha256_hash);
           setSnapshotTimestamp(new Date().toISOString());
         }
-        // Refresh milestone data
         await fetchMilestone(milestone.id);
       }
     } catch (err) {
@@ -145,7 +207,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
       setCommitInProgress(false);
     }
   }, [milestone, fetchMilestone]);
-
 
   if (!milestone) return null;
 
@@ -174,7 +235,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           transition: 'border-color 0.5s, box-shadow 0.5s',
         }}
       >
-        {/* Red particle effect for negative shifts */}
         <AnimatePresence>
           {isNegativeShift && (
             <>
@@ -208,7 +268,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           )}
         </AnimatePresence>
 
-        {/* Top gold/red rim */}
         <div className="absolute top-0 left-6 right-6 h-px transition-all duration-500" style={
           isNegativeShift
             ? { background: 'linear-gradient(90deg, transparent, hsla(0, 72%, 55%, 0.4), hsla(0, 72%, 65%, 0.2), hsla(0, 72%, 55%, 0.4), transparent)' }
@@ -219,12 +278,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           pointerEvents: 'none',
         }} />
 
-        {/* Header */}
         <DialogHeader className="p-6 pb-4 relative z-10" style={{ borderBottom: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
           <div className="flex items-center gap-2 mb-2">
             <DomainBadge domain={milestone.domain} />
             <StatusBadge status={milestone.status} />
-            {/* Animated archetype tag flip */}
             <AnimatePresence mode="wait">
               {tagFlip ? (
                 <motion.div
@@ -301,7 +358,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             </span>
           </div>
 
-          {/* Warning banner for dramatic negative shift */}
           <AnimatePresence>
             {tagFlip && (
               <motion.div
@@ -329,7 +385,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           </AnimatePresence>
         </DialogHeader>
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="p-6 pt-4 relative z-10">
           <TabsList className="mb-4 rounded-xl p-1 relative overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
             <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl pointer-events-none" style={specularReflection} />
@@ -368,7 +423,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               <p className="text-sm text-foreground relative z-10">{milestone.falsification}</p>
             </div>
 
-            {/* Belief trajectory */}
             <div className="rounded-xl p-4 relative overflow-hidden" style={{ ...glassInner, backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)', border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
               <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl" style={specularReflection} />
               <h4 className="text-[10px] uppercase tracking-[0.12em] mb-3 font-mono font-bold relative z-10" style={{
@@ -411,7 +465,6 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               </div>
             </div>
 
-            {/* Calibration snapshot */}
             {liveData?.calibration && (
               <div className="rounded-xl p-4 relative overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(43, 96%, 56%, 0.12)' }}>
                 <div className="absolute top-0 left-0 right-0 h-[30%] rounded-t-xl" style={specularReflection} />
@@ -533,7 +586,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               ))
             )}
           </TabsContent>
-          {/* View Receipt button after commit */}
+          
           {ledgerHash && (
             <div className="mt-3 flex items-center justify-center">
               <motion.button
@@ -548,18 +601,15 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 whileHover={{ scale: 1.03, boxShadow: '0 0 28px -4px hsla(43, 96%, 56%, 0.35)' }}
                 whileTap={{ scale: 0.97 }}
               >
-                <Shield className="w-3.5 h-3.5" />
                 View Receipt on Trust Ledger
-                <ExternalLink className="w-3 h-3 opacity-60" />
               </motion.button>
             </div>
           )}
-          {/* Export LP Memo button */}
+          
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid hsla(220, 10%, 72%, 0.1)' }}>
             <motion.button
               onClick={async () => {
                 if (!canExportMemo) { setShowUpgrade(true); return; }
-                // Ensure evidence is loaded before opening memo export
                 if (!detail && milestone) {
                   hasFetchedWhyRef.current = milestone.id;
                   await fetchMilestone(milestone.id);
@@ -581,14 +631,12 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <FileText className="w-4 h-4" />
               {isWonder ? '✦ Export LP Memo' : 'Export LP Memo'}
             </motion.button>
           </div>
         </Tabs>
       </DialogContent>
 
-      {/* LP Memo Export Dialog */}
       {milestone && (
         <LPMemoExport
           milestone={{
@@ -614,76 +662,5 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         requiredTier="Pro+"
       />
     </Dialog>
-  );
-}
-
-function CalibMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="text-center">
-      <div className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider mb-1">{label}</div>
-      <div className="font-mono text-sm font-bold tabular-nums" style={{
-        ...goldGradientStyle,
-        filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))',
-      }}>{(value * 100).toFixed(1)}%</div>
-    </div>
-  );
-}
-
-/* ═══ EVIDENCE ROW — metallic themed ═══ */
-function EvidenceRow({ ev }: { ev: any }) {
-  const isSupport = ev.direction === 'supports';
-  const isContradict = ev.direction === 'contradicts';
-  const borderColor = isSupport ? 'hsla(155, 82%, 48%, 0.22)' : isContradict ? 'hsla(0, 72%, 55%, 0.22)' : 'hsla(220, 10%, 72%, 0.1)';
-  const accentTint = isSupport ? 'hsla(155, 82%, 48%, 0.08)' : isContradict ? 'hsla(0, 72%, 55%, 0.08)' : 'transparent';
-  const dirLabel = isSupport ? '↑ SUPPORTS' : isContradict ? '↓ CONTRADICTS' : '~ AMBIGUOUS';
-
-  return (
-    <motion.div
-      className="rounded-xl p-4 relative overflow-hidden group shine-sweep"
-      style={{
-        background: `linear-gradient(168deg, ${accentTint}, rgba(8, 10, 28, 0.82))`,
-        border: `1px solid ${borderColor}`,
-        backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-        boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.07), inset 0 -1px 0 hsla(232, 30%, 2%, 0.4), 0 4px 16px -4px hsla(232, 30%, 2%, 0.5)',
-      }}
-      whileHover={{ scale: 1.005, y: -1 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-xl" style={specularReflection} />
-      <div className="flex items-start justify-between gap-3 mb-2.5 relative z-10">
-        <div>
-          <p className="text-sm font-medium text-foreground">{ev.source}</p>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {(ev.type || '').replace('_', ' ')} • {ev.date}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className="font-mono text-[9px] font-bold tracking-wider" style={{
-            color: isSupport ? 'hsl(155, 82%, 55%)' : isContradict ? 'hsl(0, 72%, 60%)' : 'hsl(220, 12%, 65%)',
-          }}>{dirLabel}</span>
-          <span className="font-mono text-xs font-bold tabular-nums" style={isSupport ? {
-            background: 'linear-gradient(135deg, hsl(155, 70%, 35%), hsl(155, 82%, 55%))',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          } : isContradict ? {
-            background: 'linear-gradient(135deg, hsl(0, 60%, 40%), hsl(0, 72%, 60%))',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          } : { color: 'hsl(220, 10%, 55%)' }}>
-            {ev.delta_log_odds > 0 ? '+' : ''}{Number(ev.delta_log_odds).toFixed(2)} LO
-          </span>
-        </div>
-      </div>
-      <p className="text-xs text-secondary-foreground leading-relaxed mb-3 relative z-10">{ev.summary}</p>
-      <div className="flex gap-2 flex-wrap relative z-10 font-mono text-[10px]">
-        <span className="px-2 py-0.5 rounded-lg" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
-          Cred <span className="font-bold tabular-nums" style={goldGradientStyle}>{Number(ev.credibility).toFixed(2)}</span>
-        </span>
-        <span className="px-2 py-0.5 rounded-lg" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
-          Cons <span className="font-bold tabular-nums" style={goldGradientStyle}>{Number(ev.consensus).toFixed(2)}</span>
-        </span>
-        <span className="px-2 py-0.5 rounded-lg" style={{ background: 'hsla(43, 96%, 56%, 0.1)', border: '1px solid hsla(43, 96%, 56%, 0.22)' }}>
-          <span style={{ ...goldGradientStyle, filter: 'drop-shadow(0 0 4px hsla(43, 96%, 56%, 0.2))' }}>E={Number(ev.composite).toFixed(3)}</span>
-        </span>
-      </div>
-    </motion.div>
   );
 }

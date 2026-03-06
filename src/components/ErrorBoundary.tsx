@@ -35,8 +35,8 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             <div className="absolute top-0 left-6 right-6 h-px" style={goldChromeLine} />
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center border border-destructive/20">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
               </div>
             </div>
             <h1 className="text-xl font-bold text-foreground mb-2 font-display">System Malfunction</h1>
