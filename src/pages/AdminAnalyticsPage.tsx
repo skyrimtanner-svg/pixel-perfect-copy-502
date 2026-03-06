@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Users, Zap, FileText, BarChart3, Eye, Loader2, Check, X, Search, Bot, CheckCheck, XCircle, RefreshCw, ArrowUpDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 
 interface Metrics {
   activeUsers: number;
@@ -55,8 +55,10 @@ export default function AdminAnalyticsPage() {
   const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
   const [filterDomain, setFilterDomain] = useState<string>('all');
   const [filterDirection, setFilterDirection] = useState<string>('all');
-  const [sortField, setSortField] = useState<'composite_score' | 'created_at'>('composite_score');
+  const [filterComposite, setFilterComposite] = useState<string>('all');
+  const [sortField, setSortField] = useState<'composite_score' | 'created_at' | 'direction' | 'source'>('composite_score');
   const [sortAsc, setSortAsc] = useState(false);
+  const [sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
   const [evidenceInflow, setEvidenceInflow] = useState<any[]>([]);
 
   const fetchPending = useCallback(async () => {
@@ -121,8 +123,9 @@ export default function AdminAnalyticsPage() {
     fetchPending();
     fetchLogs();
 
-    // Fetch evidence inflow data
+    // Fetch evidence inflow + source distribution
     const fetchInflow = async () => {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: allEvidence } = await supabase
         .from('pending_evidence')
         .select('created_at, source, direction, composite_score')
@@ -130,7 +133,7 @@ export default function AdminAnalyticsPage() {
 
       if (!allEvidence || allEvidence.length === 0) return;
 
-      // Group by date
+      // Group by date for inflow chart
       const grouped: Record<string, { date: string; supports: number; contradicts: number; ambiguous: number; total: number; sources: Record<string, number> }> = {};
       allEvidence.forEach((e: any) => {
         const date = new Date(e.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -141,6 +144,28 @@ export default function AdminAnalyticsPage() {
         grouped[date].sources[src] = (grouped[date].sources[src] || 0) + 1;
       });
       setEvidenceInflow(Object.values(grouped));
+
+      // Source distribution (last 30 days)
+      const recentEvidence = allEvidence.filter((e: any) => e.created_at >= thirtyDaysAgo);
+      const sourceMap: Record<string, number> = {};
+      const SOURCE_LABELS: Record<string, string> = {
+        'arxiv': 'arXiv', 'x': 'X', 'nature': 'Nature', 'reuters': 'Reuters',
+        'patents': 'patents.google.com', 'clinicaltrials': 'clinicaltrials.gov',
+        'science': 'Science', 'bbc': 'BBC', 'techcrunch': 'TechCrunch',
+      };
+      recentEvidence.forEach((e: any) => {
+        const raw = (e.source || 'unknown').toLowerCase();
+        let key = raw.split('.')[0];
+        if (raw.includes('patents.google')) key = 'patents';
+        if (raw.includes('clinicaltrials')) key = 'clinicaltrials';
+        const label = SOURCE_LABELS[key] || key;
+        sourceMap[label] = (sourceMap[label] || 0) + 1;
+      });
+      setSourceDistribution(
+        Object.entries(sourceMap)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value)
+      );
     };
     fetchInflow();
   }, [isAdmin, fetchPending, fetchLogs]);
@@ -397,15 +422,72 @@ export default function AdminAnalyticsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Source Distribution Pie Chart */}
+              {sourceDistribution.length > 0 && (
+                <div className="rounded-xl p-5 relative overflow-hidden mt-6" style={glassPanel}>
+                  <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+                  <div className="absolute top-0 left-0 right-0 h-[20%] rounded-t-xl pointer-events-none" style={specularReflection} />
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart3 className="w-4 h-4" style={{ color: 'hsl(268, 90%, 68%)' }} />
+                    <h2 className="text-sm font-display font-semibold text-foreground">Source Distribution (Last 30 Days)</h2>
+                  </div>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={sourceDistribution}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={{ stroke: 'hsla(220, 12%, 70%, 0.3)' }}
+                          strokeWidth={1}
+                          stroke="hsla(232, 26%, 8%, 0.8)"
+                        >
+                          {sourceDistribution.map((_, idx) => (
+                            <Cell key={idx} fill={[
+                              'hsl(192, 95%, 50%)', 'hsl(155, 82%, 48%)', 'hsl(43, 96%, 56%)',
+                              'hsl(268, 90%, 68%)', 'hsl(0, 82%, 60%)', 'hsl(210, 80%, 55%)',
+                              'hsl(330, 70%, 55%)', 'hsl(120, 60%, 50%)', 'hsl(30, 90%, 55%)',
+                            ][idx % 9]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            background: 'hsl(232, 26%, 12%)',
+                            border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
+                            color: 'hsl(220, 12%, 80%)',
+                          }}
+                          formatter={(value: number, name: string) => [`${value} items (${sourceDistribution.length > 0 ? ((value / sourceDistribution.reduce((s, d) => s + d.value, 0)) * 100).toFixed(1) : 0}%)`, name]}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'monospace' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
             </>
           )}
           {activeTab === 'queue' && (() => {
             const filtered = pendingEvidence
               .filter(p => filterDomain === 'all' || p.milestone_id.includes(filterDomain))
               .filter(p => filterDirection === 'all' || p.direction === filterDirection)
+              .filter(p => filterComposite === 'all' || (filterComposite === 'supports' ? p.direction === 'supports' : filterComposite === 'contradicts' ? p.direction === 'contradicts' : p.composite_score >= 0.5))
               .sort((a, b) => {
-                const av = sortField === 'composite_score' ? a.composite_score : new Date(a.created_at).getTime();
-                const bv = sortField === 'composite_score' ? b.composite_score : new Date(b.created_at).getTime();
+                let av: number, bv: number;
+                switch (sortField) {
+                  case 'composite_score': av = a.composite_score; bv = b.composite_score; break;
+                  case 'created_at': av = new Date(a.created_at).getTime(); bv = new Date(b.created_at).getTime(); break;
+                  case 'direction': av = a.direction.charCodeAt(0); bv = b.direction.charCodeAt(0); break;
+                  case 'source': av = a.source.charCodeAt(0); bv = b.source.charCodeAt(0); break;
+                  default: av = a.composite_score; bv = b.composite_score;
+                }
                 return sortAsc ? av - bv : bv - av;
               });
 
@@ -443,32 +525,36 @@ export default function AdminAnalyticsPage() {
                     <option value="contradicts">Contradicts</option>
                     <option value="ambiguous">Ambiguous</option>
                   </select>
-                  <button
-                    onClick={() => {
-                      if (sortField === 'composite_score') setSortAsc(!sortAsc);
-                      else { setSortField('composite_score'); setSortAsc(false); }
-                    }}
-                    className="text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1"
-                    style={{
-                      borderColor: sortField === 'composite_score' ? 'hsla(43, 96%, 56%, 0.3)' : 'hsla(220, 12%, 70%, 0.15)',
-                      color: sortField === 'composite_score' ? 'hsl(43, 96%, 56%)' : 'hsl(220, 12%, 55%)',
-                    }}
+                  <select
+                    value={filterComposite}
+                    onChange={e => setFilterComposite(e.target.value)}
+                    className="bg-transparent text-[10px] font-mono px-2 py-1 rounded border text-foreground"
+                    style={{ borderColor: 'hsla(220, 12%, 70%, 0.15)' }}
                   >
-                    <ArrowUpDown className="w-3 h-3" /> Score {sortField === 'composite_score' ? (sortAsc ? '↑' : '↓') : ''}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (sortField === 'created_at') setSortAsc(!sortAsc);
-                      else { setSortField('created_at'); setSortAsc(false); }
-                    }}
-                    className="text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1"
-                    style={{
-                      borderColor: sortField === 'created_at' ? 'hsla(43, 96%, 56%, 0.3)' : 'hsla(220, 12%, 70%, 0.15)',
-                      color: sortField === 'created_at' ? 'hsl(43, 96%, 56%)' : 'hsl(220, 12%, 55%)',
-                    }}
-                  >
-                    <ArrowUpDown className="w-3 h-3" /> Date {sortField === 'created_at' ? (sortAsc ? '↑' : '↓') : ''}
-                  </button>
+                    <option value="all">All</option>
+                    <option value="supports">Supports only</option>
+                    <option value="contradicts">Contradicts only</option>
+                    <option value="high">≥0.5 composite only</option>
+                  </select>
+                  {(['composite_score', 'direction', 'source', 'created_at'] as const).map(field => {
+                    const labels: Record<string, string> = { composite_score: 'Score', direction: 'Dir', source: 'Source', created_at: 'Date' };
+                    return (
+                      <button
+                        key={field}
+                        onClick={() => {
+                          if (sortField === field) setSortAsc(!sortAsc);
+                          else { setSortField(field); setSortAsc(false); }
+                        }}
+                        className="text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1"
+                        style={{
+                          borderColor: sortField === field ? 'hsla(43, 96%, 56%, 0.3)' : 'hsla(220, 12%, 70%, 0.15)',
+                          color: sortField === field ? 'hsl(43, 96%, 56%)' : 'hsl(220, 12%, 55%)',
+                        }}
+                      >
+                        <ArrowUpDown className="w-3 h-3" /> {labels[field]} {sortField === field ? (sortAsc ? '↑' : '↓') : ''}
+                      </button>
+                    );
+                  })}
                   <span className="text-[10px] font-mono text-muted-foreground/50 ml-auto">
                     {filtered.length}/{pendingEvidence.length} shown
                   </span>

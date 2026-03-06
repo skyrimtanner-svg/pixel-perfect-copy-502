@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface EvidencePulse {
@@ -21,6 +21,7 @@ const SIX_H = 6 * 60 * 60 * 1000;
 export function useRealtimeEvidence(milestoneIds: string[]) {
   const [pulses, setPulses] = useState<Map<string, EvidencePulse>>(new Map());
   const [scoutSignal, setScoutSignal] = useState<ScoutSignal | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idSet = useMemo(() => new Set(milestoneIds), [milestoneIds]);
 
@@ -102,6 +103,7 @@ export function useRealtimeEvidence(milestoneIds: string[]) {
             });
             return next;
           });
+          setRefreshToken(t => t + 1);
         }, 300);
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'scout_logs' }, () => {
@@ -112,6 +114,13 @@ export function useRealtimeEvidence(milestoneIds: string[]) {
             lastRunMinAgo: 0,
             details: prev?.details || [],
           }));
+          setRefreshToken(t => t + 1);
+        }, 300);
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pending_evidence' }, () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          setRefreshToken(t => t + 1);
         }, 300);
       })
       .subscribe();
@@ -119,5 +128,5 @@ export function useRealtimeEvidence(milestoneIds: string[]) {
     return () => { supabase.removeChannel(channel); };
   }, [idSet]);
 
-  return { pulses, scoutSignal };
+  return { pulses, scoutSignal, refreshToken };
 }
