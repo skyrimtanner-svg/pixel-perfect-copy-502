@@ -46,17 +46,14 @@ export default function AdminAnalyticsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingEvidence, setPendingEvidence] = useState<PendingEvidence[]>([]);
-  const [scoutLogs, setScoutLogs] = useState<ScoutLog[]>([]);
-  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [_scoutLogs, setScoutLogs] = useState<ScoutLog[]>([]);
   const [scoutRunning, setScoutRunning] = useState(false);
-  const [batchProcessing, setBatchProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
-  const [evidenceInflow, setEvidenceInflow] = useState<any[]>([]);
-  const [sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
-  const [domainPortfolio, setDomainPortfolio] = useState<{ name: string; avgPosterior: number; count: number }[]>([]);
-  const [topMovers, setTopMovers] = useState<{ title: string; delta: number; direction: string }[]>([]);
-  const [calibrationTrend, setCalibrationTrend] = useState<{ date: string; brier: number }[]>([]);
+  const [_evidenceInflow, setEvidenceInflow] = useState<{ date: string; supports: number; contradicts: number; ambiguous: number; total: number; sources: Record<string, number> }[]>([]);
+  const [_sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
+  const [_domainPortfolio, setDomainPortfolio] = useState<{ name: string; avgPosterior: number; count: number }[]>([]);
+  const [_topMovers, setTopMovers] = useState<{ title: string; delta: number; direction: string }[]>([]);
+  const [_calibrationTrend, setCalibrationTrend] = useState<{ date: string; brier: number }[]>([]);
 
   const fetchPending = useCallback(async () => {
     const { data } = await supabase
@@ -208,7 +205,7 @@ export default function AdminAnalyticsPage() {
         Object.entries(agg)
           .sort((a, b) => Math.abs(b[1].delta) - Math.abs(a[1].delta))
           .slice(0, 5)
-          .map(([id, { delta, direction }]) => ({
+          .map(([id, { delta }]) => ({
             title: titleMap[id] || id,
             delta: Math.round(delta * 1000) / 1000,
             direction: delta >= 0 ? 'supports' : 'contradicts',

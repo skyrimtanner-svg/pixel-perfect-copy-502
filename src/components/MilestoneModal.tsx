@@ -110,7 +110,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   const { isWonder } = useMode();
   const { canExportMemo } = useEntitlement();
   const { loading, detail, whatIfResult, whatIfLoading, fetchMilestone, runWhatIf } = useMilestoneAPI();
-  const [commitInProgress, setCommitInProgress] = useState(false);
+  const [_commitInProgress, setCommitInProgress] = useState(false);
   const hysteresis = useHysteresis();
   const [ledgerHash, setLedgerHash] = useState<string | null>(null);
   const [snapshotTimestamp, setSnapshotTimestamp] = useState<string | null>(null);

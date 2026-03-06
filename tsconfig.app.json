@@ -20,7 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
-    "exactOptionalPropertyTypes": true,
     "strictNullChecks": true,
 
     "paths": {

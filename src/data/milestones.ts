@@ -49,7 +49,7 @@ export const archetypeConfig: Record<Archetype, { label: string; icon: string; c
   anchor: { label: 'Anchor', icon: '⚓', color: 'text-chrome' },
 };
 
-const credibilityMap: Record<SourceType, number> = {
+export const credibilityMap: Record<SourceType, number> = {
   peer_reviewed: 0.95, government_data: 0.90, benchmark: 0.88,
   industry_data: 0.85, expert_analysis: 0.80, news: 0.65,
   patent: 0.60, preprint: 0.55, community: 0.40, social: 0.30,

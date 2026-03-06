@@ -1,9 +1,9 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { BetaWelcomeBanner } from '@/components/BetaWelcomeBanner';
 import { Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
-import { FreshSignalsBanner } from '@/components/FreshSignalsBanner';
+// FreshSignalsBanner reserved for future scout integration
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
@@ -20,7 +20,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { domainColorClass } from '@/lib/domain-styles';
+// domainColorClass reserved for future domain-colored elements
 
 const domains: (Domain | 'all')[] = ['all', 'compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
 
@@ -57,15 +57,9 @@ export default function TriagePage() {
   const listRef = useRef<HTMLDivElement>(null);
 
   const milestoneIds = useMemo(() => milestones.map(m => m.id), [milestones]);
-  const { pulses, scoutSignal } = useRealtimeEvidence(milestoneIds);
+  const { pulses } = useRealtimeEvidence(milestoneIds);
 
-  const scrollToFirstAffected = useCallback(() => {
-    if (!listRef.current) return;
-    const firstPulseId = [...pulses.keys()][0];
-    if (!firstPulseId) return;
-    const el = listRef.current.querySelector(`[data-milestone-id="${firstPulseId}"]`);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [pulses]);
+  // scrollToFirstAffected reserved for FreshSignalsBanner integration
 
   const filtered = useMemo(() => {
     const list = selectedDomain === 'all' ? milestones : milestones.filter(m => m.domain === selectedDomain);

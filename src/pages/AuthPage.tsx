@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, Mail, Loader2, CheckCircle, Sparkles, Lock, ArrowLeft } from 'lucide-react';
+import { Eye, Mail, Loader2, CheckCircle, Sparkles, Lock } from 'lucide-react';
 import { glassPanelStrong, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';

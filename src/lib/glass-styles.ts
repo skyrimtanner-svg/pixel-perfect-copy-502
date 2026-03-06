@@ -10,7 +10,7 @@ import { CSSProperties } from 'react';
 /* ── Core frost backgrounds ── */
 const FROST_DARK = 'rgba(8, 10, 28, 0.82)';
 const FROST_MEDIUM = 'rgba(10, 13, 32, 0.78)';
-const FROST_LIGHT = 'rgba(14, 17, 38, 0.72)';
+export const FROST_LIGHT = 'rgba(14, 17, 38, 0.72)';
 
 /* ── Specular & chrome edge colors ── */
 const SPECULAR_TOP = 'hsla(220, 16%, 95%, 0.09)';

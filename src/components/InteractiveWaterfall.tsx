@@ -82,7 +82,7 @@ function MicroBadge({ icon, label, value, color = 'hsl(220, 14%, 70%)' }: { icon
 
 export function InteractiveWaterfall({
   prior, contributions, evidence, milestoneId, tier = 'active',
-  onWhatIf, whatIfResult, whatIfLoading, ledgerHash: externalHash,
+  onWhatIf, whatIfResult, whatIfLoading: _whatIfLoading, ledgerHash: externalHash,
   onNegativeShift, onEvidenceClick
 }: InteractiveWaterfallProps) {
   const { isWonder } = useMode();
@@ -215,6 +215,7 @@ export function InteractiveWaterfall({
   }, [prior, contributions]);
   const maxAbsDelta = Math.max(...sortedContribs.map(c => Math.abs(c.delta_log_odds)), 0.5);
   const isDropping = effectiveWhatIf && (effectiveWhatIf.update_result.posterior < canonicalPosterior);
+  const posteriorDelta = finalPosterior - canonicalPosterior;
 
   useEffect(() => { onNegativeShift?.(!!isDropping, finalPosterior); }, [isDropping, finalPosterior, onNegativeShift]);
 

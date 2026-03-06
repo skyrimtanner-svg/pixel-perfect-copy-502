@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { Milestone, Evidence, archetypeConfig, domainLabels } from '@/data/milestones';
+import { Milestone, archetypeConfig, domainLabels } from '@/data/milestones';
 import { useMode } from '@/contexts/ModeContext';
-import { FileText, Download, Send, Sparkles, CheckCircle2, Shield, Hash, QrCode, ExternalLink } from 'lucide-react';
+import { FileText, Download, Send, Sparkles, CheckCircle2, Shield, Hash, ExternalLink } from 'lucide-react';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { toast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';

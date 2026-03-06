@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { Milestone, Evidence, Domain, Tier, Status, Archetype } from '@/data/milestones';
+import type { Milestone, Domain, Tier, Status, Archetype } from '@/data/milestones';
 
 /**
  * v3.0 Triage Score: urgency × proximity × magnitude

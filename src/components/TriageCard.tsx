@@ -156,12 +156,7 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
                     boxShadow: '0 2px 12px -2px hsla(43, 96%, 56%, 0.5), inset 0 1px 0 hsla(48, 100%, 85%, 0.5), inset 0 -1px 0 hsla(38, 88%, 28%, 0.5)',
                     textShadow: '0 1px 0 hsla(48, 100%, 80%, 0.4)',
                   } : {
-                    background: 'linear-gradient(168deg, rgba(14, 17, 38, 0.6), rgba(10, 13, 32, 0.5))',
                     border: '1px solid hsla(220, 12%, 70%, 0.16)',
-                    ...chromeGradientStyle,
-                    WebkitBackgroundClip: undefined,
-                    WebkitTextFillColor: undefined,
-                    backgroundClip: undefined,
                     color: 'hsl(220, 14%, 70%)',
                     boxShadow: 'inset 0 1px 0 hsla(220, 16%, 95%, 0.07), inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
                   }}
