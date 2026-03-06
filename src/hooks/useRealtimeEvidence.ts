@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimePostgresInsertPayload } from '@supabase/supabase-js';
+import { Database } from '@/integrations/supabase/types';
 
 interface EvidencePulse {
   milestoneId: string;
@@ -87,10 +89,10 @@ export function useRealtimeEvidence(milestoneIds: string[]) {
   useEffect(() => {
     const channel = supabase
       .channel('evidence-pulse')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'evidence' }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'evidence' }, (payload: RealtimePostgresInsertPayload<Database['public']['Tables']['evidence']['Row']>) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
-          const e = payload.new as any;
+          const e = payload.new;
           if (!idSet.has(e.milestone_id)) return;
           setPulses(prev => {
             const next = new Map(prev);
@@ -98,7 +100,7 @@ export function useRealtimeEvidence(milestoneIds: string[]) {
               milestoneId: e.milestone_id,
               deltaLogOdds: e.delta_log_odds,
               composite: e.composite,
-              direction: e.direction,
+              direction: e.direction as EvidencePulse['direction'],
               timestamp: Date.now(),
             });
             return next;
