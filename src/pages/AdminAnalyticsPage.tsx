@@ -208,7 +208,7 @@ export default function AdminAnalyticsPage() {
         Object.entries(agg)
           .sort((a, b) => Math.abs(b[1].delta) - Math.abs(a[1].delta))
           .slice(0, 5)
-          .map(([id, { delta, direction }]) => ({
+          .map(([id, { delta }]) => ({
             title: titleMap[id] || id,
             delta: Math.round(delta * 1000) / 1000,
             direction: delta >= 0 ? 'supports' : 'contradicts',

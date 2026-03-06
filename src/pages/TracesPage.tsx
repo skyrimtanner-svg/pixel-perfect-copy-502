@@ -21,7 +21,7 @@ const domainGlows: Record<Domain, string> = {
   biology: 'hsla(155, 82%, 48%, 0.5)',
 };
 
-const goldGradientStyle = {
+const _goldGradientStyle = {
   background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
   backgroundSize: '200% 100%',
   WebkitBackgroundClip: 'text' as const,

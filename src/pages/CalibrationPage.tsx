@@ -60,7 +60,7 @@ export default function CalibrationPage() {
 
   // Also compute a baseline across ALL non-historical milestones (treating current posterior as forecast)
   const allActive = useMemo(() => milestones.filter(m => m.tier !== 'historical'), [milestones]);
-  const avgPosterior = useMemo(() => {
+  const _avgPosterior = useMemo(() => {
     if (allActive.length === 0) return 0;
     return allActive.reduce((s, m) => s + m.posterior, 0) / allActive.length;
   }, [allActive]);
