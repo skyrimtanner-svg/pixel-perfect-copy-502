@@ -16,10 +16,17 @@ const domainHsl: Record<string, string> = {
   biology: 'hsl(155, 82%, 48%)',
 };
 
+export interface EvidencePulseData {
+  deltaLogOdds: number;
+  composite: number;
+  direction: 'supports' | 'contradicts' | 'ambiguous';
+}
+
 interface TriageCardProps {
   milestone: Milestone;
   index: number;
   onClick: () => void;
+  pulse?: EvidencePulseData | null;
 }
 
 const goldGradientStyle = {
@@ -50,10 +57,16 @@ const wonderDescriptions: Record<string, string> = {
   'solid-state-battery': "Next-gen batteries that charge in minutes, last decades, and never catch fire — powering everything from phones to planes! 🔋⚡",
 };
 
-export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
+export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps) {
   const { isWonder } = useMode();
   const [isFlipped, setIsFlipped] = useState(false);
   const delta = milestone.posterior - milestone.prior;
+
+  // Pulse glow: intensity based on |delta_log_odds| and composite
+  const pulseIntensity = pulse ? Math.min(1, (Math.abs(pulse.deltaLogOdds) * 0.5 + pulse.composite * 0.5)) : 0;
+  const pulseColor = pulse?.direction === 'contradicts' ? '248, 113, 113' : '74, 222, 128'; // red or green
+  const pulseGlowPx = Math.min(3, pulseIntensity * 3);
+  const pulseOpacity = Math.min(0.65, pulseIntensity * 0.65);
   const isPositive = delta >= 0;
   const isTopItem = index < 3;
   const isHighMag = milestone.magnitude >= 9;
@@ -71,7 +84,13 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
           onHoverStart={() => setIsFlipped(true)}
           onHoverEnd={() => setIsFlipped(false)}
           className="w-full rounded-2xl text-left group relative"
-          style={{ transformStyle: 'preserve-3d' }}
+          style={{
+            transformStyle: 'preserve-3d',
+            ...(pulse ? {
+              boxShadow: `0 0 ${pulseGlowPx * 3}px rgba(${pulseColor}, ${pulseOpacity * 0.4}), 0 0 ${pulseGlowPx}px rgba(${pulseColor}, ${pulseOpacity})`,
+              animation: 'evidence-pulse 3s ease-in-out infinite',
+            } : {}),
+          }}
           whileHover={{ scale: 1.012, y: -3 }}
           whileTap={{ scale: 0.998 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
@@ -105,7 +124,20 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
                 : 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
             }} />
 
-            {/* Celebration particles */}
+            {/* Live evidence pulse indicator */}
+            {pulse && isWonder && (
+              <div className="absolute top-2 left-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full"
+                style={{
+                  background: `rgba(${pulseColor}, 0.12)`,
+                  color: `rgb(${pulseColor})`,
+                  border: `1px solid rgba(${pulseColor}, 0.25)`,
+                }}
+                title="The future just shifted… ✨"
+              >
+                ✨ live
+              </div>
+            )}
+
             {isPositive && delta > 0.1 && (
               <motion.div
                 className="absolute top-3 right-3"
@@ -225,11 +257,27 @@ export function TriageCard({ milestone, index, onClick }: TriageCardProps) {
         ...(isTopItem ? glassPanelGold : glassPanelChrome),
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
+        ...(pulse ? {
+          boxShadow: `${(isTopItem ? glassPanelGold : glassPanelChrome).boxShadow || ''}, 0 0 ${pulseGlowPx * 2}px rgba(${pulseColor}, ${pulseOpacity * 0.5})`,
+          animation: 'evidence-pulse 3s ease-in-out infinite',
+        } : {}),
       }}
       whileHover={{
         backgroundColor: 'hsla(232, 26%, 8%, 0.7)',
       }}
     >
+      {/* Analyst pulse badge */}
+      {pulse && (
+        <div className="absolute top-0.5 right-1 text-[8px] font-mono font-bold tabular-nums px-1 rounded"
+          style={{
+            color: `rgb(${pulseColor})`,
+            textShadow: `0 0 4px rgba(${pulseColor}, 0.4)`,
+          }}
+          title={`Live evidence: ${pulse.direction}`}
+        >
+          {pulse.deltaLogOdds >= 0 ? '+' : ''}{pulse.deltaLogOdds.toFixed(2)} LO
+        </div>
+      )}
       {/* Left edge hover indicator */}
       <div className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         style={{
