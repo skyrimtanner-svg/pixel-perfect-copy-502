@@ -5,29 +5,47 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { ModeProvider } from "@/contexts/ModeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import AppLayout from "@/components/AppLayout";
-import TriagePage from "@/pages/TriagePage";
-import TracesPage from "@/pages/TracesPage";
-import CalibrationPage from "@/pages/CalibrationPage";
-import AdminAnalyticsPage from "@/pages/AdminAnalyticsPage";
-import AuthPage from "@/pages/AuthPage";
-import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
-import NotFound from "./pages/NotFound";
-import VerifyPage from "./pages/VerifyPage";
+import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-const queryClient = new QueryClient();
+// Lazy load pages
+const AppLayout = lazy(() => import("@/components/AppLayout"));
+const TriagePage = lazy(() => import("@/pages/TriagePage"));
+const TracesPage = lazy(() => import("@/pages/TracesPage"));
+const CalibrationPage = lazy(() => import("@/pages/CalibrationPage"));
+const AdminAnalyticsPage = lazy(() => import("@/pages/AdminAnalyticsPage"));
+const AuthPage = lazy(() => import("@/pages/AuthPage"));
+const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const VerifyPage = lazy(() => import("@/pages/VerifyPage"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center nebula-bg">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'hsl(43, 96%, 56%)' }} />
+        <span className="text-xs font-mono text-muted-foreground tracking-widest uppercase animate-pulse">Initializing...</span>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center nebula-bg">
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'hsl(43, 96%, 56%)' }} />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user) return <Navigate to="/auth" replace />;
@@ -36,34 +54,38 @@ function ProtectedRoute() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <ModeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/verify/:hash" element={<VerifyPage />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ModeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/verify/:hash" element={<VerifyPage />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<TriagePage />} />
-                  <Route path="/traces" element={<TracesPage />} />
-                  <Route path="/calibration" element={<CalibrationPage />} />
-                  <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ModeProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+                  <Route element={<ProtectedRoute />}>
+                    <Route element={<AppLayout />}>
+                      <Route path="/" element={<TriagePage />} />
+                      <Route path="/traces" element={<TracesPage />} />
+                      <Route path="/calibration" element={<CalibrationPage />} />
+                      <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
+                  </Route>
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ModeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

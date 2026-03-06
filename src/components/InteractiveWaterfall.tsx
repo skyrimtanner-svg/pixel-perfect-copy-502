@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw, Undo2, Copy, CheckCircle2, FileCheck, Flame } from 'lucide-react';
+import { Shield, Clock, Users, Crosshair, Beaker, Hash, ExternalLink, Sparkles, RotateCcw, Undo2, Copy, CheckCircle2, FileCheck } from 'lucide-react';
 import { glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Contribution, EvidenceItem, WhatIfResult } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
@@ -70,10 +70,20 @@ function shorten(s: string, maxLen = 28): string {
   return s.length > maxLen ? s.slice(0, maxLen - 1) + '…' : s;
 }
 
+function MicroBadge({ icon, label, value, color = 'hsl(220, 14%, 70%)' }: { icon?: React.ReactNode, label: string, value: string, color?: string }) {
+  return (
+    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/20 border border-white/5 text-[8px] font-mono text-muted-foreground/80">
+      {icon}
+      <span>{label}:</span>
+      <span className="font-bold tabular-nums" style={{ color }}>{value}</span>
+    </span>
+  );
+}
+
 export function InteractiveWaterfall({
   prior, contributions, evidence, milestoneId, tier = 'active',
   onWhatIf, whatIfResult, whatIfLoading, ledgerHash: externalHash,
-  onNegativeShift, onEvidenceClick, onCommitNegativeEvidence,
+  onNegativeShift, onEvidenceClick
 }: InteractiveWaterfallProps) {
   const { isWonder } = useMode();
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
@@ -81,8 +91,6 @@ export function InteractiveWaterfall({
   const [showReceipt, setShowReceipt] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [particleBurst, setParticleBurst] = useState<string | null>(null);
-  const [commitSparks, setCommitSparks] = useState(false);
-  const [isCommitting, setIsCommitting] = useState(false);
   const prevPosteriorRef = useRef<number | null>(null);
 
   const isSimActive = excludedIds.size > 0;
@@ -200,14 +208,12 @@ export function InteractiveWaterfall({
   }, [sortedContribs, activePrior, excludedIds, evidence]);
 
   const finalPosterior = activePosterior ?? (blocks.length > 0 ? blocks[blocks.length - 1].endProb : prior);
-  // Canonical posterior = what the posterior would be with all evidence included (no exclusions)
   const canonicalPosterior = useMemo(() => {
     let cumLO = Math.log(prior / (1 - prior));
     for (const c of contributions) cumLO += c.delta_log_odds;
     return logOddsToProb(cumLO);
   }, [prior, contributions]);
   const maxAbsDelta = Math.max(...sortedContribs.map(c => Math.abs(c.delta_log_odds)), 0.5);
-  const posteriorDelta = finalPosterior - prior;
   const isDropping = effectiveWhatIf && (effectiveWhatIf.update_result.posterior < canonicalPosterior);
 
   useEffect(() => { onNegativeShift?.(!!isDropping, finalPosterior); }, [isDropping, finalPosterior, onNegativeShift]);
@@ -566,8 +572,8 @@ export function InteractiveWaterfall({
 
                       {/* Provenance micro-badges */}
                       <div className="hidden sm:flex items-center gap-1 shrink-0">
-                        <MicroBadge value={meta.credibility} color={COLORS.supports} />
-                        <MicroBadge value={meta.consensus} color="hsl(43, 96%, 56%)" />
+                        <MicroBadge icon={<Shield className="w-2.5 h-2.5" />} label="C" value={meta.credibility.toFixed(2)} color={COLORS.supports} />
+                        <MicroBadge icon={<Users className="w-2.5 h-2.5" />} label="N" value={meta.consensus.toFixed(2)} color="hsl(43, 96%, 56%)" />
                       </div>
                     </div>
 
@@ -653,10 +659,10 @@ export function InteractiveWaterfall({
                     {tooltipText}
                   </p>
                   <div className="flex gap-2 flex-wrap font-mono text-[10px] text-muted-foreground relative z-10">
-                    <MetaBadge icon={<Shield className="w-2.5 h-2.5" />} label="Cred" value={meta.credibility.toFixed(2)} />
-                    <MetaBadge icon={<Clock className="w-2.5 h-2.5" />} label="Decay" value={meta.decay.toFixed(2)} />
-                    <MetaBadge icon={<Users className="w-2.5 h-2.5" />} label="Cons" value={meta.consensus.toFixed(2)} />
-                    <MetaBadge icon={<Crosshair className="w-2.5 h-2.5" />} label="Match" value={meta.criteria_match.toFixed(2)} />
+                    <MicroBadge icon={<Shield className="w-2.5 h-2.5" />} label="Cred" value={meta.credibility.toFixed(2)} />
+                    <MicroBadge icon={<Clock className="w-2.5 h-2.5" />} label="Decay" value={meta.decay.toFixed(2)} />
+                    <MicroBadge icon={<Users className="w-2.5 h-2.5" />} label="Cons" value={meta.consensus.toFixed(2)} />
+                    <MicroBadge icon={<Crosshair className="w-2.5 h-2.5" />} label="Match" value={meta.criteria_match.toFixed(2)} />
                   </div>
                   <div className="font-mono text-[10px] text-muted-foreground relative z-10">
                     <span className="font-bold tabular-nums" style={goldGradientStyle}>{(block.startProb * 100).toFixed(1)}%</span>
@@ -687,186 +693,60 @@ export function InteractiveWaterfall({
           </div>
           <div className="flex-1 h-9 rounded-lg relative overflow-hidden" style={{
             background: 'rgba(8, 10, 28, 0.6)',
-            border: `1px solid ${isDropping ? 'hsla(4, 82%, 63%, 0.3)' : 'hsla(43, 96%, 56%, 0.22)'}`,
-            boxShadow: isDropping
-              ? '0 0 30px -6px hsla(4, 82%, 63%, 0.35), inset 0 1px 0 hsla(4, 82%, 75%, 0.08)'
-              : 'inset 0 1px 0 hsla(43, 96%, 56%, 0.08), 0 0 20px -6px hsla(43, 96%, 56%, 0.12)',
-            transition: 'all 0.5s',
+            border: `1px solid ${isDropping ? 'hsla(4, 82%, 63%, 0.3)' : 'hsla(43, 96%, 56%, 0.25)'}`,
+            boxShadow: [
+              `inset 0 1px 0 ${isDropping ? 'hsla(4, 82%, 63%, 0.1)' : 'hsla(43, 96%, 56%, 0.08)'}`,
+              'inset 0 -1px 0 hsla(232, 30%, 2%, 0.35)',
+              `0 0 20px -6px ${isDropping ? 'hsla(4, 82%, 63%, 0.2)' : 'hsla(43, 96%, 56%, 0.15)'}`,
+            ].join(', '),
           }}>
             <div className="absolute top-0 left-0 right-0 h-[40%] rounded-t-lg pointer-events-none" style={specularReflection} />
             <motion.div
               className="absolute left-0 top-0 h-full rounded-lg"
               style={{
                 background: isDropping
-                  ? 'linear-gradient(90deg, hsla(4, 82%, 63%, 0.35), hsla(4, 82%, 70%, 0.2), hsla(4, 82%, 63%, 0.08))'
+                  ? 'linear-gradient(90deg, hsla(4, 72%, 45%, 0.4), hsla(4, 82%, 60%, 0.2), hsla(4, 72%, 55%, 0.1))'
                   : 'linear-gradient(90deg, hsla(43, 96%, 56%, 0.35), hsla(48, 100%, 72%, 0.2), hsla(48, 100%, 67%, 0.08))',
                 boxShadow: isDropping
-                  ? '0 0 32px -6px hsla(4, 82%, 63%, 0.4)'
+                  ? '0 0 32px -6px hsla(4, 82%, 63%, 0.3), inset 0 1px 0 hsla(4, 82%, 70%, 0.12)'
                   : '0 0 32px -6px hsla(43, 96%, 56%, 0.3), inset 0 1px 0 hsla(48, 100%, 80%, 0.12)',
               }}
-              animate={{ width: `${finalPosterior * 100}%` }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
+              initial={{ width: 0 }}
+              animate={{ width: `${(finalPosterior * 100)}%` }}
+              transition={{ duration: 0.6 }}
             />
-            <motion.span
-              className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-sm font-bold tabular-nums"
-              style={isDropping ? {
-                background: 'linear-gradient(135deg, hsl(4, 60%, 42%), hsl(4, 82%, 65%))',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                filter: 'drop-shadow(0 0 6px hsla(4, 82%, 63%, 0.4))',
+            
+            {/* Probability text */}
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-sm font-bold tabular-nums" style={{
+              ...(isDropping ? {
+                color: 'hsl(4, 82%, 63%)',
+                textShadow: '0 0 12px hsla(4, 82%, 63%, 0.4)',
               } : {
-                ...goldGradientStyle, filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.3))',
-              }}
-              key={finalPosterior.toFixed(3)}
-              initial={{ scale: 1.3, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
+                ...goldGradientStyle,
+                filter: 'drop-shadow(0 0 6px hsla(43, 96%, 56%, 0.3)) drop-shadow(0 1px 0 hsla(40, 90%, 28%, 0.5))',
+              })
+            }}>
               {(finalPosterior * 100).toFixed(1)}%
-            </motion.span>
+            </span>
+
+            {/* Delta pill if simulating */}
+            {isSimActive && (
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/40 border border-white/10"
+                style={{ color: posteriorDelta >= 0 ? 'hsl(155, 82%, 55%)' : 'hsl(4, 82%, 63%)' }}
+              >
+                {posteriorDelta >= 0 ? '+' : ''}{(posteriorDelta * 100).toFixed(1)}pp
+              </span>
+            )}
           </div>
         </motion.div>
 
-        {/* Scenario delta summary */}
-        {whatIfResult && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between px-3 py-2 rounded-xl relative z-10"
-            style={{ ...glassInner, border: `1px solid ${isDropping ? 'hsla(4, 82%, 63%, 0.2)' : 'hsla(192, 95%, 50%, 0.2)'}` }}
-          >
-            <span className="text-[10px] font-mono text-muted-foreground">
-              {excludedIds.size} evidence excluded • {whatIfResult.remaining_evidence_count} remaining
-            </span>
-            <span className="font-mono text-xs font-bold tabular-nums" style={isDropping ? {
-              color: 'hsl(4, 82%, 63%)', textShadow: '0 0 12px hsla(4, 82%, 63%, 0.5)',
-            } : { color: 'hsl(123, 38%, 57%)', textShadow: '0 0 8px hsla(123, 38%, 57%, 0.3)' }}>
-              Δ {posteriorDelta > 0 ? '+' : ''}{(posteriorDelta * 100).toFixed(1)}pp
-              {!isWonder && (
-                <span className="ml-2 text-[9px] text-muted-foreground" style={{ fontFamily: "'Space Mono', monospace" }}>
-                  ({whatIfResult.update_result.delta_log_odds > 0 ? '+' : ''}{whatIfResult.update_result.delta_log_odds.toFixed(4)} LO)
-                </span>
-              )}
-            </span>
-          </motion.div>
-        )}
-
-        {/* ═══ COMMIT AS REAL NEGATIVE EVIDENCE ═══ */}
-        <AnimatePresence>
-          {isSimActive && isDropping && effectiveWhatIf && onCommitNegativeEvidence && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.95 }}
-              transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-              className="relative z-10"
-            >
-              <button
-                disabled={isCommitting}
-                onClick={async () => {
-                  if (!effectiveWhatIf) return;
-                  setIsCommitting(true);
-                  setCommitSparks(true);
-                  
-                  // Mode-aware commit toast
-                  if (isWonder) {
-                    toast({
-                      title: "💔 The future just got heavier…",
-                      description: "…but we have the receipt ❤️‍🔥",
-                    });
-                  } else {
-                    const loShift = effectiveWhatIf.update_result.delta_log_odds;
-                    toast({
-                      title: "⚠ Evidence Committed",
-                      description: `Δ ${(posteriorDelta * 100).toFixed(1)}pp | ${loShift > 0 ? '+' : ''}${loShift.toFixed(4)} LO → Trust Ledger`,
-                    });
-                  }
-
-                  try {
-                    await onCommitNegativeEvidence(Array.from(excludedIds), effectiveWhatIf);
-                    // Reset sandbox after commit
-                    setTimeout(() => {
-                      setExcludedIds(new Set());
-                      setSnapshotHash(null);
-                      setShowReceipt(false);
-                      setIsCommitting(false);
-                    }, 1500);
-                  } catch {
-                    setIsCommitting(false);
-                  }
-                  setTimeout(() => setCommitSparks(false), 2000);
-                }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
-                style={{
-                  background: 'linear-gradient(135deg, hsla(0, 72%, 45%, 0.25), hsla(0, 72%, 35%, 0.15), rgba(8, 10, 28, 0.8))',
-                  border: '1px solid hsla(0, 72%, 55%, 0.35)',
-                  boxShadow: [
-                    '0 0 32px -8px hsla(0, 72%, 55%, 0.4)',
-                    'inset 0 1px 0 hsla(0, 72%, 70%, 0.12)',
-                    'inset 0 -1px 0 hsla(232, 30%, 2%, 0.4)',
-                  ].join(', '),
-                  color: 'hsl(0, 72%, 65%)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                }}
-              >
-                <Flame className="w-4 h-4" style={{
-                  filter: 'drop-shadow(0 0 8px hsla(0, 72%, 55%, 0.6))',
-                  animation: 'pulse 1.5s infinite',
-                }} />
-                <span style={{
-                  background: 'linear-gradient(135deg, hsl(0, 60%, 50%), hsl(0, 72%, 65%), hsl(355, 80%, 72%))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}>
-                  {isCommitting ? 'COMMITTING TO LEDGER…' : 'COMMIT AS REAL NEGATIVE EVIDENCE'}
-                </span>
-                <Flame className="w-4 h-4" style={{
-                  filter: 'drop-shadow(0 0 8px hsla(0, 72%, 55%, 0.6))',
-                  animation: 'pulse 1.5s infinite 0.3s',
-                }} />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Full-screen commit sparks */}
+        {/* Negative drop sparks effect */}
         <NegativeDropSparks
-          active={commitSparks}
-          intensity={0.85}
+          active={!!isDropping}
+          intensity={Math.abs(posteriorDelta) * 5} // Scale intensity
           containerSize={200}
-          fullScreen
         />
-
-        {/* Loading bar */}
-        {whatIfLoading && (
-          <motion.div className="h-0.5 rounded-full overflow-hidden relative z-10" style={{ background: 'hsla(192, 95%, 50%, 0.1)' }}>
-            <motion.div className="h-full" style={{ background: 'linear-gradient(90deg, hsl(192, 95%, 50%), hsl(43, 96%, 56%))' }}
-              animate={{ x: ['-100%', '100%'] }} transition={{ duration: 0.8, repeat: Infinity }} />
-          </motion.div>
-        )}
       </div>
     </TooltipProvider>
-  );
-}
-
-function MicroBadge({ value, color }: { value: number; color: string }) {
-  return (
-    <div className="w-4 h-3 rounded-sm flex items-end overflow-hidden" style={{ background: 'hsla(220, 10%, 30%, 0.3)' }}>
-      <div style={{ width: '100%', height: `${value * 100}%`, background: `${color}88`, borderRadius: '1px 1px 0 0' }} />
-    </div>
-  );
-}
-
-function MetaBadge({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <span className="flex items-center gap-1">
-      <span style={{
-        background: 'linear-gradient(135deg, hsl(220, 10%, 55%), hsl(220, 14%, 82%))',
-        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-      }}>{icon}</span>
-      <span>{label}:</span>
-      <span className="font-bold tabular-nums" style={{
-        ...goldGradientStyle, filter: 'drop-shadow(0 0 3px hsla(43, 96%, 56%, 0.15))',
-      }}>{value}</span>
-    </span>
   );
 }

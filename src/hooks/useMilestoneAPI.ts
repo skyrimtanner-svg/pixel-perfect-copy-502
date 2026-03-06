@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
 export interface ContributionMeta {
   type: string;
@@ -66,7 +66,7 @@ export interface EvidenceItem {
 }
 
 export interface MilestoneDetail {
-  milestone: any;
+  milestone: Database['public']['Tables']['milestones']['Row'];
   evidence: EvidenceItem[];
   bayes: BayesBundle;
   calibration: CalibrationSnapshot;

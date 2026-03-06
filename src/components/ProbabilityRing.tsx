@@ -37,14 +37,12 @@ export function ProbabilityRing({
   const showGold = !isNegativeShift && (useGold || isWonder || value > 0.7);
   const showRed = isNegativeShift;
 
-  // Dramatic drop detection
   const dropMagnitude = previousValue !== undefined ? previousValue - value : 0;
   const shiftMagnitude = previousValue !== undefined ? Math.abs(previousValue - value) : 0;
   const isDramaticDrop = dropMagnitude > 0.05;
   const isSignificantDrop = dropMagnitude > 0.08;
   const isSignificantShift = shiftMagnitude > 0.05;
 
-  // Spark trigger state
   const [sparkActive, setSparkActive] = useState(false);
   const [goldPulse, setGoldPulse] = useState(false);
 
@@ -56,7 +54,6 @@ export function ProbabilityRing({
     }
   }, [isSignificantDrop, showRed, value]);
 
-  // Gold pulse on any >5pp shift
   useEffect(() => {
     if (isSignificantShift && !showRed) {
       setGoldPulse(true);
@@ -66,8 +63,16 @@ export function ProbabilityRing({
   }, [isSignificantShift, showRed, value]);
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
-      {/* Outer glow ring — gold or red */}
+    <div 
+      className={`relative inline-flex items-center justify-center ${className}`} 
+      style={{ width: size, height: size }}
+      role="meter"
+      aria-valuenow={Math.round(value * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Probability: ${Math.round(value * 100)}%`}
+    >
+      <title>Probability Ring: {Math.round(value * 100)}%</title>
       <AnimatePresence mode="wait">
         {showRed ? (
           <motion.div
@@ -100,7 +105,6 @@ export function ProbabilityRing({
         ) : null}
       </AnimatePresence>
 
-      {/* Red pulse rings for dramatic drops */}
       <AnimatePresence>
         {isDramaticDrop && showRed && (
           <>
@@ -123,7 +127,6 @@ export function ProbabilityRing({
 
       <svg width={size} height={size} className="-rotate-90">
         <defs>
-          {/* Gold gradient */}
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             {showGold ? (
               <>
@@ -142,7 +145,6 @@ export function ProbabilityRing({
               </>
             )}
           </linearGradient>
-          {/* Red gradient for negative shifts */}
           <linearGradient id={redGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="hsl(0, 60%, 30%)" />
             <stop offset="20%" stopColor="hsl(0, 72%, 48%)" />
@@ -172,15 +174,12 @@ export function ProbabilityRing({
             <feComposite in="SourceGraphic" in2="glow" operator="over" />
           </filter>
         </defs>
-        {/* Background track — chrome bevel */}
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none"
           stroke="hsla(230, 16%, 14%, 0.7)" strokeWidth={strokeWidth} />
         <circle cx={size / 2} cy={size / 2} r={radius} fill="none"
           stroke="hsla(220, 10%, 85%, 0.05)" strokeWidth={strokeWidth - 1} />
-        {/* Inner shadow track */}
         <circle cx={size / 2} cy={size / 2} r={radius - 1} fill="none"
           stroke="hsla(232, 30%, 2%, 0.3)" strokeWidth={1} />
-        {/* Main ring */}
         <motion.circle
           cx={size / 2} cy={size / 2} r={radius} fill="none"
           stroke={showRed ? `url(#${redGradientId})` : `url(#${gradientId})`}
@@ -192,7 +191,6 @@ export function ProbabilityRing({
           transition={{ duration: showRed && isDramaticDrop ? 1.5 : 1, ease: showRed ? [0.4, 0, 0.2, 1] : 'easeOut' }}
           filter={showRed ? `url(#${redGlowId})` : showGold ? `url(#${glowId})` : undefined}
         />
-        {/* Specular highlight pass */}
         {(showGold || showRed) && (
           <motion.circle
             cx={size / 2} cy={size / 2} r={radius} fill="none"
@@ -207,14 +205,12 @@ export function ProbabilityRing({
           />
         )}
       </svg>
-      {/* Negative drop sparks */}
       <NegativeDropSparks
         active={sparkActive}
         intensity={Math.min(1, dropMagnitude * 5)}
         containerSize={size}
       />
 
-      {/* Ultra-subtle gold inner glow pulse on >5pp shift */}
       <AnimatePresence>
         {goldPulse && showGold && (
           <motion.div
@@ -231,7 +227,6 @@ export function ProbabilityRing({
         )}
       </AnimatePresence>
 
-      {/* Lens-flare highlight on shift */}
       <AnimatePresence>
         {(goldPulse || sparkActive) && (
           <motion.div
