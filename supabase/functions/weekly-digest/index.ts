@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       headers: gatewayHeaders,
     });
     const listData = await listResp.json();
-    console.log("conversations.list response:", JSON.stringify({ ok: listData.ok, channelCount: listData.channels?.length, channels: (listData.channels || []).map((c: any) => c.name).slice(0, 20) }));
+    
     const channel = (listData.channels || []).find((c: any) => c.name === "evidence-scout");
 
     if (!channel) {
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("Found channel:", channel.id, channel.name);
+    
 
     // Join the channel
     const joinResp = await fetch(`${GATEWAY_URL}/conversations.join`, {
@@ -145,8 +145,7 @@ Deno.serve(async (req) => {
       headers: gatewayHeaders,
       body: JSON.stringify({ channel: channel.id }),
     });
-    const joinData = await joinResp.json();
-    console.log("conversations.join response:", JSON.stringify(joinData));
+    await joinResp.json();
 
     const slackResp = await fetch(`${GATEWAY_URL}/chat.postMessage`, {
       method: "POST",
