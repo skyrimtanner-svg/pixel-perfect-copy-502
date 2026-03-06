@@ -5,6 +5,7 @@ import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Users, Zap, FileText, BarChart3, Bot, Loader2 } from 'lucide-react';
+import ScoutDiagnosticRow from '@/components/ScoutDiagnosticRow';
 import { toast } from 'sonner';
 
 interface Metrics {
@@ -327,6 +328,7 @@ export default function AdminAnalyticsPage() {
           {/* ─── METRICS TAB ─── */}
           {activeTab === 'metrics' && (
             <>
+              <ScoutDiagnosticRow />
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {cards.map((card, i) => {
                   const Icon = card.icon;
