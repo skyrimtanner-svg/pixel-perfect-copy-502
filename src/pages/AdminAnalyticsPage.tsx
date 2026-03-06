@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Users, Zap, FileText, BarChart3, Eye, Loader2, Check, X, Search, Bot, CheckCheck, XCircle, RefreshCw, ArrowUpDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from 'recharts';
 
 interface Metrics {
   activeUsers: number;
@@ -56,6 +57,7 @@ export default function AdminAnalyticsPage() {
   const [filterDirection, setFilterDirection] = useState<string>('all');
   const [sortField, setSortField] = useState<'composite_score' | 'created_at'>('composite_score');
   const [sortAsc, setSortAsc] = useState(false);
+  const [evidenceInflow, setEvidenceInflow] = useState<any[]>([]);
 
   const fetchPending = useCallback(async () => {
     const { data } = await supabase
@@ -118,6 +120,29 @@ export default function AdminAnalyticsPage() {
     fetchMetrics();
     fetchPending();
     fetchLogs();
+
+    // Fetch evidence inflow data
+    const fetchInflow = async () => {
+      const { data: allEvidence } = await supabase
+        .from('pending_evidence')
+        .select('created_at, source, direction, composite_score')
+        .order('created_at', { ascending: true });
+
+      if (!allEvidence || allEvidence.length === 0) return;
+
+      // Group by date
+      const grouped: Record<string, { date: string; supports: number; contradicts: number; ambiguous: number; total: number; sources: Record<string, number> }> = {};
+      allEvidence.forEach((e: any) => {
+        const date = new Date(e.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (!grouped[date]) grouped[date] = { date, supports: 0, contradicts: 0, ambiguous: 0, total: 0, sources: {} };
+        grouped[date][e.direction as 'supports' | 'contradicts' | 'ambiguous'] = (grouped[date][e.direction as 'supports' | 'contradicts' | 'ambiguous'] || 0) + 1;
+        grouped[date].total++;
+        const src = e.source?.split('.')[0] || 'unknown';
+        grouped[date].sources[src] = (grouped[date].sources[src] || 0) + 1;
+      });
+      setEvidenceInflow(Object.values(grouped));
+    };
+    fetchInflow();
   }, [isAdmin, fetchPending, fetchLogs]);
 
   const handleApproveReject = async (pendingId: string, action: 'approve' | 'reject') => {
@@ -325,10 +350,55 @@ export default function AdminAnalyticsPage() {
                   )}
                 </div>
               </div>
+
+              {/* Evidence Inflow Chart */}
+              {evidenceInflow.length > 0 && (
+                <div className="rounded-xl p-5 relative overflow-hidden mt-6" style={glassPanel}>
+                  <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+                  <div className="absolute top-0 left-0 right-0 h-[20%] rounded-t-xl pointer-events-none" style={specularReflection} />
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart3 className="w-4 h-4" style={{ color: 'hsl(192, 95%, 50%)' }} />
+                    <h2 className="text-sm font-display font-semibold text-foreground">Evidence Inflow by Direction</h2>
+                  </div>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={evidenceInflow} barGap={1} barCategoryGap="20%">
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsla(220, 12%, 70%, 0.08)" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fill: 'hsl(220, 12%, 55%)', fontSize: 10, fontFamily: 'monospace' }}
+                          axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)' }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fill: 'hsl(220, 12%, 55%)', fontSize: 10, fontFamily: 'monospace' }}
+                          axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)' }}
+                          tickLine={false}
+                          allowDecimals={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: 'hsl(232, 26%, 12%)',
+                            border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
+                            color: 'hsl(220, 12%, 80%)',
+                          }}
+                        />
+                        <Legend
+                          wrapperStyle={{ fontSize: '10px', fontFamily: 'monospace' }}
+                        />
+                        <Bar dataKey="supports" stackId="a" fill="hsl(155, 82%, 48%)" name="Supports" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="contradicts" stackId="a" fill="hsl(0, 82%, 60%)" name="Contradicts" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="ambiguous" stackId="a" fill="hsl(43, 96%, 56%)" name="Ambiguous" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
             </>
           )}
-
-          {/* ─── APPROVAL QUEUE TAB ─── */}
           {activeTab === 'queue' && (() => {
             const filtered = pendingEvidence
               .filter(p => filterDomain === 'all' || p.milestone_id.includes(filterDomain))
