@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'framer-motion';
 import { useId } from 'react';
 
+interface EvidencePulseInfo {
+  composite: number;
+  direction: 'supports' | 'contradicts' | 'ambiguous';
+}
+
 interface AnimatedProbabilityRingProps {
   currentValue: number;
   previousValue?: number;
@@ -11,11 +16,13 @@ interface AnimatedProbabilityRingProps {
   domainColor?: string;
   useGold?: boolean;
   isNegativeShift?: boolean;
+  evidencePulse?: EvidencePulseInfo | null;
 }
 
 const springTransition = { type: 'spring' as const, stiffness: 380, damping: 32, mass: 1.0 };
 const glowSpring = { type: 'spring' as const, stiffness: 500, damping: 25 };
 const flareSpring = { type: 'spring' as const, stiffness: 600, damping: 20 };
+const burstSpring = { type: 'spring' as const, stiffness: 450, damping: 22, mass: 0.8 };
 
 export function AnimatedProbabilityRing({
   currentValue,
@@ -26,6 +33,7 @@ export function AnimatedProbabilityRing({
   domainColor = 'hsl(var(--primary))',
   useGold = false,
   isNegativeShift = false,
+  evidencePulse = null,
 }: AnimatedProbabilityRingProps) {
   const id = useId();
   const radius = (size - strokeWidth) / 2;
@@ -52,7 +60,9 @@ export function AnimatedProbabilityRing({
   const [showFlare, setShowFlare] = useState(false);
   const [showGlow, setShowGlow] = useState(false);
   const [sparkles, setSparkles] = useState<{ x: number; y: number; delay: number }[]>([]);
+  const [goldBurst, setGoldBurst] = useState<{ x: number; y: number; delay: number; sz: number }[]>([]);
   const prevRef = useRef(currentValue);
+  const prevPulseRef = useRef<EvidencePulseInfo | null>(null);
 
   // Animate progress with spring physics
   useEffect(() => {
@@ -94,6 +104,32 @@ export function AnimatedProbabilityRing({
   useEffect(() => {
     prevRef.current = currentValue;
   }, [currentValue]);
+
+  // Gold particle burst on high-signal evidence arrival (Wonder mode only)
+  useEffect(() => {
+    if (!isWonder || !evidencePulse) return;
+    // Only burst on supports/ambiguous with composite ≥ 0.5
+    if (evidencePulse.direction === 'contradicts') return;
+    if (evidencePulse.composite < 0.5) return;
+    // Skip if same pulse object
+    if (prevPulseRef.current === evidencePulse) return;
+    prevPulseRef.current = evidencePulse;
+
+    const count = 7; // 6–8 particles
+    const particles = Array.from({ length: count }, (_, i) => {
+      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      const dist = size * 0.55 + Math.random() * size * 0.15;
+      return {
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        delay: i * 0.03,
+        sz: 3 + Math.random() * 2, // 3–5px
+      };
+    });
+    setGoldBurst(particles);
+    const t = setTimeout(() => setGoldBurst([]), 900);
+    return () => clearTimeout(t);
+  }, [evidencePulse, isWonder, size]);
 
   const fontSize = size < 40 ? '9px' : size < 56 ? '11px' : '13px';
 
@@ -158,6 +194,28 @@ export function AnimatedProbabilityRing({
             animate={{ x: s.x, y: s.y, opacity: 0, scale: 0.3 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.7, delay: s.delay, ease: 'easeOut' }}
+          />
+        ))}
+      </AnimatePresence>
+
+      {/* Gold particle burst on evidence arrival (Wonder mode only) */}
+      <AnimatePresence>
+        {goldBurst.map((p, i) => (
+          <motion.div
+            key={`gold-burst-${i}`}
+            className="absolute pointer-events-none rounded-full"
+            style={{
+              width: p.sz,
+              height: p.sz,
+              background: 'linear-gradient(135deg, hsl(43, 96%, 68%), hsl(48, 100%, 82%))',
+              boxShadow: '0 0 8px 2px hsla(43, 96%, 56%, 0.6)',
+              left: size / 2 - p.sz / 2,
+              top: size / 2 - p.sz / 2,
+            }}
+            initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+            animate={{ x: p.x, y: p.y, opacity: 0, scale: 0.2 }}
+            exit={{ opacity: 0 }}
+            transition={{ ...burstSpring, delay: p.delay }}
           />
         ))}
       </AnimatePresence>

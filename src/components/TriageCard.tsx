@@ -184,6 +184,7 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
                 strokeWidth={5}
                 domainColor={domainHsl[milestone.domain]}
                 useGold={isTopItem}
+                evidencePulse={pulse ? { composite: pulse.composite, direction: pulse.direction } : null}
               />
 
               <div className="flex-1 min-w-0">
@@ -312,6 +313,7 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
           strokeWidth={2.5}
           domainColor={domainHsl[milestone.domain]}
           useGold={isTopItem}
+          evidencePulse={pulse ? { composite: pulse.composite, direction: pulse.direction } : null}
         />
 
         <div className="flex-1 min-w-0 flex items-center gap-2">
