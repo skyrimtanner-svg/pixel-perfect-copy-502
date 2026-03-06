@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Users, Zap, FileText, BarChart3, Eye, Loader2, Check, X, Search, Bot, CheckCheck, XCircle, RefreshCw, ArrowUpDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 interface Metrics {
   activeUsers: number;
@@ -60,6 +60,9 @@ export default function AdminAnalyticsPage() {
   const [sortAsc, setSortAsc] = useState(false);
   const [sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
   const [evidenceInflow, setEvidenceInflow] = useState<any[]>([]);
+  const [domainPortfolio, setDomainPortfolio] = useState<{ name: string; avgPosterior: number; count: number }[]>([]);
+  const [topMovers, setTopMovers] = useState<{ title: string; delta: number; direction: string }[]>([]);
+  const [calibrationTrend, setCalibrationTrend] = useState<{ date: string; brier: number }[]>([]);
 
   const fetchPending = useCallback(async () => {
     const { data } = await supabase
@@ -168,6 +171,84 @@ export default function AdminAnalyticsPage() {
       );
     };
     fetchInflow();
+
+    // Fetch domain portfolio from milestones
+    const fetchDomainPortfolio = async () => {
+      const { data: ms } = await supabase.from('milestones').select('domain, posterior');
+      if (!ms || ms.length === 0) return;
+      const domainMap: Record<string, { sum: number; count: number }> = {};
+      ms.forEach((m: any) => {
+        const d = m.domain || 'Unknown';
+        if (!domainMap[d]) domainMap[d] = { sum: 0, count: 0 };
+        domainMap[d].sum += m.posterior;
+        domainMap[d].count++;
+      });
+      setDomainPortfolio(
+        Object.entries(domainMap)
+          .map(([name, { sum, count }]) => ({ name, avgPosterior: sum / count, count }))
+          .sort((a, b) => b.count - a.count)
+      );
+    };
+    fetchDomainPortfolio();
+
+    // Fetch top movers (largest |delta_log_odds| in last 30 days)
+    const fetchTopMovers = async () => {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: ev } = await supabase
+        .from('evidence')
+        .select('milestone_id, delta_log_odds, direction')
+        .gte('created_at', thirtyDaysAgo);
+      if (!ev || ev.length === 0) return;
+      // Aggregate by milestone
+      const agg: Record<string, { delta: number; direction: string }> = {};
+      ev.forEach((e: any) => {
+        if (!agg[e.milestone_id]) agg[e.milestone_id] = { delta: 0, direction: e.direction };
+        agg[e.milestone_id].delta += e.delta_log_odds;
+      });
+      // Fetch titles
+      const ids = Object.keys(agg);
+      const { data: msData } = await supabase.from('milestones').select('id, title').in('id', ids);
+      const titleMap: Record<string, string> = {};
+      (msData || []).forEach((m: any) => { titleMap[m.id] = m.title; });
+      setTopMovers(
+        Object.entries(agg)
+          .sort((a, b) => Math.abs(b[1].delta) - Math.abs(a[1].delta))
+          .slice(0, 5)
+          .map(([id, { delta, direction }]) => ({
+            title: titleMap[id] || id,
+            delta: Math.round(delta * 1000) / 1000,
+            direction: delta >= 0 ? 'supports' : 'contradicts',
+          }))
+      );
+    };
+    fetchTopMovers();
+
+    // Fetch calibration trend (mock Brier from trust_ledger snapshots)
+    const fetchCalibration = async () => {
+      const { data: ledger } = await supabase
+        .from('trust_ledger')
+        .select('created_at, prior, posterior')
+        .order('created_at', { ascending: true })
+        .limit(500);
+      if (!ledger || ledger.length === 0) return;
+      // Compute rolling Brier-like score per day: (posterior - outcome_proxy)^2
+      // Since we don't have outcomes, use |posterior - prior| as calibration proxy
+      const dailyMap: Record<string, { sum: number; count: number }> = {};
+      ledger.forEach((l: any) => {
+        const date = new Date(l.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (!dailyMap[date]) dailyMap[date] = { sum: 0, count: 0 };
+        const brierProxy = Math.pow(l.posterior - l.prior, 2);
+        dailyMap[date].sum += brierProxy;
+        dailyMap[date].count++;
+      });
+      setCalibrationTrend(
+        Object.entries(dailyMap).map(([date, { sum, count }]) => ({
+          date,
+          brier: Math.round((sum / count) * 10000) / 10000,
+        }))
+      );
+    };
+    fetchCalibration();
   }, [isAdmin, fetchPending, fetchLogs]);
 
   const handleApproveReject = async (pendingId: string, action: 'approve' | 'reject') => {
@@ -470,6 +551,170 @@ export default function AdminAnalyticsPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
+                </div>
+              )}
+
+              {/* Domain Portfolio Pie Chart */}
+              {domainPortfolio.length > 0 && (
+                <div className="rounded-xl p-5 relative overflow-hidden mt-6" style={glassPanel}>
+                  <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+                  <div className="absolute top-0 left-0 right-0 h-[20%] rounded-t-xl pointer-events-none" style={specularReflection} />
+                  <div className="flex items-center gap-2 mb-4">
+                    <Eye className="w-4 h-4" style={{ color: 'hsl(43, 96%, 56%)' }} />
+                    <h2 className="text-sm font-display font-semibold text-foreground">Domain Portfolio</h2>
+                  </div>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={domainPortfolio}
+                          dataKey="avgPosterior"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={{ stroke: 'hsla(220, 12%, 70%, 0.3)' }}
+                          strokeWidth={1}
+                          stroke="hsla(232, 26%, 8%, 0.8)"
+                        >
+                          {domainPortfolio.map((_, idx) => (
+                            <Cell key={idx} fill={[
+                              'hsl(192, 95%, 50%)', 'hsl(155, 82%, 48%)', 'hsl(43, 96%, 56%)',
+                              'hsl(268, 90%, 68%)', 'hsl(0, 82%, 60%)',
+                            ][idx % 5]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            background: 'hsl(232, 26%, 12%)',
+                            border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
+                            color: 'hsl(220, 12%, 80%)',
+                          }}
+                          formatter={(_: any, name: string, props: any) => {
+                            const entry = props?.payload;
+                            if (!entry) return [_, name];
+                            return [`Avg P(X): ${(entry.avgPosterior * 100).toFixed(1)}% · ${entry.count} milestones`, entry.name];
+                          }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '10px', fontFamily: 'monospace' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Top Movers Bar Chart */}
+              {topMovers.length > 0 && (
+                <div className="rounded-xl p-5 relative overflow-hidden mt-6" style={glassPanel}>
+                  <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+                  <div className="absolute top-0 left-0 right-0 h-[20%] rounded-t-xl pointer-events-none" style={specularReflection} />
+                  <div className="flex items-center gap-2 mb-4">
+                    <Zap className="w-4 h-4" style={{ color: 'hsl(43, 96%, 56%)' }} />
+                    <h2 className="text-sm font-display font-semibold text-foreground">Top Movers (Last 30 Days)</h2>
+                  </div>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={topMovers} layout="vertical" barCategoryGap="20%">
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsla(220, 12%, 70%, 0.08)" />
+                        <XAxis
+                          type="number"
+                          tick={{ fill: 'hsl(220, 12%, 55%)', fontSize: 10, fontFamily: 'monospace' }}
+                          axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)' }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="title"
+                          width={160}
+                          tick={{ fill: 'hsl(220, 12%, 70%)', fontSize: 10, fontFamily: 'monospace' }}
+                          axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)' }}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: 'hsl(232, 26%, 12%)',
+                            border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
+                            color: 'hsl(220, 12%, 80%)',
+                          }}
+                          formatter={(value: number) => [`${value >= 0 ? '+' : ''}${value.toFixed(3)} log-odds`, 'Net Δ']}
+                        />
+                        <Bar dataKey="delta" radius={[0, 4, 4, 0]}>
+                          {topMovers.map((m, idx) => (
+                            <Cell key={idx} fill={m.delta >= 0 ? 'hsl(155, 82%, 48%)' : 'hsl(0, 82%, 60%)'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Calibration Trend Line */}
+              {calibrationTrend.length > 0 && (
+                <div className="rounded-xl p-5 relative overflow-hidden mt-6" style={glassPanel}>
+                  <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+                  <div className="absolute top-0 left-0 right-0 h-[20%] rounded-t-xl pointer-events-none" style={specularReflection} />
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart3 className="w-4 h-4" style={{ color: 'hsl(155, 82%, 48%)' }} />
+                    <h2 className="text-sm font-display font-semibold text-foreground">Calibration Trend (Brier Score Proxy)</h2>
+                  </div>
+                  <div className="h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={calibrationTrend}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsla(220, 12%, 70%, 0.08)" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fill: 'hsl(220, 12%, 55%)', fontSize: 10, fontFamily: 'monospace' }}
+                          axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)' }}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          domain={[0, 0.25]}
+                          tick={{ fill: 'hsl(220, 12%, 55%)', fontSize: 10, fontFamily: 'monospace' }}
+                          axisLine={{ stroke: 'hsla(220, 12%, 70%, 0.15)' }}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: 'hsl(232, 26%, 12%)',
+                            border: '1px solid hsla(43, 96%, 56%, 0.2)',
+                            borderRadius: '8px',
+                            fontSize: '11px',
+                            fontFamily: 'monospace',
+                            color: 'hsl(220, 12%, 80%)',
+                          }}
+                          formatter={(value: number) => [value.toFixed(4), 'Brier Score']}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="brier"
+                          stroke="hsl(192, 95%, 50%)"
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(192, 95%, 50%)', r: 3 }}
+                          activeDot={{ r: 5, fill: 'hsl(43, 96%, 56%)' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {(() => {
+                    const latest = calibrationTrend[calibrationTrend.length - 1]?.brier ?? 0;
+                    const label = latest <= 0.05 ? 'Excellent' : latest <= 0.15 ? 'Good' : 'Needs Attention';
+                    const color = latest <= 0.05 ? 'hsl(155, 82%, 48%)' : latest <= 0.15 ? 'hsl(43, 96%, 56%)' : 'hsl(0, 82%, 60%)';
+                    return (
+                      <div className="text-center mt-3">
+                        <span className="text-xs font-mono" style={{ color }}>
+                          Latest: {latest.toFixed(4)} — {label}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </>
