@@ -131,6 +131,6 @@ export function useRealtimeEvidence(milestoneIds: string[]) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       supabase.removeChannel(channel);
     };
-
+  }, [idSet]);
   return { pulses, scoutSignal, refreshToken };
 }
