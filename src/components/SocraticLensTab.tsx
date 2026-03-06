@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMode } from '@/contexts/ModeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { glassPanel, glassInner, specularReflection } from '@/lib/glass-styles';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Brain, MessageCircle, Link2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, Brain, MessageCircle, Link2, ChevronDown, Send, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface SocraticTopic {
   id: string;
@@ -11,6 +13,15 @@ interface SocraticTopic {
   topic_title: string;
   socratic_question: string;
   cynical_lens: string;
+  created_at: string;
+}
+
+interface SocraticComment {
+  id: string;
+  topic_id: string;
+  milestone_id: string;
+  user_id: string;
+  content: string;
   created_at: string;
 }
 
@@ -28,15 +39,20 @@ interface SocraticLensTabProps {
 
 export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
   const { isWonder } = useMode();
+  const { user } = useAuth();
   const [topics, setTopics] = useState<SocraticTopic[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+  const [comments, setComments] = useState<SocraticComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [discussTopicId, setDiscussTopicId] = useState<string | null>(null);
+  const [newComment, setNewComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [topicsRes, evidenceRes] = await Promise.all([
+      const [topicsRes, evidenceRes, commentsRes] = await Promise.all([
         supabase
           .from('socratic_topics')
           .select('*')
@@ -48,14 +64,61 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
           .eq('milestone_id', milestoneId)
           .order('composite', { ascending: false })
           .limit(10),
+        supabase
+          .from('socratic_comments')
+          .select('*')
+          .eq('milestone_id', milestoneId)
+          .order('created_at', { ascending: true }),
       ]);
-      // Cast the response to our expected type since the table is new
       setTopics((topicsRes.data as unknown as SocraticTopic[]) || []);
       setEvidence(evidenceRes.data || []);
+      setComments((commentsRes.data as unknown as SocraticComment[]) || []);
       setLoading(false);
     };
     load();
   }, [milestoneId]);
+
+  // Realtime subscription for comments
+  useEffect(() => {
+    const channel = supabase
+      .channel(`socratic-comments-${milestoneId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'socratic_comments', filter: `milestone_id=eq.${milestoneId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setComments(prev => [...prev, payload.new as SocraticComment]);
+          } else if (payload.eventType === 'DELETE') {
+            setComments(prev => prev.filter(c => c.id !== (payload.old as any).id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [milestoneId]);
+
+  const handleSubmitComment = useCallback(async (topicId: string) => {
+    if (!newComment.trim() || !user || submitting) return;
+    setSubmitting(true);
+    try {
+      await supabase.from('socratic_comments').insert({
+        topic_id: topicId,
+        milestone_id: milestoneId,
+        user_id: user.id,
+        content: newComment.trim(),
+      } as any);
+      setNewComment('');
+    } catch (err) {
+      console.error('Comment submit failed:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [newComment, user, milestoneId, submitting]);
+
+  const handleDeleteComment = useCallback(async (commentId: string) => {
+    await supabase.from('socratic_comments').delete().eq('id', commentId as any);
+  }, []);
 
   if (loading) {
     return (
@@ -68,6 +131,7 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
   }
 
   const topEvidence = evidence.slice(0, 3);
+  const getTopicComments = (topicId: string) => comments.filter(c => c.topic_id === topicId);
 
   return (
     <div className="space-y-4">
@@ -98,6 +162,9 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
         <AnimatePresence initial={false}>
           {topics.map((topic, i) => {
             const isExpanded = expandedId === topic.id;
+            const isDiscussing = discussTopicId === topic.id;
+            const topicComments = getTopicComments(topic.id);
+
             return (
               <motion.div
                 key={topic.id}
@@ -129,6 +196,14 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
                           {isWonder ? `🔮 ${i + 1}` : `Q${i + 1}`}
                         </span>
                         <h4 className="text-sm font-bold text-foreground truncate">{topic.topic_title}</h4>
+                        {topicComments.length > 0 && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full" style={{
+                            background: 'hsla(192, 100%, 52%, 0.1)',
+                            color: 'hsl(192, 100%, 52%)',
+                          }}>
+                            {topicComments.length} 💬
+                          </span>
+                        )}
                       </div>
 
                       <p className="text-xs leading-relaxed" style={{ color: isWonder ? 'hsla(43, 50%, 80%, 0.9)' : 'hsl(220, 10%, 65%)' }}>
@@ -208,21 +283,108 @@ export function SocraticLensTab({ milestoneId }: SocraticLensTabProps) {
                             </div>
                           )}
 
-                          {/* Discuss Button */}
-                          <button
-                            className="flex items-center gap-1.5 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            style={{
-                              background: isWonder
-                                ? 'linear-gradient(135deg, hsla(43, 96%, 56%, 0.15), hsla(43, 60%, 40%, 0.1))'
-                                : 'hsla(192, 100%, 52%, 0.1)',
-                              border: `1px solid ${isWonder ? 'hsla(43, 96%, 56%, 0.25)' : 'hsla(192, 100%, 52%, 0.2)'}`,
-                              color: isWonder ? 'hsl(43, 96%, 56%)' : 'hsl(192, 100%, 52%)',
-                            }}
-                            onClick={(e) => { e.stopPropagation(); }}
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                            {isWonder ? '💬 Discuss This' : 'DISCUSS'}
-                          </button>
+                          {/* Discussion Thread */}
+                          <div>
+                            <button
+                              className="flex items-center gap-1.5 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+                              style={{
+                                background: isWonder
+                                  ? 'linear-gradient(135deg, hsla(43, 96%, 56%, 0.15), hsla(43, 60%, 40%, 0.1))'
+                                  : 'hsla(192, 100%, 52%, 0.1)',
+                                border: `1px solid ${isWonder ? 'hsla(43, 96%, 56%, 0.25)' : 'hsla(192, 100%, 52%, 0.2)'}`,
+                                color: isWonder ? 'hsl(43, 96%, 56%)' : 'hsl(192, 100%, 52%)',
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDiscussTopicId(isDiscussing ? null : topic.id);
+                              }}
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              {isWonder ? `💬 Discuss (${topicComments.length})` : `DISCUSS (${topicComments.length})`}
+                            </button>
+
+                            {/* Comment Thread */}
+                            <AnimatePresence>
+                              {isDiscussing && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div className="mt-3 space-y-2 rounded-lg p-3" style={{
+                                    ...glassInner,
+                                    border: '1px solid hsla(220, 12%, 70%, 0.1)',
+                                  }}>
+                                    {/* Existing comments */}
+                                    {topicComments.length === 0 && (
+                                      <p className="text-[10px] text-muted-foreground italic text-center py-2">
+                                        {isWonder ? '🌱 Be the first to share your thoughts…' : 'No comments yet. Start the discussion.'}
+                                      </p>
+                                    )}
+                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                      {topicComments.map(comment => (
+                                        <motion.div
+                                          key={comment.id}
+                                          initial={{ opacity: 0, x: -8 }}
+                                          animate={{ opacity: 1, x: 0 }}
+                                          className="flex items-start gap-2 group/comment"
+                                        >
+                                          <div className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[8px] font-bold" style={{
+                                            background: isWonder ? 'hsla(43, 96%, 56%, 0.2)' : 'hsla(192, 100%, 52%, 0.15)',
+                                            color: isWonder ? 'hsl(43, 96%, 56%)' : 'hsl(192, 100%, 52%)',
+                                          }}>
+                                            {isWonder ? '✦' : 'U'}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-[11px] text-foreground leading-relaxed">{comment.content}</p>
+                                            <span className="text-[9px] text-muted-foreground font-mono">
+                                              {format(new Date(comment.created_at), 'MMM d, HH:mm')}
+                                            </span>
+                                          </div>
+                                          {user && comment.user_id === user.id && (
+                                            <button
+                                              onClick={() => handleDeleteComment(comment.id)}
+                                              className="opacity-0 group-hover/comment:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10"
+                                            >
+                                              <Trash2 className="w-3 h-3 text-destructive" />
+                                            </button>
+                                          )}
+                                        </motion.div>
+                                      ))}
+                                    </div>
+
+                                    {/* Comment input */}
+                                    {user && (
+                                      <div className="flex items-center gap-2 mt-2 pt-2" style={{ borderTop: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
+                                        <input
+                                          type="text"
+                                          value={newComment}
+                                          onChange={(e) => setNewComment(e.target.value)}
+                                          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitComment(topic.id); }}
+                                          placeholder={isWonder ? 'Share your impression…' : 'Add a comment…'}
+                                          className="flex-1 bg-transparent text-[11px] text-foreground placeholder:text-muted-foreground outline-none font-mono"
+                                        />
+                                        <button
+                                          onClick={() => handleSubmitComment(topic.id)}
+                                          disabled={!newComment.trim() || submitting}
+                                          className="p-1.5 rounded-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-30"
+                                          style={{
+                                            background: isWonder ? 'hsla(43, 96%, 56%, 0.2)' : 'hsla(192, 100%, 52%, 0.15)',
+                                            color: isWonder ? 'hsl(43, 96%, 56%)' : 'hsl(192, 100%, 52%)',
+                                          }}
+                                        >
+                                          <Send className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                       </motion.div>
                     )}
