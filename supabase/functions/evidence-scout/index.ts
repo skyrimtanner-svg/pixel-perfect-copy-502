@@ -496,7 +496,6 @@ Deno.serve(async (req) => {
     // ─── 5. SLACK NOTIFICATION FOR HIGH-COMPOSITE EVIDENCE ───
     const SLACK_API_KEY = Deno.env.get("SLACK_API_KEY");
     const LOVABLE_API_KEY_GATEWAY = Deno.env.get("LOVABLE_API_KEY");
-    const highCompositeItems = [];
 
     // Re-query pending evidence from this run with composite >= 0.5
     const { data: highItems } = await supabase
@@ -509,11 +508,61 @@ Deno.serve(async (req) => {
 
     if (highItems && highItems.length > 0 && SLACK_API_KEY && LOVABLE_API_KEY_GATEWAY) {
       const GATEWAY_URL = "https://connector-gateway.lovable.dev/slack/api";
-      const lines = highItems.map((item: any) =>
-        `• *${item.milestone_id}* — ${item.direction} (${item.composite_score.toFixed(3)}) — ${item.summary || item.source}${item.source_url ? ` <${item.source_url}|↗>` : ""}`
+
+      // Fetch milestone titles and posteriors for context
+      const msIds = [...new Set(highItems.map((i: any) => i.milestone_id))];
+      const { data: msData } = await supabase
+        .from("milestones")
+        .select("id, title, posterior, prior")
+        .in("id", msIds);
+      const msMap: Record<string, { title: string; posterior: number; prior: number }> = {};
+      (msData || []).forEach((m: any) => { msMap[m.id] = m; });
+
+      // App URL for "View in Observatory" links
+      const appUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "").replace("https://", "");
+
+      // Build rich blocks
+      const blocks: any[] = [
+        {
+          type: "header",
+          text: { type: "plain_text", text: `🔬 Evidence Scout — ${highItems.length} high-signal finding${highItems.length > 1 ? "s" : ""}`, emoji: true },
+        },
+        { type: "divider" },
+      ];
+
+      for (const item of highItems as any[]) {
+        const ms = msMap[item.milestone_id];
+        const title = ms?.title || item.milestone_id;
+        const dirEmoji = item.direction === "supports" ? "↑" : item.direction === "contradicts" ? "↓" : "↔";
+        const pChange = ms ? `P(X): ${(ms.prior * 100).toFixed(0)}% → ${(ms.posterior * 100).toFixed(0)}%` : "";
+
+        blocks.push({
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*${dirEmoji} ${title}*${pChange ? `  ·  ${pChange}` : ""}\nComposite: \`${item.composite_score.toFixed(3)}\`  ·  ${item.direction}\n${item.summary || "_No summary_"}`,
+          },
+          accessory: item.source_url ? {
+            type: "button",
+            text: { type: "plain_text", text: "View Source ↗", emoji: true },
+            url: item.source_url,
+            action_id: `view_source_${item.milestone_id}`,
+          } : undefined,
+        });
+      }
+
+      blocks.push(
+        { type: "divider" },
+        {
+          type: "context",
+          elements: [
+            { type: "mrkdwn", text: `_Run ${runId.slice(0, 8)} · ${new Date().toISOString().split("T")[0]} · <https://lovable.dev|View in Observatory>_` },
+          ],
+        },
       );
 
-      const slackMessage = `🔬 *Evidence Scout — ${highItems.length} high-signal finding${highItems.length > 1 ? "s" : ""}*\n\n${lines.join("\n")}\n\n_Run ID: ${runId.slice(0, 8)} · ${new Date().toISOString().split("T")[0]}_`;
+      // Fallback text for notifications
+      const fallbackText = `🔬 Evidence Scout: ${highItems.length} high-signal finding(s) — ${(highItems as any[]).map((i: any) => `${i.direction === "supports" ? "↑" : "↓"} ${msMap[i.milestone_id]?.title || i.milestone_id} (${i.composite_score.toFixed(2)})`).join(", ")}`;
 
       try {
         const slackResp = await fetch(`${GATEWAY_URL}/chat.postMessage`, {
@@ -525,7 +574,8 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             channel: "#evidence-scout",
-            text: slackMessage,
+            text: fallbackText,
+            blocks,
             username: "ÆETH Evidence Scout",
             icon_emoji: ":telescope:",
           }),
