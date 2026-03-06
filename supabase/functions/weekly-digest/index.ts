@@ -122,8 +122,8 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${SLACK_API_KEY}`,
-        "x-lovable-api-key": LOVABLE_API_KEY,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": SLACK_API_KEY,
       },
       body: JSON.stringify({
         channel: "#evidence-scout",
