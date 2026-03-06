@@ -60,10 +60,8 @@ export default function CalibrationPage() {
 
   // Also compute a baseline across ALL non-historical milestones (treating current posterior as forecast)
   const allActive = useMemo(() => milestones.filter(m => m.tier !== 'historical'), [milestones]);
-  const _avgPosterior = useMemo(() => {
-    if (allActive.length === 0) return 0;
-    return allActive.reduce((s, m) => s + m.posterior, 0) / allActive.length;
-  }, [allActive]);
+  // Average posterior across active milestones (reserved for future calibration metrics)
+  // const avgPosterior = allActive.length > 0 ? allActive.reduce((s, m) => s + m.posterior, 0) / allActive.length : 0;
 
   const calibrationLabel = brierScore < 0.1 ? 'Excellent' : brierScore < 0.15 ? 'Well Calibrated' : brierScore < 0.2 ? 'Fair' : 'Needs Improvement';
 

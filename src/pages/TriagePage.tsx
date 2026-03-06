@@ -59,7 +59,8 @@ export default function TriagePage() {
   const milestoneIds = useMemo(() => milestones.map(m => m.id), [milestones]);
   const { pulses } = useRealtimeEvidence(milestoneIds);
 
-  const _scrollToFirstAffected = useCallback(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const scrollToFirstAffected = useCallback(() => {
     if (!listRef.current) return;
     const firstPulseId = [...pulses.keys()][0];
     if (!firstPulseId) return;
