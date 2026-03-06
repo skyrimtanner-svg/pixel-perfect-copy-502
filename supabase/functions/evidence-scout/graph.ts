@@ -368,8 +368,11 @@ RULES:
 Be SELECTIVE. Most articles are NOT relevant to most milestones.${memoryHint}`;
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s per call
     const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
+      signal: controller.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
@@ -404,6 +407,7 @@ Be SELECTIVE. Most articles are NOT relevant to most milestones.${memoryHint}`;
         tool_choice: { type: "function", function: { name: "classify_evidence" } },
       }),
     });
+    clearTimeout(timeout);
 
     if (!resp.ok) { await resp.text(); return null; }
     const data = await resp.json();
@@ -413,11 +417,16 @@ Be SELECTIVE. Most articles are NOT relevant to most milestones.${memoryHint}`;
   } catch { return null; }
 }
 
+const MAX_AI_CALLS = 15; // Cap to stay within edge function timeout (~60s)
+const PARALLEL_BATCH_SIZE = 5; // Concurrent AI calls per batch
+
 const classifyNode: NodeFn = async (state) => {
   const classifications: GraphState["classifications"] = [];
   let aiCallsMade = 0;
   let aiCallsFailed = 0;
 
+  // Build all (article, milestone) pairs first, then process in parallel batches
+  const pairs: { article: Article; milestone: Milestone }[] = [];
   for (const article of state.uniqueArticles) {
     const articleText = `${article.title} ${article.description}`.toLowerCase();
     const candidateMilestones = state.milestones.filter(m => {
@@ -426,16 +435,30 @@ const classifyNode: NodeFn = async (state) => {
       return words.filter(w => articleText.includes(w)).length >= 2;
     }).slice(0, 3);
 
-    if (candidateMilestones.length === 0) continue;
-
     for (const milestone of candidateMilestones) {
+      pairs.push({ article, milestone });
+    }
+  }
+
+  // Cap total pairs to avoid timeout
+  const capped = pairs.slice(0, MAX_AI_CALLS);
+  await logToScout(state, "classify_plan", { totalPairs: pairs.length, capped: capped.length });
+
+  // Process in parallel batches
+  for (let i = 0; i < capped.length; i += PARALLEL_BATCH_SIZE) {
+    const batch = capped.slice(i, i + PARALLEL_BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map(async ({ article, milestone }) => {
+        const memCtx = state.memory.get(milestone.id);
+        const result = await classifyWithAI(article, milestone, state.apiKey, memCtx || undefined);
+        return { article, milestone, result };
+      })
+    );
+
+    for (const r of results) {
       aiCallsMade++;
-
-      // Retrieve memory context for this milestone
-      const memCtx = state.memory.get(milestone.id);
-
-      const result = await classifyWithAI(article, milestone, state.apiKey, memCtx || undefined);
-      if (!result) { aiCallsFailed++; continue; }
+      if (r.status === "rejected" || !r.value.result) { aiCallsFailed++; continue; }
+      const { article, milestone, result } = r.value;
       if (!result.relevant) continue;
 
       classifications.push({ article, milestone, result });
