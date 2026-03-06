@@ -116,17 +116,38 @@ Deno.serve(async (req) => {
     );
 
     const GATEWAY_URL = "https://connector-gateway.lovable.dev/slack/api";
+    const gatewayHeaders = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      "X-Connection-Api-Key": SLACK_API_KEY,
+    };
     const fallbackText = `📊 Weekly Digest: ${uniqueRuns.size} scout runs, ${evidenceCount || 0} evidence items, ${topMovers.length} top movers`;
+
+    // Find the channel ID first
+    const listResp = await fetch(`${GATEWAY_URL}/conversations.list?types=public_channel&limit=200`, {
+      headers: gatewayHeaders,
+    });
+    const listData = await listResp.json();
+    const channel = (listData.channels || []).find((c: any) => c.name === "evidence-scout");
+
+    if (!channel) {
+      return new Response(JSON.stringify({ ok: false, error: "Channel #evidence-scout not found", channels: (listData.channels || []).map((c: any) => c.name).slice(0, 20) }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Join the channel
+    await fetch(`${GATEWAY_URL}/conversations.join`, {
+      method: "POST",
+      headers: gatewayHeaders,
+      body: JSON.stringify({ channel: channel.id }),
+    });
 
     const slackResp = await fetch(`${GATEWAY_URL}/chat.postMessage`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": SLACK_API_KEY,
-      },
+      headers: gatewayHeaders,
       body: JSON.stringify({
-        channel: "#evidence-scout",
+        channel: channel.id,
         text: fallbackText,
         blocks,
         username: "ÆETH Weekly Digest",
