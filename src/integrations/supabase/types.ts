@@ -407,6 +407,33 @@ export type Database = {
         }
         Relationships: []
       }
+      socratic_topics: {
+        Row: {
+          created_at: string
+          cynical_lens: string
+          id: string
+          milestone_id: string | null
+          socratic_question: string
+          topic_title: string
+        }
+        Insert: {
+          created_at?: string
+          cynical_lens: string
+          id?: string
+          milestone_id?: string | null
+          socratic_question: string
+          topic_title: string
+        }
+        Update: {
+          created_at?: string
+          cynical_lens?: string
+          id?: string
+          milestone_id?: string | null
+          socratic_question?: string
+          topic_title?: string
+        }
+        Relationships: []
+      }
       trust_ledger: {
         Row: {
           calibration_snapshot: Json | null
