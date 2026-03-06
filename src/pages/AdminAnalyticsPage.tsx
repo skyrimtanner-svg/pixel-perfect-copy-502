@@ -46,17 +46,17 @@ export default function AdminAnalyticsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingEvidence, setPendingEvidence] = useState<PendingEvidence[]>([]);
-  const [scoutLogs, setScoutLogs] = useState<ScoutLog[]>([]);
+  const [_scoutLogs, setScoutLogs] = useState<ScoutLog[]>([]);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [scoutRunning, setScoutRunning] = useState(false);
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
-  const [evidenceInflow, setEvidenceInflow] = useState<any[]>([]);
-  const [sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
-  const [domainPortfolio, setDomainPortfolio] = useState<{ name: string; avgPosterior: number; count: number }[]>([]);
-  const [topMovers, setTopMovers] = useState<{ title: string; delta: number; direction: string }[]>([]);
-  const [calibrationTrend, setCalibrationTrend] = useState<{ date: string; brier: number }[]>([]);
+  const [_evidenceInflow, setEvidenceInflow] = useState<{ date: string; count: number }[]>([]);
+  const [_sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
+  const [_domainPortfolio, setDomainPortfolio] = useState<{ name: string; avgPosterior: number; count: number }[]>([]);
+  const [_topMovers, setTopMovers] = useState<{ title: string; delta: number; direction: string }[]>([]);
+  const [_calibrationTrend, setCalibrationTrend] = useState<{ date: string; brier: number }[]>([]);
 
   const fetchPending = useCallback(async () => {
     const { data } = await supabase
