@@ -5,6 +5,7 @@ import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { Users, Zap, FileText, BarChart3, Bot, Loader2 } from 'lucide-react';
+import ScoutDiagnosticRow from '@/components/ScoutDiagnosticRow';
 import { toast } from 'sonner';
 
 interface Metrics {
