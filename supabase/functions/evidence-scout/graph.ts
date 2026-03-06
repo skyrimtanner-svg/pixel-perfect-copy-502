@@ -46,6 +46,7 @@ export interface ScoredEvidence {
   recency: number;
   composite: number;
   deltaLogOdds: number;
+  autoCommitted?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -66,6 +67,7 @@ export interface GraphState {
   classifications: { article: Article; milestone: Milestone; result: ClassificationResult }[];
   scoredEvidence: ScoredEvidence[];
   queuedCount: number;
+  autoCommittedCount: number;
   highSignalItems: any[];
 
   // Memory: tracks previous classifications per milestone in this run
@@ -471,13 +473,67 @@ const scoreNode: NodeFn = async (state) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NODE 4: QUEUE — insert into pending_evidence + Slack notify
+// NODE 4: AUTO-COMMIT — route high-confidence evidence directly
+// ═══════════════════════════════════════════════════════════════
+
+const AUTO_COMMIT_THRESHOLD = 0.75;
+
+const autoCommitNode: NodeFn = async (state) => {
+  let autoCommittedCount = 0;
+  const committedMilestoneIds: string[] = [];
+
+  for (const ev of state.scoredEvidence) {
+    if (ev.composite < AUTO_COMMIT_THRESHOLD) continue;
+
+    try {
+      const msApiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/milestones-api/${ev.milestone.id}/evidence`;
+      const resp = await fetch(msApiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          direction: ev.classification.direction,
+          credibility: ev.classification.credibility,
+          consensus: ev.classification.consensus,
+          criteria_match: ev.classification.criteria_match,
+          recency: ev.recency,
+          source: ev.article.link || ev.article.source,
+          type: ev.classification.evidence_type,
+          summary: ev.classification.summary,
+          date: new Date().toISOString().split("T")[0],
+          raw_sources: [{ url: ev.article.link, publisher: ev.article.source, snippet: ev.article.description?.slice(0, 500) }],
+        }),
+      });
+
+      if (resp.ok) {
+        ev.autoCommitted = true;
+        autoCommittedCount++;
+        committedMilestoneIds.push(ev.milestone.id);
+      } else {
+        const errText = await resp.text();
+        await logToScout(state, "auto_commit_failed", { milestone_id: ev.milestone.id, status: resp.status, error: errText.slice(0, 200) });
+      }
+    } catch (e) {
+      await logToScout(state, "auto_commit_error", { milestone_id: ev.milestone.id, error: String(e).slice(0, 200) });
+    }
+  }
+
+  await logToScout(state, "node_auto_commit", { count: autoCommittedCount, milestone_ids: committedMilestoneIds });
+
+  return { ...state, autoCommittedCount };
+};
+
+// ═══════════════════════════════════════════════════════════════
+// NODE 5: QUEUE — insert remaining into pending_evidence + Slack notify
 // ═══════════════════════════════════════════════════════════════
 
 const queueNode: NodeFn = async (state) => {
   let queuedCount = 0;
 
   for (const ev of state.scoredEvidence) {
+    if (ev.autoCommitted) continue;
     const row = {
       milestone_id: ev.milestone.id,
       source: ev.article.source,
@@ -579,6 +635,7 @@ const queueNode: NodeFn = async (state) => {
 const tracedSearch = traceNode("search", searchNode);
 const tracedClassify = traceNode("classify", classifyNode);
 const tracedScore = traceNode("score", scoreNode);
+const tracedAutoCommit = traceNode("autoCommit", autoCommitNode);
 const tracedQueue = traceNode("queue", queueNode);
 
 export async function runGraph(initialState: GraphState): Promise<GraphState> {
@@ -586,6 +643,7 @@ export async function runGraph(initialState: GraphState): Promise<GraphState> {
   state = await tracedSearch(state);
   state = await tracedClassify(state);
   state = await tracedScore(state);
+  state = await tracedAutoCommit(state);
   state = await tracedQueue(state);
   return state;
 }
