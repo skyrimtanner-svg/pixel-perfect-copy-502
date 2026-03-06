@@ -1,73 +1,97 @@
-# Welcome to your Lovable project
+# ÆTH Observatory — Next-Gen
 
-## Project info
+> **See Why the Future Changes.**
+> A premium deep-space command center for tracking and forecasting technological milestones.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://pixel-perfect-copy-502.lovable.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-## How can I edit this code?
+## 🌌 Vision
 
-There are several ways of editing your application.
+ÆTH Observatory is a Bayesian forecasting interface designed for high-stakes technological monitoring. It replaces "gut feel" with **log-odds evidence accumulation**, visualizing how every news item, paper, and breakthrough shifts the probability of future milestones like AGI, Fusion Power, and Longevity.
 
-**Use Lovable**
+It is built to feel like a $15k/year Bloomberg Terminal for the future — precise, dense, beautiful, and strictly typed.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## 🛠 Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Framework**: [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Language**: [TypeScript 5.x](https://www.typescriptlang.org/) (Strict Mode)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Framer Motion](https://www.framer.com/motion/) (Animations)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/) (Radix Primitives)
+- **Data Fetching**: [TanStack Query](https://tanstack.com/query/latest)
+- **Backend**: [Supabase](https://supabase.com/) (Auth, Database, Edge Functions, Realtime)
+- **Visualization**: [Recharts](https://recharts.org/) + Custom D3-like SVG Rings
 
-**Use your preferred IDE**
+## 🏗 Architecture
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Data Flow
+1.  **Supabase Realtime**: Subscribes to `evidence` and `milestones` tables for sub-second updates.
+2.  **Bayesian Engine**: `useMilestoneAPI` hook calculates posteriors on the fly or fetches cached snapshots.
+3.  **Trust Ledger**: Every significant forecast update is hashed (SHA-256) and stored in an immutable ledger for auditability.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Key Components
+-   **`InteractiveWaterfall`**: Visualizes log-odds shifts from evidence. Supports "What-If" sandbox simulations.
+-   **`ProbabilityRing`**: Custom SVG component with spring physics, gold/red states, and particle effects.
+-   **`MilestoneModal`**: The core detail view with deep-linking, tabs, and Socratic discussion.
 
-Follow these steps:
+## 🚀 Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Prerequisites
+-   Node.js 18+
+-   npm or bun
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Installation
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+# Clone the repo
+git clone https://github.com/your-org/aeth-observatory.git
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env` file in the root:
 
-**Use GitHub Codespaces**
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_key
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📦 Deployment
 
-## What technologies are used for this project?
+### Lovable / Vercel
+This project is optimized for deployment on Vercel or Lovable Cloud.
+1.  Connect your GitHub repo.
+2.  Set the environment variables.
+3.  Deploy.
 
-This project is built with:
+## ♿ Accessibility & Performance
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+-   **Strict TypeScript**: Full type safety for all data models.
+-   **Performance**: 
+    -   Lazy-loaded routes.
+    -   GPU-accelerated animations.
+    -   `will-change` optimizations for heavy elements.
+    -   Memoized heavy chart components.
+-   **Accessibility**:
+    -   ARIA labels on interactive rings and charts.
+    -   High-contrast text support (Analyst mode).
+    -   Keyboard navigation support.
+    -   `prefers-reduced-motion` compliance.
 
-## How can I deploy this project?
+## 🔮 Roadmap
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+-   [x] Phase 1: Core Triage & Evidence Waterfall
+-   [x] Phase 2: Socratic Lens & AI Integration
+-   [x] Phase 3: "What-If" Simulation Sandbox
+-   [ ] Phase 4: Prediction Markets Integration (Polyglot)
+-   [ ] Phase 5: Mobile Native App
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+*Built with precision by [Lovable](https://lovable.dev).*

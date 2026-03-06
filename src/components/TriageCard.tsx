@@ -62,9 +62,8 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
   const [isFlipped, setIsFlipped] = useState(false);
   const delta = milestone.posterior - milestone.prior;
 
-  // Pulse glow: intensity based on |delta_log_odds| and composite
   const pulseIntensity = pulse ? Math.min(1, (Math.abs(pulse.deltaLogOdds) * 0.5 + pulse.composite * 0.5)) : 0;
-  const pulseColor = pulse?.direction === 'contradicts' ? '248, 113, 113' : '74, 222, 128'; // red or green
+  const pulseColor = pulse?.direction === 'contradicts' ? '248, 113, 113' : '74, 222, 128'; 
   const pulseGlowPx = Math.min(3, pulseIntensity * 3);
   const pulseOpacity = Math.min(0.65, pulseIntensity * 0.65);
   const isPositive = delta >= 0;
@@ -104,10 +103,8 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             style={isTopItem ? glassPanelGold : glassPanel}
           >
-            {/* Specular top reflection */}
             <div className="absolute top-0 left-0 right-0 h-[45%] rounded-t-2xl" style={specularReflection} />
 
-            {/* Gold shimmer line for top items */}
             {isTopItem && (
               <motion.div
                 className="absolute top-0 left-4 right-4 h-px"
@@ -117,14 +114,12 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
               />
             )}
 
-            {/* Bottom chrome bevel */}
             <div className="absolute bottom-0 left-4 right-4 h-px" style={{
               background: isTopItem
                 ? 'linear-gradient(90deg, transparent, hsla(43, 96%, 56%, 0.12), transparent)'
                 : 'linear-gradient(90deg, transparent, hsla(220, 14%, 88%, 0.06), transparent)',
             }} />
 
-            {/* Live evidence pulse indicator */}
             {pulse && isWonder && (
               <div className="absolute top-2 left-2 text-[9px] font-mono px-1.5 py-0.5 rounded-full"
                 style={{
@@ -152,7 +147,6 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
             )}
 
             <div className="flex items-start gap-5 relative z-10">
-              {/* Rank badge — metallic bevel */}
               <div className="flex flex-col items-center gap-1 pt-1">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center font-mono text-xs font-bold tabular-nums"
@@ -248,7 +242,6 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
     );
   }
 
-  // ═══ ANALYST MODE: Bloomberg-terminal ultra-dense ═══
   return (
     <motion.button
       initial={{ opacity: 0 }}
@@ -269,7 +262,6 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
         backgroundColor: 'hsla(232, 26%, 8%, 0.7)',
       }}
     >
-      {/* Analyst pulse badge */}
       {pulse && (
         <div className="absolute top-0.5 right-1 text-[8px] font-mono font-bold tabular-nums px-1 rounded"
           style={{
@@ -281,7 +273,6 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
           {pulse.deltaLogOdds >= 0 ? '+' : ''}{pulse.deltaLogOdds.toFixed(2)} LO
         </div>
       )}
-      {/* Left edge hover indicator */}
       <div className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-150"
         style={{
           background: isTopItem
