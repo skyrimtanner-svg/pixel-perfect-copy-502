@@ -57,7 +57,7 @@ export default function TriagePage() {
   const listRef = useRef<HTMLDivElement>(null);
 
   const milestoneIds = useMemo(() => milestones.map(m => m.id), [milestones]);
-  const { pulses, scoutSignal } = useRealtimeEvidence(milestoneIds);
+  const { pulses, scoutSignal: _scoutSignal } = useRealtimeEvidence(milestoneIds);
 
   const scrollToFirstAffected = useCallback(() => {
     if (!listRef.current) return;
