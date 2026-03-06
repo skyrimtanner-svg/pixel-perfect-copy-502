@@ -4,7 +4,7 @@ import { ProbabilityRing } from '@/components/ProbabilityRing';
 import { Hash, ExternalLink, ShieldCheck, AlertTriangle, Copy, CheckCircle2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
-import { BayesBundle, CalibrationSnapshot, EvidenceItem } from '@/hooks/useMilestoneAPI';
+import { EvidenceItem } from '@/hooks/useMilestoneAPI';
 
 const goldGradientStyle = {
   background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',
