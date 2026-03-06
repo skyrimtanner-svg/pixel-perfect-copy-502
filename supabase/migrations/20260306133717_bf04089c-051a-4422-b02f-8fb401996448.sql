@@ -1,0 +1,1 @@
+CREATE POLICY "Service can insert AI comments" ON public.socratic_comments FOR INSERT TO service_role WITH CHECK (true);
