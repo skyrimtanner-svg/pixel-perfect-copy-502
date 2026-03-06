@@ -56,15 +56,108 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, pending_id } = await req.json();
+    const body = await req.json();
+    const { action, pending_id, pending_ids } = body;
 
+    // ─── BATCH OPERATIONS ───
+    if (pending_ids && Array.isArray(pending_ids) && pending_ids.length > 0) {
+      if (!["approve", "reject"].includes(action)) {
+        return new Response(JSON.stringify({ error: "Invalid action" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const results: { id: string; success: boolean; error?: string }[] = [];
+
+      for (const pid of pending_ids) {
+        try {
+          const { data: pending, error: fetchErr } = await supabase
+            .from("pending_evidence")
+            .select("*")
+            .eq("id", pid)
+            .eq("status", "pending")
+            .single();
+
+          if (fetchErr || !pending) {
+            results.push({ id: pid, success: false, error: "Not found or already processed" });
+            continue;
+          }
+
+          if (action === "reject") {
+            await supabase.from("pending_evidence").update({
+              status: "rejected",
+              reviewed_at: new Date().toISOString(),
+              reviewed_by: userId,
+            }).eq("id", pid);
+            results.push({ id: pid, success: true });
+            continue;
+          }
+
+          // Approve: POST to milestones-api
+          const msApiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/milestones-api/${pending.milestone_id}/evidence`;
+          const msResp = await fetch(msApiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              direction: pending.direction,
+              credibility: pending.credibility,
+              consensus: pending.consensus,
+              criteria_match: pending.criteria_match,
+              recency: pending.recency,
+              source: pending.source_url || pending.source,
+              type: pending.evidence_type,
+              summary: pending.summary,
+              date: new Date().toISOString().split("T")[0],
+              raw_sources: [{ url: pending.source_url, publisher: pending.source, snippet: pending.raw_snippet }],
+            }),
+          });
+
+          const msResult = await msResp.json();
+
+          if (!msResp.ok) {
+            results.push({ id: pid, success: false, error: `Evidence commit failed: ${msResult.error || msResp.status}` });
+            continue;
+          }
+
+          await supabase.from("pending_evidence").update({
+            status: "approved",
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: userId,
+          }).eq("id", pid);
+
+          results.push({ id: pid, success: true });
+        } catch (e) {
+          results.push({ id: pid, success: false, error: String(e) });
+        }
+      }
+
+      const approved = results.filter(r => r.success && action === "approve").length;
+      const rejected = results.filter(r => r.success && action === "reject").length;
+      const failed = results.filter(r => !r.success).length;
+
+      return new Response(JSON.stringify({
+        success: true,
+        action,
+        batch: true,
+        approved,
+        rejected,
+        failed,
+        results,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── SINGLE OPERATION ───
     if (!pending_id || !["approve", "reject"].includes(action)) {
       return new Response(JSON.stringify({ error: "Invalid action or pending_id" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fetch pending evidence
     const { data: pending, error: fetchErr } = await supabase
       .from("pending_evidence")
       .select("*")
@@ -90,30 +183,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Approve: POST to milestones-api /evidence endpoint via internal call
-    const evidencePayload = {
-      milestone_id: pending.milestone_id,
-      source: pending.source_url || pending.source,
-      direction: pending.direction,
-      type: pending.evidence_type,
-      credibility: pending.credibility,
-      consensus: pending.consensus,
-      criteria_match: pending.criteria_match,
-      recency: pending.recency,
-      summary: pending.summary,
-      date: new Date().toISOString().split("T")[0],
-      raw_sources: [{ url: pending.source_url, publisher: pending.source, snippet: pending.raw_snippet }],
-    };
-
-    // Call milestones-api directly
-    const msApiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/milestones-api/evidence`;
+    // Approve: POST to milestones-api/{id}/evidence
+    const msApiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/milestones-api/${pending.milestone_id}/evidence`;
     const msResp = await fetch(msApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
       },
-      body: JSON.stringify(evidencePayload),
+      body: JSON.stringify({
+        direction: pending.direction,
+        credibility: pending.credibility,
+        consensus: pending.consensus,
+        criteria_match: pending.criteria_match,
+        recency: pending.recency,
+        source: pending.source_url || pending.source,
+        type: pending.evidence_type,
+        summary: pending.summary,
+        date: new Date().toISOString().split("T")[0],
+        raw_sources: [{ url: pending.source_url, publisher: pending.source, snippet: pending.raw_snippet }],
+      }),
     });
 
     const msResult = await msResp.json();
@@ -124,7 +213,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Mark as approved
     await supabase.from("pending_evidence").update({
       status: "approved",
       reviewed_at: new Date().toISOString(),

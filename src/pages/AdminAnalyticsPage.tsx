@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
-import { Users, Zap, FileText, BarChart3, Eye, Loader2, Check, X, Search, Bot, Clock } from 'lucide-react';
+import { Users, Zap, FileText, BarChart3, Eye, Loader2, Check, X, Search, Bot, CheckCheck, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Metrics {
@@ -42,13 +42,15 @@ interface ScoutLog {
 }
 
 export default function AdminAnalyticsPage() {
-  const { isAdmin, loading: authLoading, session } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingEvidence, setPendingEvidence] = useState<PendingEvidence[]>([]);
   const [scoutLogs, setScoutLogs] = useState<ScoutLog[]>([]);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [scoutRunning, setScoutRunning] = useState(false);
+  const [batchProcessing, setBatchProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
 
   const fetchPending = useCallback(async () => {
@@ -56,7 +58,7 @@ export default function AdminAnalyticsPage() {
       .from('pending_evidence')
       .select('*')
       .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+      .order('composite_score', { ascending: false });
     if (data) setPendingEvidence(data as PendingEvidence[]);
   }, []);
 
@@ -65,7 +67,7 @@ export default function AdminAnalyticsPage() {
       .from('scout_logs')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(100);
     if (data) setScoutLogs(data as ScoutLog[]);
   }, []);
 
@@ -122,12 +124,45 @@ export default function AdminAnalyticsPage() {
       });
 
       if (error) throw error;
-      toast.success(action === 'approve' ? 'Evidence approved & committed' : 'Evidence rejected');
+      toast.success(action === 'approve' ? 'Evidence approved & committed → Bayesian update triggered' : 'Evidence rejected');
       setPendingEvidence(prev => prev.filter(p => p.id !== pendingId));
+      setSelectedIds(prev => { const s = new Set(prev); s.delete(pendingId); return s; });
     } catch (e) {
       toast.error(`Failed to ${action}: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setProcessingIds(prev => { const s = new Set(prev); s.delete(pendingId); return s; });
+    }
+  };
+
+  const handleBatchAction = async (action: 'approve' | 'reject') => {
+    if (selectedIds.size === 0) {
+      toast.error('No items selected');
+      return;
+    }
+    setBatchProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('approve-evidence', {
+        body: { action, pending_ids: Array.from(selectedIds) },
+      });
+
+      if (error) throw error;
+
+      const approved = data?.approved || 0;
+      const rejected = data?.rejected || 0;
+      const failed = data?.failed || 0;
+
+      if (action === 'approve') {
+        toast.success(`${approved} evidence items approved & committed. ${failed > 0 ? `${failed} failed.` : ''}`);
+      } else {
+        toast.success(`${rejected} evidence items rejected. ${failed > 0 ? `${failed} failed.` : ''}`);
+      }
+
+      setPendingEvidence(prev => prev.filter(p => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+    } catch (e) {
+      toast.error(`Batch ${action} failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBatchProcessing(false);
     }
   };
 
@@ -136,13 +171,33 @@ export default function AdminAnalyticsPage() {
     try {
       const { data, error } = await supabase.functions.invoke('evidence-scout');
       if (error) throw error;
-      toast.success(`Scout run complete: ${data?.evidence_queued || 0} evidence items queued`);
+      const queued = data?.evidence_queued || 0;
+      const fetched = data?.articles_fetched || 0;
+      const classified = data?.articles_classified || 0;
+      toast.success(`Scout complete: ${fetched} articles fetched → ${classified} classified → ${queued} queued for review`);
       await fetchPending();
       await fetchLogs();
     } catch (e) {
       toast.error(`Scout error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setScoutRunning(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === pendingEvidence.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(pendingEvidence.map(p => p.id)));
     }
   };
 
@@ -163,7 +218,11 @@ export default function AdminAnalyticsPage() {
     { label: 'Avg Brier Score', value: metrics?.avgBrierScore?.toFixed(3) ?? 'N/A', icon: BarChart3, color: 'hsl(268, 90%, 68%)' },
   ];
 
-  const directionColor = (d: string) => d === 'supports' ? 'hsl(155, 82%, 48%)' : d === 'contradicts' ? 'hsl(0, 82%, 60%)' : 'hsl(43, 96%, 56%)';
+  const directionColor = (d: string) =>
+    d === 'supports' ? 'hsl(155, 82%, 48%)' : d === 'contradicts' ? 'hsl(0, 82%, 60%)' : 'hsl(43, 96%, 56%)';
+
+  const compositeColor = (c: number) =>
+    c >= 0.35 ? 'hsl(155, 82%, 48%)' : c >= 0.2 ? 'hsl(43, 96%, 56%)' : 'hsl(0, 82%, 60%)';
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
@@ -175,7 +234,7 @@ export default function AdminAnalyticsPage() {
         <button
           onClick={triggerScoutRun}
           disabled={scoutRunning}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono transition-all hover:scale-[1.02]"
           style={{
             background: scoutRunning ? 'hsla(43, 96%, 56%, 0.1)' : 'hsla(43, 96%, 56%, 0.15)',
             border: '1px solid hsla(43, 96%, 56%, 0.3)',
@@ -184,7 +243,7 @@ export default function AdminAnalyticsPage() {
           }}
         >
           {scoutRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
-          {scoutRunning ? 'Scanning…' : 'Run Evidence Scout'}
+          {scoutRunning ? 'Scanning all sources…' : 'Run Evidence Scout'}
         </button>
       </div>
 
@@ -212,7 +271,7 @@ export default function AdminAnalyticsPage() {
         </div>
       ) : (
         <>
-          {/* Metrics Tab */}
+          {/* ─── METRICS TAB ─── */}
           {activeTab === 'metrics' && (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -265,9 +324,61 @@ export default function AdminAnalyticsPage() {
             </>
           )}
 
-          {/* Approval Queue Tab */}
+          {/* ─── APPROVAL QUEUE TAB ─── */}
           {activeTab === 'queue' && (
             <div className="space-y-3">
+              {/* Batch controls */}
+              {pendingEvidence.length > 0 && (
+                <div className="flex items-center justify-between px-2 py-2">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="text-[10px] font-mono px-2 py-1 rounded"
+                      style={{
+                        background: selectedIds.size === pendingEvidence.length ? 'hsla(43, 96%, 56%, 0.15)' : 'hsla(220, 12%, 70%, 0.08)',
+                        color: selectedIds.size === pendingEvidence.length ? 'hsl(43, 96%, 56%)' : 'hsl(220, 12%, 55%)',
+                        border: '1px solid hsla(220, 12%, 70%, 0.12)',
+                      }}
+                    >
+                      {selectedIds.size === pendingEvidence.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                      {selectedIds.size} selected
+                    </span>
+                  </div>
+                  {selectedIds.size > 0 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleBatchAction('approve')}
+                        disabled={batchProcessing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-mono transition-all hover:scale-[1.02]"
+                        style={{
+                          background: 'hsla(155, 82%, 48%, 0.12)',
+                          border: '1px solid hsla(155, 82%, 48%, 0.25)',
+                          color: 'hsl(155, 82%, 48%)',
+                        }}
+                      >
+                        {batchProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCheck className="w-3 h-3" />}
+                        Approve {selectedIds.size}
+                      </button>
+                      <button
+                        onClick={() => handleBatchAction('reject')}
+                        disabled={batchProcessing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-mono transition-all hover:scale-[1.02]"
+                        style={{
+                          background: 'hsla(0, 82%, 60%, 0.12)',
+                          border: '1px solid hsla(0, 82%, 60%, 0.25)',
+                          color: 'hsl(0, 82%, 60%)',
+                        }}
+                      >
+                        <XCircle className="w-3 h-3" />
+                        Reject {selectedIds.size}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {pendingEvidence.length === 0 ? (
                 <div className="rounded-xl p-8 text-center" style={glassPanel}>
                   <Search className="w-8 h-8 mx-auto mb-3" style={{ color: 'hsl(220, 12%, 40%)' }} />
@@ -279,16 +390,33 @@ export default function AdminAnalyticsPage() {
                   {pendingEvidence.map((pe, i) => (
                     <motion.div
                       key={pe.id}
-                      className="rounded-xl p-4 relative overflow-hidden"
-                      style={glassPanel}
+                      className="rounded-xl p-4 relative overflow-hidden cursor-pointer"
+                      style={{
+                        ...glassPanel,
+                        ...(selectedIds.has(pe.id) ? { border: '1px solid hsla(43, 96%, 56%, 0.3)' } : {}),
+                      }}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -100 }}
-                      transition={{ delay: i * 0.03 }}
+                      transition={{ delay: i * 0.02 }}
+                      onClick={() => toggleSelect(pe.id)}
                     >
                       <div className="flex items-start justify-between gap-4">
+                        {/* Checkbox */}
+                        <div className="pt-1 shrink-0">
+                          <div
+                            className="w-4 h-4 rounded border flex items-center justify-center"
+                            style={{
+                              borderColor: selectedIds.has(pe.id) ? 'hsl(43, 96%, 56%)' : 'hsla(220, 12%, 70%, 0.2)',
+                              background: selectedIds.has(pe.id) ? 'hsla(43, 96%, 56%, 0.2)' : 'transparent',
+                            }}
+                          >
+                            {selectedIds.has(pe.id) && <Check className="w-3 h-3" style={{ color: 'hsl(43, 96%, 56%)' }} />}
+                          </div>
+                        </div>
+
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1.5">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                             <span
                               className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider"
                               style={{
@@ -301,6 +429,13 @@ export default function AdminAnalyticsPage() {
                             </span>
                             <span className="text-[10px] font-mono text-muted-foreground">T{pe.publisher_tier}</span>
                             <span className="text-[10px] font-mono text-muted-foreground">{pe.evidence_type}</span>
+                            <span
+                              className="text-[10px] font-mono font-bold"
+                              style={{ color: compositeColor(pe.composite_score) }}
+                            >
+                              comp: {pe.composite_score.toFixed(3)}
+                              {pe.composite_score >= 0.35 && ' ✓'}
+                            </span>
                             <span className="text-[10px] font-mono text-muted-foreground/50">
                               {new Date(pe.created_at).toLocaleDateString()}
                             </span>
@@ -312,8 +447,9 @@ export default function AdminAnalyticsPage() {
                               href={pe.source_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[10px] font-mono mt-1 inline-block"
+                              className="text-[10px] font-mono mt-1 inline-block hover:underline"
                               style={{ color: 'hsl(192, 95%, 50%)' }}
+                              onClick={e => e.stopPropagation()}
                             >
                               {pe.source} ↗
                             </a>
@@ -322,10 +458,10 @@ export default function AdminAnalyticsPage() {
                             <span>cred: {pe.credibility.toFixed(2)}</span>
                             <span>cons: {pe.consensus.toFixed(2)}</span>
                             <span>match: {pe.criteria_match.toFixed(2)}</span>
-                            <span className="text-foreground/80">comp: {pe.composite_score.toFixed(3)}</span>
+                            <span>rec: {(pe as any).recency?.toFixed(2) || '—'}</span>
                           </div>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-2 shrink-0" onClick={e => e.stopPropagation()}>
                           <button
                             onClick={() => handleApproveReject(pe.id, 'approve')}
                             disabled={processingIds.has(pe.id)}
@@ -335,6 +471,7 @@ export default function AdminAnalyticsPage() {
                               border: '1px solid hsla(155, 82%, 48%, 0.25)',
                               color: 'hsl(155, 82%, 48%)',
                             }}
+                            title="Approve & commit (triggers Bayesian update)"
                           >
                             {processingIds.has(pe.id) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                           </button>
@@ -347,6 +484,7 @@ export default function AdminAnalyticsPage() {
                               border: '1px solid hsla(0, 82%, 60%, 0.25)',
                               color: 'hsl(0, 82%, 60%)',
                             }}
+                            title="Reject"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -356,30 +494,67 @@ export default function AdminAnalyticsPage() {
                   ))}
                 </AnimatePresence>
               )}
+
+              {/* Refresh button */}
+              {pendingEvidence.length > 0 && (
+                <div className="text-center pt-2">
+                  <button
+                    onClick={fetchPending}
+                    className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 mx-auto"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Refresh queue
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Logs Tab */}
+          {/* ─── LOGS TAB ─── */}
           {activeTab === 'logs' && (
-            <div className="rounded-xl relative overflow-hidden" style={glassPanel}>
-              <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
-              <div className="p-4 space-y-1 max-h-[500px] overflow-y-auto font-mono text-[11px]">
-                {scoutLogs.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No scout logs yet</p>
-                ) : (
-                  scoutLogs.map(log => (
-                    <div key={log.id} className="flex gap-3 py-1 border-b border-border/5">
-                      <span className="text-muted-foreground/40 shrink-0 w-16">
-                        {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      <span className="shrink-0 w-20 text-muted-foreground/60 truncate">{log.run_id?.slice(0, 8)}</span>
-                      <span style={{ color: log.action.includes('error') ? 'hsl(0, 82%, 60%)' : log.action.includes('completed') ? 'hsl(155, 82%, 48%)' : 'hsl(43, 96%, 56%)' }}>
-                        {log.action}
-                      </span>
-                      <span className="text-muted-foreground/40 truncate">{JSON.stringify(log.detail).slice(0, 80)}</span>
-                    </div>
-                  ))
-                )}
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <button
+                  onClick={fetchLogs}
+                  className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                >
+                  <RefreshCw className="w-3 h-3" /> Refresh
+                </button>
+              </div>
+              <div className="rounded-xl relative overflow-hidden" style={glassPanel}>
+                <div className="absolute top-0 left-4 right-4 h-px" style={goldChromeLine} />
+                <div className="p-4 space-y-1 max-h-[600px] overflow-y-auto font-mono text-[11px]">
+                  {scoutLogs.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No scout logs yet — run the Evidence Scout to populate</p>
+                  ) : (
+                    scoutLogs.map(log => (
+                      <div key={log.id} className="flex gap-3 py-1 border-b border-border/5">
+                        <span className="text-muted-foreground/40 shrink-0 w-28">
+                          {new Date(log.created_at).toLocaleString([], {
+                            month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+                          })}
+                        </span>
+                        <span className="shrink-0 w-16 text-muted-foreground/50 truncate">{log.run_id?.slice(0, 8)}</span>
+                        <span
+                          className="shrink-0 w-32"
+                          style={{
+                            color: log.action.includes('error') || log.action.includes('failed')
+                              ? 'hsl(0, 82%, 60%)'
+                              : log.action.includes('completed')
+                                ? 'hsl(155, 82%, 48%)'
+                                : log.action.includes('queued')
+                                  ? 'hsl(192, 95%, 50%)'
+                                  : 'hsl(43, 96%, 56%)',
+                          }}
+                        >
+                          {log.action}
+                        </span>
+                        <span className="text-muted-foreground/40 truncate flex-1">
+                          {typeof log.detail === 'object' ? JSON.stringify(log.detail).slice(0, 120) : String(log.detail)}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}
