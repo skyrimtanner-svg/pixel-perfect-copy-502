@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanel, glassPanelGold, specularReflection, goldChromeLine } from '@/lib/glass-styles';
-import { Users, Zap, FileText, BarChart3, Eye, Loader2, Check, X, Search, Bot, CheckCheck, XCircle, RefreshCw } from 'lucide-react';
+import { Users, Zap, FileText, BarChart3, Eye, Loader2, Check, X, Search, Bot, CheckCheck, XCircle, RefreshCw, ArrowUpDown, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Metrics {
@@ -52,6 +52,10 @@ export default function AdminAnalyticsPage() {
   const [scoutRunning, setScoutRunning] = useState(false);
   const [batchProcessing, setBatchProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
+  const [filterDomain, setFilterDomain] = useState<string>('all');
+  const [filterDirection, setFilterDirection] = useState<string>('all');
+  const [sortField, setSortField] = useState<'composite_score' | 'created_at'>('composite_score');
+  const [sortAsc, setSortAsc] = useState(false);
 
   const fetchPending = useCallback(async () => {
     const { data } = await supabase
@@ -325,10 +329,84 @@ export default function AdminAnalyticsPage() {
           )}
 
           {/* ─── APPROVAL QUEUE TAB ─── */}
-          {activeTab === 'queue' && (
+          {activeTab === 'queue' && (() => {
+            const filtered = pendingEvidence
+              .filter(p => filterDomain === 'all' || p.milestone_id.includes(filterDomain))
+              .filter(p => filterDirection === 'all' || p.direction === filterDirection)
+              .sort((a, b) => {
+                const av = sortField === 'composite_score' ? a.composite_score : new Date(a.created_at).getTime();
+                const bv = sortField === 'composite_score' ? b.composite_score : new Date(b.created_at).getTime();
+                return sortAsc ? av - bv : bv - av;
+              });
+
+            const domains = [...new Set(pendingEvidence.map(p => {
+              const id = p.milestone_id;
+              // Extract domain-like prefix (e.g. "agi" from "agi-reasoning")
+              return id.split('-')[0] || id;
+            }))].sort();
+
+            return (
             <div className="space-y-3">
-              {/* Batch controls */}
+              {/* Filter/Sort controls */}
               {pendingEvidence.length > 0 && (
+                <div className="flex items-center gap-3 flex-wrap px-2 py-2 rounded-lg" style={{ background: 'hsla(232, 26%, 8%, 0.4)', border: '1px solid hsla(220, 12%, 70%, 0.06)' }}>
+                  <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <select
+                    value={filterDomain}
+                    onChange={e => setFilterDomain(e.target.value)}
+                    className="bg-transparent text-[10px] font-mono px-2 py-1 rounded border text-foreground"
+                    style={{ borderColor: 'hsla(220, 12%, 70%, 0.15)' }}
+                  >
+                    <option value="all">All Domains</option>
+                    {domains.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterDirection}
+                    onChange={e => setFilterDirection(e.target.value)}
+                    className="bg-transparent text-[10px] font-mono px-2 py-1 rounded border text-foreground"
+                    style={{ borderColor: 'hsla(220, 12%, 70%, 0.15)' }}
+                  >
+                    <option value="all">All Directions</option>
+                    <option value="supports">Supports</option>
+                    <option value="contradicts">Contradicts</option>
+                    <option value="ambiguous">Ambiguous</option>
+                  </select>
+                  <button
+                    onClick={() => {
+                      if (sortField === 'composite_score') setSortAsc(!sortAsc);
+                      else { setSortField('composite_score'); setSortAsc(false); }
+                    }}
+                    className="text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1"
+                    style={{
+                      borderColor: sortField === 'composite_score' ? 'hsla(43, 96%, 56%, 0.3)' : 'hsla(220, 12%, 70%, 0.15)',
+                      color: sortField === 'composite_score' ? 'hsl(43, 96%, 56%)' : 'hsl(220, 12%, 55%)',
+                    }}
+                  >
+                    <ArrowUpDown className="w-3 h-3" /> Score {sortField === 'composite_score' ? (sortAsc ? '↑' : '↓') : ''}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (sortField === 'created_at') setSortAsc(!sortAsc);
+                      else { setSortField('created_at'); setSortAsc(false); }
+                    }}
+                    className="text-[10px] font-mono px-2 py-1 rounded border flex items-center gap-1"
+                    style={{
+                      borderColor: sortField === 'created_at' ? 'hsla(43, 96%, 56%, 0.3)' : 'hsla(220, 12%, 70%, 0.15)',
+                      color: sortField === 'created_at' ? 'hsl(43, 96%, 56%)' : 'hsl(220, 12%, 55%)',
+                    }}
+                  >
+                    <ArrowUpDown className="w-3 h-3" /> Date {sortField === 'created_at' ? (sortAsc ? '↑' : '↓') : ''}
+                  </button>
+                  <span className="text-[10px] font-mono text-muted-foreground/50 ml-auto">
+                    {filtered.length}/{pendingEvidence.length} shown
+                  </span>
+                </div>
+              )}
+
+              {/* Batch controls */}
+              {filtered.length > 0 && (
                 <div className="flex items-center justify-between px-2 py-2">
                   <div className="flex items-center gap-3">
                     <button
@@ -379,15 +457,19 @@ export default function AdminAnalyticsPage() {
                 </div>
               )}
 
-              {pendingEvidence.length === 0 ? (
+              {filtered.length === 0 ? (
                 <div className="rounded-xl p-8 text-center" style={glassPanel}>
                   <Search className="w-8 h-8 mx-auto mb-3" style={{ color: 'hsl(220, 12%, 40%)' }} />
-                  <p className="text-sm text-muted-foreground font-mono">No pending evidence to review</p>
-                  <p className="text-xs text-muted-foreground/60 font-mono mt-1">Run the Evidence Scout to scan for new findings</p>
+                  <p className="text-sm text-muted-foreground font-mono">
+                    {pendingEvidence.length === 0 ? 'No pending evidence to review' : 'No items match current filters'}
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 font-mono mt-1">
+                    {pendingEvidence.length === 0 ? 'Run the Evidence Scout to scan for new findings' : 'Try adjusting your filter criteria'}
+                  </p>
                 </div>
               ) : (
                 <AnimatePresence>
-                  {pendingEvidence.map((pe, i) => (
+                  {filtered.map((pe, i) => (
                     <motion.div
                       key={pe.id}
                       className="rounded-xl p-4 relative overflow-hidden cursor-pointer"
@@ -507,7 +589,8 @@ export default function AdminAnalyticsPage() {
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* ─── LOGS TAB ─── */}
           {activeTab === 'logs' && (
