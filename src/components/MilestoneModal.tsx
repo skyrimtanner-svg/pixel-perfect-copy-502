@@ -520,6 +520,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             </AnimatePresence>
           </TabsContent>
 
+          <TabsContent value="socratic">
+            <SocraticLensTab milestoneId={milestone.id} />
+          </TabsContent>
+
           <TabsContent value="evidence" className="space-y-3">
             {(liveData?.evidence ?? milestone.evidence).length === 0 ? (
               <p className="text-sm text-muted-foreground">Historical milestone — no tracked evidence.</p>
