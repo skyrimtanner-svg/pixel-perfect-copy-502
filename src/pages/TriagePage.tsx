@@ -1,14 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { BetaWelcomeBanner } from '@/components/BetaWelcomeBanner';
 import { Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
-
+import { FreshSignalsBanner } from '@/components/FreshSignalsBanner';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
 import { useEntitlement } from '@/hooks/useEntitlement';
 import { useMilestones } from '@/hooks/useMilestones';
+import { useRealtimeEvidence } from '@/hooks/useRealtimeEvidence';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import type { Milestone } from '@/data/milestones';
 import { ChevronDown, FileText, Filter, Loader2 } from 'lucide-react';
@@ -53,6 +54,18 @@ export default function TriagePage() {
   const [memoSearch, setMemoSearch] = useState('');
   const [memoHighlight, setMemoHighlight] = useState(-1);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const milestoneIds = useMemo(() => milestones.map(m => m.id), [milestones]);
+  const { pulses, scoutSignal } = useRealtimeEvidence(milestoneIds);
+
+  const scrollToFirstAffected = useCallback(() => {
+    if (!listRef.current) return;
+    const firstPulseId = [...pulses.keys()][0];
+    if (!firstPulseId) return;
+    const el = listRef.current.querySelector(`[data-milestone-id="${firstPulseId}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [pulses]);
 
   const filtered = useMemo(() => {
     const list = selectedDomain === 'all' ? milestones : milestones.filter(m => m.domain === selectedDomain);
@@ -280,16 +293,21 @@ export default function TriagePage() {
 
       {/* Milestone list */}
       <LayoutGroup>
-        <div className={isWonder ? 'space-y-3' : 'space-y-px'}>
+        <div ref={listRef} className={isWonder ? 'space-y-3' : 'space-y-px'}>
           <AnimatePresence mode="popLayout">
-            {visible.map((m, i) => (
-              <TriageCard
-                key={m.id}
-                milestone={m}
-                index={i}
-                onClick={() => setSelectedMilestone(m)}
-              />
-            ))}
+            {visible.map((m, i) => {
+              const p = pulses.get(m.id);
+              return (
+                <div key={m.id} data-milestone-id={m.id}>
+                  <TriageCard
+                    milestone={m}
+                    index={i}
+                    onClick={() => setSelectedMilestone(m)}
+                    pulse={p ? { deltaLogOdds: p.deltaLogOdds, composite: p.composite, direction: p.direction } : null}
+                  />
+                </div>
+              );
+            })}
           </AnimatePresence>
         </div>
       </LayoutGroup>
