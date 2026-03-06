@@ -21,6 +21,7 @@ export default function AuthPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<AuthMode>('sign-in');
   const { user, loading: authLoading } = useAuth();
