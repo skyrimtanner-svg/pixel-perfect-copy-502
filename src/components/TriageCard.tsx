@@ -1,7 +1,7 @@
 import { Milestone } from '@/data/milestones';
 import { domainColorClass } from '@/lib/domain-styles';
 import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
-import { ProbabilityRing } from '@/components/ProbabilityRing';
+import { AnimatedProbabilityRing } from '@/components/AnimatedProbabilityRing';
 import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react';
@@ -176,9 +176,11 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
                 </div>
               </div>
 
-              <ProbabilityRing
-                value={milestone.posterior}
+              <AnimatedProbabilityRing
+                currentValue={milestone.posterior}
+                previousValue={pulse?.composite !== undefined ? milestone.posterior - (pulse.deltaLogOdds * 0.1) : undefined}
                 size={64}
+                mode={isWonder ? 'wonder' : 'analyst'}
                 strokeWidth={5}
                 domainColor={domainHsl[milestone.domain]}
                 useGold={isTopItem}
@@ -302,9 +304,11 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
           </span>
         </div>
 
-        <ProbabilityRing
-          value={milestone.posterior}
+        <AnimatedProbabilityRing
+          currentValue={milestone.posterior}
+          previousValue={pulse?.composite !== undefined ? milestone.posterior - (pulse.deltaLogOdds * 0.1) : undefined}
           size={30}
+          mode={isWonder ? 'wonder' : 'analyst'}
           strokeWidth={2.5}
           domainColor={domainHsl[milestone.domain]}
           useGold={isTopItem}

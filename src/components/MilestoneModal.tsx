@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Milestone } from '@/data/milestones';
 import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
-import { ProbabilityRing } from '@/components/ProbabilityRing';
+import { AnimatedProbabilityRing } from '@/components/AnimatedProbabilityRing';
 import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
 import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
@@ -267,14 +267,15 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             >
-              <ProbabilityRing
-                value={displayPosterior}
+              <AnimatedProbabilityRing
+                currentValue={displayPosterior}
+                previousValue={livePosterior}
                 size={56}
+                mode={isWonder ? 'wonder' : 'analyst'}
                 strokeWidth={5}
                 domainColor={isNegativeShift ? 'hsl(0, 72%, 55%)' : domainHsl[milestone.domain]}
                 useGold={!isNegativeShift}
                 isNegativeShift={isNegativeShift}
-                previousValue={livePosterior}
               />
             </motion.div>
           </DialogTitle>
