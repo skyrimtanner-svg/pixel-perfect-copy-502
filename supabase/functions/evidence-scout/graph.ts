@@ -317,9 +317,16 @@ const searchNode: NodeFn = async (state) => {
   const { data: existingEvidence } = await state.supabase.from("evidence").select("source");
   const existingSources = new Set((existingEvidence || []).map((e: any) => e.source));
 
-  const unique = articles.filter(a =>
-    a.link && a.link.length > 5 && !existingUrls.has(a.link) && !existingSources.has(a.link)
-  ).slice(0, 60);
+  // In-run dedup: prevent the same URL from being classified twice within one scout run
+  const seenInRun = new Set<string>();
+  const unique = articles.filter(a => {
+    if (!a.link || a.link.length <= 5) return false;
+    if (existingUrls.has(a.link) || existingSources.has(a.link)) return false;
+    const normalizedUrl = a.link.toLowerCase().replace(/\/+$/, '').replace(/^https?:\/\//, '');
+    if (seenInRun.has(normalizedUrl)) return false;
+    seenInRun.add(normalizedUrl);
+    return true;
+  }).slice(0, 60);
 
   return {
     ...state,

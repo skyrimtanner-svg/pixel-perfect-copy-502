@@ -127,8 +127,10 @@ export function useRealtimeEvidence(milestoneIds: string[]) {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [idSet]);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      supabase.removeChannel(channel);
+    };
 
   return { pulses, scoutSignal, refreshToken };
 }
