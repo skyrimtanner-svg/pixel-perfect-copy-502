@@ -15,8 +15,8 @@ export default function AppLayout() {
   const navigate = useNavigate();
   
   // Parallax transforms — background layers move slower than content
-  const nebula1Y = useTransform(scrollY, [0, 1000], [0, -60]);
-  const nebula2Y = useTransform(scrollY, [0, 1000], [0, -30]);
+  const _nebula1Y = useTransform(scrollY, [0, 1000], [0, -60]);
+  const _nebula2Y = useTransform(scrollY, [0, 1000], [0, -30]);
   const starsY = useTransform(scrollY, [0, 1000], [0, -15]);
   const constellation1Y = useTransform(scrollY, [0, 1000], [0, -45]);
   const constellation2Y = useTransform(scrollY, [0, 1000], [0, -20]);

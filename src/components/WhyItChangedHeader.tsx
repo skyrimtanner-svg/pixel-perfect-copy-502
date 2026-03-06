@@ -36,7 +36,7 @@ function computeEvidenceBalance(evidence: EvidenceItem[]): { label: string; colo
 }
 
 export function WhyItChangedHeader({
-  posterior, prior, snapshotHash, snapshotTimestamp, evidence, domainColor, isNegativeShift, previousValue,
+  posterior, prior: _prior, snapshotHash, snapshotTimestamp, evidence, domainColor, isNegativeShift, previousValue,
 }: WhyItChangedHeaderProps) {
   const balance = computeEvidenceBalance(evidence);
   const [copied, setCopied] = useState(false);
