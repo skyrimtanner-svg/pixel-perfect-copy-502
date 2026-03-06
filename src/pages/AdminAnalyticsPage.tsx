@@ -47,10 +47,7 @@ export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [pendingEvidence, setPendingEvidence] = useState<PendingEvidence[]>([]);
   const [_scoutLogs, setScoutLogs] = useState<ScoutLog[]>([]);
-  const [, setProcessingIds] = useState<Set<string>>(new Set());
-  const [, setSelectedIds] = useState<Set<string>>(new Set());
   const [scoutRunning, setScoutRunning] = useState(false);
-  const [, setBatchProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
   const [_evidenceInflow, setEvidenceInflow] = useState<{ date: string; supports: number; contradicts: number; ambiguous: number; total: number; sources: Record<string, number> }[]>([]);
   const [_sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);

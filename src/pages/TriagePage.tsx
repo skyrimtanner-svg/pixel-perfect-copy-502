@@ -59,14 +59,7 @@ export default function TriagePage() {
   const milestoneIds = useMemo(() => milestones.map(m => m.id), [milestones]);
   const { pulses } = useRealtimeEvidence(milestoneIds);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const scrollToFirstAffected = useCallback(() => {
-    if (!listRef.current) return;
-    const firstPulseId = [...pulses.keys()][0];
-    if (!firstPulseId) return;
-    const el = listRef.current.querySelector(`[data-milestone-id="${firstPulseId}"]`);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [pulses]);
+  // scrollToFirstAffected reserved for FreshSignalsBanner integration
 
   const filtered = useMemo(() => {
     const list = selectedDomain === 'all' ? milestones : milestones.filter(m => m.domain === selectedDomain);
