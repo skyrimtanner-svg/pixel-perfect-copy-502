@@ -20,7 +20,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { domainColorClass as _domainColorClass } from '@/lib/domain-styles';
+// domainColorClass reserved for future domain-colored elements
 
 const domains: (Domain | 'all')[] = ['all', 'compute', 'energy', 'connectivity', 'manufacturing', 'biology'];
 
