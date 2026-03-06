@@ -493,6 +493,57 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── 5. SLACK NOTIFICATION FOR HIGH-COMPOSITE EVIDENCE ───
+    const SLACK_API_KEY = Deno.env.get("SLACK_API_KEY");
+    const LOVABLE_API_KEY_GATEWAY = Deno.env.get("LOVABLE_API_KEY");
+    const highCompositeItems = [];
+
+    // Re-query pending evidence from this run with composite >= 0.5
+    const { data: highItems } = await supabase
+      .from("pending_evidence")
+      .select("milestone_id, source, direction, composite_score, summary, source_url")
+      .eq("scout_run_id", runId)
+      .gte("composite_score", 0.5)
+      .order("composite_score", { ascending: false })
+      .limit(10);
+
+    if (highItems && highItems.length > 0 && SLACK_API_KEY && LOVABLE_API_KEY_GATEWAY) {
+      const GATEWAY_URL = "https://connector-gateway.lovable.dev/slack/api";
+      const lines = highItems.map((item: any) =>
+        `• *${item.milestone_id}* — ${item.direction} (${item.composite_score.toFixed(3)}) — ${item.summary || item.source}${item.source_url ? ` <${item.source_url}|↗>` : ""}`
+      );
+
+      const slackMessage = `🔬 *Evidence Scout — ${highItems.length} high-signal finding${highItems.length > 1 ? "s" : ""}*\n\n${lines.join("\n")}\n\n_Run ID: ${runId.slice(0, 8)} · ${new Date().toISOString().split("T")[0]}_`;
+
+      try {
+        const slackResp = await fetch(`${GATEWAY_URL}/chat.postMessage`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY_GATEWAY}`,
+            "X-Connection-Api-Key": SLACK_API_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            channel: "#evidence-scout",
+            text: slackMessage,
+            username: "ÆETH Evidence Scout",
+            icon_emoji: ":telescope:",
+          }),
+        });
+
+        const slackData = await slackResp.json();
+        if (!slackResp.ok || !slackData.ok) {
+          await log("slack_error", { status: slackResp.status, error: slackData.error || "unknown" });
+        } else {
+          await log("slack_notified", { channel: "#evidence-scout", items: highItems.length });
+        }
+      } catch (slackErr) {
+        await log("slack_error", { error: String(slackErr).slice(0, 200) });
+      }
+    } else if (highItems && highItems.length > 0) {
+      await log("slack_skipped", { reason: !SLACK_API_KEY ? "No SLACK_API_KEY" : "No LOVABLE_API_KEY", high_items: highItems.length });
+    }
+
     const summary = {
       run_id: runId,
       articles_fetched: allArticles.length,
@@ -501,6 +552,8 @@ Deno.serve(async (req) => {
       ai_failures: aiCallsFailed,
       evidence_queued: pendingInserted,
       auto_committed: autoCommitted,
+      slack_notified: (highItems?.length || 0) > 0 && !!SLACK_API_KEY,
+      high_composite_count: highItems?.length || 0,
       sources: sourceSummary,
     };
 
