@@ -82,7 +82,7 @@ function MicroBadge({ icon, label, value, color = 'hsl(220, 14%, 70%)' }: { icon
 
 export function InteractiveWaterfall({
   prior, contributions, evidence, milestoneId, tier = 'active',
-  onWhatIf, whatIfResult, whatIfLoading, ledgerHash: externalHash,
+  onWhatIf, whatIfResult, whatIfLoading: _whatIfLoading, ledgerHash: externalHash,
   onNegativeShift, onEvidenceClick
 }: InteractiveWaterfallProps) {
   const { isWonder } = useMode();
