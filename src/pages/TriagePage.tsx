@@ -3,7 +3,7 @@ import { BetaWelcomeBanner } from '@/components/BetaWelcomeBanner';
 import { Domain, domainLabels } from '@/data/milestones';
 import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
-import { FreshSignalsBanner } from '@/components/FreshSignalsBanner';
+import { FreshSignalsBanner as _FreshSignalsBanner } from '@/components/FreshSignalsBanner';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
