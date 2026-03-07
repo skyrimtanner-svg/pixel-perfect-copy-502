@@ -74,7 +74,9 @@ export const milestones: Milestone[] = [
     tier: 'historical',
     status: 'accomplished',
     magnitude: 9,
-    prior: 0.5, posterior: 1.0, delta_log_odds: Infinity,
+    // Historical milestones use a large finite log-odds value instead of Infinity
+    // to avoid JSON serialization issues and NaN propagation in calculations.
+    prior: 0.5, posterior: 1.0, delta_log_odds: 18.42,
     evidence: [],
     success_criteria: 'Movable type press enabling mass book production',
     falsification: 'N/A — historical',
@@ -91,7 +93,8 @@ export const milestones: Milestone[] = [
     tier: 'historical',
     status: 'accomplished',
     magnitude: 9,
-    prior: 0.5, posterior: 1.0, delta_log_odds: Infinity,
+    // logOdds(0.9999) ≈ 9.21; doubled for "certain" historical events
+    prior: 0.5, posterior: 1.0, delta_log_odds: 18.42,
     evidence: [],
     success_criteria: 'Practical steam-driven mechanical power',
     falsification: 'N/A — historical',
@@ -108,7 +111,7 @@ export const milestones: Milestone[] = [
     tier: 'historical',
     status: 'accomplished',
     magnitude: 10,
-    prior: 0.5, posterior: 1.0, delta_log_odds: Infinity,
+    prior: 0.5, posterior: 1.0, delta_log_odds: 18.42,
     evidence: [],
     success_criteria: 'Solid-state amplification and switching',
     falsification: 'N/A — historical',
