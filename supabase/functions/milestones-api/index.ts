@@ -455,8 +455,13 @@ Deno.serve(async (req) => {
       action = afterFn.length >= 2 ? afterFn[1] : null;
     }
 
-    // ─── POST /milestones-api/recalculate-all ───
+    // ─── POST /milestones-api/recalculate-all ─── (admin only)
     if (milestoneId === "recalculate-all" && req.method === "POST") {
+      if (!callerIsAdmin) {
+        return new Response(JSON.stringify({ error: "Admin access required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { data: allMilestones } = await supabase.from("milestones").select("*").neq("tier", "historical");
       if (!allMilestones || allMilestones.length === 0) {
         return new Response(JSON.stringify({ error: "No milestones found" }), {
