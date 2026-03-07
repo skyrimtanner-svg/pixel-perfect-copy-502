@@ -43,8 +43,8 @@ It is built to feel like a $15k/year Bloomberg Terminal for the future — preci
 ### Installation
 
 ```bash
-# Clone the repo
-git clone <your-github-repo-url>
+# Clone the repo (replace with your actual repository URL)
+git clone https://github.com/<your-org>/aeth-observatory.git
 cd aeth-observatory
 
 # Copy environment template and fill in your values
@@ -61,11 +61,12 @@ npm run dev
 
 ### Environment Variables
 
-Create a `.env` file in the root:
+Copy `.env.example` to `.env` and fill in your values:
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_key
+VITE_SUPABASE_PROJECT_ID=your-project-id
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
 ```
 
 ## 📦 Deployment
