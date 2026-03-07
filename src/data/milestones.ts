@@ -74,7 +74,9 @@ export const milestones: Milestone[] = [
     tier: 'historical',
     status: 'accomplished',
     magnitude: 9,
-    prior: 0.5, posterior: 1.0, delta_log_odds: Infinity,
+    // Historical milestones use a large finite log-odds value instead of Infinity
+    // to avoid JSON serialization issues and NaN propagation in calculations.
+    prior: 0.5, posterior: 1.0, delta_log_odds: 18.42,
     evidence: [],
     success_criteria: 'Movable type press enabling mass book production',
     falsification: 'N/A — historical',
