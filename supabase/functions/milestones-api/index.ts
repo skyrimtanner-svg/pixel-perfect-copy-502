@@ -390,9 +390,51 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ─── AUTH: Verify caller identity ───
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const isServiceRole = token === serviceRoleKey;
+
+  let callerId: string | null = null;
+  let callerIsAdmin = false;
+
+  if (isServiceRole) {
+    // Service-role calls (from approve-evidence, evidence-scout) are trusted
+    callerIsAdmin = true;
+    callerId = "service-role";
+  } else {
+    // Validate user JWT
+    const supabaseAnon = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: claimsData, error: claimsErr } = await supabaseAnon.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    callerId = claimsData.claims.sub as string;
+
+    // Check admin role for mutation routes
+    const adminCheck = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+    const { data: roleData } = await adminCheck
+      .from("user_roles").select("role")
+      .eq("user_id", callerId).eq("role", "admin").maybeSingle();
+    callerIsAdmin = !!roleData;
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    serviceRoleKey,
   );
 
   try {
@@ -413,8 +455,13 @@ Deno.serve(async (req) => {
       action = afterFn.length >= 2 ? afterFn[1] : null;
     }
 
-    // ─── POST /milestones-api/recalculate-all ───
+    // ─── POST /milestones-api/recalculate-all ─── (admin only)
     if (milestoneId === "recalculate-all" && req.method === "POST") {
+      if (!callerIsAdmin) {
+        return new Response(JSON.stringify({ error: "Admin access required" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { data: allMilestones } = await supabase.from("milestones").select("*").neq("tier", "historical");
       if (!allMilestones || allMilestones.length === 0) {
         return new Response(JSON.stringify({ error: "No milestones found" }), {
@@ -577,8 +624,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ─── POST /milestones/{id}/evidence ───
+    // ─── POST /milestones/{id}/evidence ─── (admin or service-role only)
     if (req.method === "POST" && action === "evidence") {
+      if (!callerIsAdmin) {
+        return new Response(JSON.stringify({ error: "Admin access required to submit evidence" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const body = await req.json();
       const { direction, credibility, recency, consensus, criteria_match, source, type, date, summary, raw_sources } = body;
 

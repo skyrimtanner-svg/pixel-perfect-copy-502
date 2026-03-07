@@ -43,8 +43,12 @@ It is built to feel like a $15k/year Bloomberg Terminal for the future — preci
 ### Installation
 
 ```bash
-# Clone the repo (replace with your actual repo URL)
-git clone <your-repo-url>
+# Clone the repo
+git clone <your-github-repo-url>
+cd aeth-observatory
+
+# Copy environment template and fill in your values
+cp .env.example .env
 
 # Install dependencies
 npm install
@@ -52,6 +56,8 @@ npm install
 # Start development server
 npm run dev
 ```
+
+> **Note:** Never commit `.env` to version control. The `.env.example` file contains the template.
 
 ### Environment Variables
 

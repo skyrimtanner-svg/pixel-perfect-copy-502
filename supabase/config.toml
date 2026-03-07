@@ -1,1 +1,16 @@
 project_id = "hnsawpxoxjuolhtnnvte"
+
+[functions.milestones-api]
+verify_jwt = false
+
+[functions.evidence-scout]
+verify_jwt = false
+
+[functions.socratic-ai]
+verify_jwt = false
+
+[functions.weekly-digest]
+verify_jwt = false
+
+[functions.approve-evidence]
+verify_jwt = false
