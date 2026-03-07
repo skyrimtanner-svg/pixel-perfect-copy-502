@@ -111,7 +111,7 @@ export const milestones: Milestone[] = [
     tier: 'historical',
     status: 'accomplished',
     magnitude: 10,
-    prior: 0.5, posterior: 1.0, delta_log_odds: Infinity,
+    prior: 0.5, posterior: 1.0, delta_log_odds: 18.42,
     evidence: [],
     success_criteria: 'Solid-state amplification and switching',
     falsification: 'N/A — historical',
