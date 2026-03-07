@@ -43,8 +43,8 @@ It is built to feel like a $15k/year Bloomberg Terminal for the future — preci
 ### Installation
 
 ```bash
-# Clone the repo (replace with your actual repository URL)
-git clone https://github.com/<your-org>/aeth-observatory.git
+# Clone the repo
+git clone https://github.com/GPT-AOTH/aeth-observatory.git
 cd aeth-observatory
 
 # Copy environment template and fill in your values
@@ -57,17 +57,19 @@ npm install
 npm run dev
 ```
 
-> **Note:** Never commit `.env` to version control. The `.env.example` file contains the template.
+> **⚠️ Important:** Never commit `.env` to version control. Only `.env.example` (with placeholder values) should be tracked. If `.env` is already tracked, run `git rm --cached .env` to untrack it.
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and fill in your values:
+Copy `.env.example` to `.env` and fill in your values. The template contains:
 
 ```env
 VITE_SUPABASE_PROJECT_ID=your-project-id
 VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 ```
+
+All three variables are required for the app to connect to the backend.
 
 ## 📦 Deployment
 
