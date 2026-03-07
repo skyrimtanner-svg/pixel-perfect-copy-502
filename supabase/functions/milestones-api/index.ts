@@ -390,9 +390,51 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ─── AUTH: Verify caller identity ───
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const isServiceRole = token === serviceRoleKey;
+
+  let callerId: string | null = null;
+  let callerIsAdmin = false;
+
+  if (isServiceRole) {
+    // Service-role calls (from approve-evidence, evidence-scout) are trusted
+    callerIsAdmin = true;
+    callerId = "service-role";
+  } else {
+    // Validate user JWT
+    const supabaseAnon = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: claimsData, error: claimsErr } = await supabaseAnon.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    callerId = claimsData.claims.sub as string;
+
+    // Check admin role for mutation routes
+    const adminCheck = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+    const { data: roleData } = await adminCheck
+      .from("user_roles").select("role")
+      .eq("user_id", callerId).eq("role", "admin").maybeSingle();
+    callerIsAdmin = !!roleData;
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    serviceRoleKey,
   );
 
   try {
