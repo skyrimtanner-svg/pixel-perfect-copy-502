@@ -90,6 +90,17 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const sb = createClient(supabaseUrl, supabaseKey);
 
+    // Insert user comment first (attributed to the authenticated caller)
+    const { error: userInsertError } = await sb.from("socratic_comments").insert({
+      topic_id: topicId,
+      milestone_id: milestoneId,
+      user_id: userId,
+      content: userComment,
+      is_ai: false,
+    });
+    if (userInsertError) console.error("Failed to insert user comment:", userInsertError);
+
+    // Insert AI reply (no user attribution — it's the AI persona)
     const { error: insertError } = await sb.from("socratic_comments").insert({
       topic_id: topicId,
       milestone_id: milestoneId,
