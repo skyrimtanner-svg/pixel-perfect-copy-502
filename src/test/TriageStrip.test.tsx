@@ -34,11 +34,12 @@ function makeMilestone(overrides: Partial<Milestone> = {}): Milestone {
     delta_log_odds: 0.5,
     archetype: 'breakthrough',
     triageScore: 55,
-    dependencies: null,
-    success_criteria: null,
-    falsification: null,
+    dependencies: [],
+    success_criteria: '',
+    falsification: '',
+    evidence: [],
     ...overrides,
-  };
+  } as Milestone;
 }
 
 describe('TriageStrip', () => {

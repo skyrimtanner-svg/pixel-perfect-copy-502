@@ -37,7 +37,7 @@ function makeMilestone(overrides: Partial<Milestone> = {}): Milestone {
     description: 'Human-level AI',
     domain: 'compute',
     tier: 'active',
-    status: 'in_progress',
+    status: 'projected',
     year: 2030,
     magnitude: 10,
     prior: 0.15,
@@ -45,11 +45,12 @@ function makeMilestone(overrides: Partial<Milestone> = {}): Milestone {
     delta_log_odds: 0.65,
     archetype: 'breakthrough',
     triageScore: 82,
-    dependencies: null,
-    success_criteria: null,
-    falsification: null,
+    dependencies: [],
+    success_criteria: '',
+    falsification: '',
+    evidence: [],
     ...overrides,
-  };
+  } as Milestone;
 }
 
 describe('TriageCard', () => {
