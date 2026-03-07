@@ -1,20 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-// ═══════════════════════════════════════════════════════════════
-// Triage Score computation — mirrors useMilestones.ts logic
-// ═══════════════════════════════════════════════════════════════
-
-function computeTriageScore(m: { posterior: number; delta_log_odds: number; magnitude: number; year: number; tier: string }): number {
-  const now = new Date().getFullYear();
-  const yearsOut = Math.max(0.5, m.year - now);
-  const proximity = Math.max(0.1, 1 / Math.sqrt(yearsOut));
-  const uncertainty = 1 - Math.abs(m.posterior - 0.5) * 2;
-  const urgency = Math.min(3, Math.abs(m.delta_log_odds)) * 0.6 + uncertainty * 0.4;
-  const tierMul = m.tier === 'active' ? 1.3 : m.tier === 'plausible' ? 1.0 : m.tier === 'speculative' ? 0.7 : 0.2;
-  if (m.tier === 'historical') return Math.round(m.magnitude);
-  const raw = urgency * proximity * (m.magnitude / 10) * tierMul * 100;
-  return Math.round(Math.min(99, Math.max(1, raw)));
-}
+import { computeTriageScore } from '@/lib/triage-score';
 
 describe('Triage Score Computation', () => {
   it('historical milestones return magnitude directly', () => {
@@ -23,12 +8,10 @@ describe('Triage Score Computation', () => {
   });
 
   it('scores are bounded between 1 and 99', () => {
-    // Extreme high case
     const high = computeTriageScore({ posterior: 0.5, delta_log_odds: 5, magnitude: 10, year: new Date().getFullYear() + 1, tier: 'active' });
     expect(high).toBeLessThanOrEqual(99);
     expect(high).toBeGreaterThanOrEqual(1);
 
-    // Extreme low case
     const low = computeTriageScore({ posterior: 0.01, delta_log_odds: 0, magnitude: 1, year: new Date().getFullYear() + 50, tier: 'speculative' });
     expect(low).toBeLessThanOrEqual(99);
     expect(low).toBeGreaterThanOrEqual(1);

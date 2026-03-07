@@ -43,8 +43,8 @@ It is built to feel like a $15k/year Bloomberg Terminal for the future — preci
 ### Installation
 
 ```bash
-# Clone the repo
-git clone https://github.com/your-org/aeth-observatory.git
+# Clone the repo (replace with your actual repo URL)
+git clone <your-repo-url>
 
 # Install dependencies
 npm install
