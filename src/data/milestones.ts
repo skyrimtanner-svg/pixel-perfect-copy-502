@@ -49,6 +49,15 @@ export const archetypeConfig: Record<Archetype, { label: string; icon: string; c
   anchor: { label: 'Anchor', icon: '⚓', color: 'text-chrome' },
 };
 
+/**
+ * Finite sentinel for historical milestone log-odds.
+ * Equals 2 × logOdds(0.9999) ≈ 2 × 9.21 = 18.42.
+ * Used instead of Infinity to prevent JSON serialization errors,
+ * NaN propagation, and chart rendering issues while representing
+ * a practically certain (p ≈ 1.0) belief.
+ */
+export const HISTORICAL_LOG_ODDS = 18.42;
+
 export const credibilityMap: Record<SourceType, number> = {
   peer_reviewed: 0.95, government_data: 0.90, benchmark: 0.88,
   industry_data: 0.85, expert_analysis: 0.80, news: 0.65,
