@@ -624,8 +624,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ─── POST /milestones/{id}/evidence ───
+    // ─── POST /milestones/{id}/evidence ─── (admin or service-role only)
     if (req.method === "POST" && action === "evidence") {
+      if (!callerIsAdmin) {
+        return new Response(JSON.stringify({ error: "Admin access required to submit evidence" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const body = await req.json();
       const { direction, credibility, recency, consensus, criteria_match, source, type, date, summary, raw_sources } = body;
 
