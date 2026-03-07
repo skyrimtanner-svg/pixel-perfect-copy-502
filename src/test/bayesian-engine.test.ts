@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   logOdds,
   fromLogOdds,
-  computeContributions,
   runUpdate,
   type EvidenceInput,
 } from '@/lib/bayesian';
