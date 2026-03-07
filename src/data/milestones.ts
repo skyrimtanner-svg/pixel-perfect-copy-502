@@ -100,8 +100,7 @@ export const milestones: Milestone[] = [
     tier: 'historical',
     status: 'accomplished',
     magnitude: 9,
-    // logOdds(0.9999) ≈ 9.21; doubled for "certain" historical events
-    prior: 0.5, posterior: 1.0, delta_log_odds: 18.42,
+    prior: 0.5, posterior: 1.0, delta_log_odds: HISTORICAL_LOG_ODDS,
     evidence: [],
     success_criteria: 'Practical steam-driven mechanical power',
     falsification: 'N/A — historical',
