@@ -64,6 +64,21 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
   const rafRef = useRef<number>(0);
   const delta = milestone.posterior - milestone.prior;
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      cardRef.current.style.setProperty('--specular-x', `${e.clientX - rect.left}px`);
+      cardRef.current.style.setProperty('--specular-y', `${e.clientY - rect.top}px`);
+      cardRef.current.style.setProperty('--specular-opacity', '1');
+    });
+  };
+  const handleMouseLeave = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    cardRef.current?.style.setProperty('--specular-opacity', '0');
+  };
+
   const pulseIntensity = pulse ? Math.min(1, (Math.abs(pulse.deltaLogOdds) * 0.5 + pulse.composite * 0.5)) : 0;
   const pulseColor = pulse?.direction === 'contradicts' ? '248, 113, 113' : '74, 222, 128'; 
   const pulseGlowPx = Math.min(3, pulseIntensity * 3);
