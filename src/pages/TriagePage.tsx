@@ -329,13 +329,13 @@ export default function TriagePage() {
           </button>
         </motion.div>
       )}
+      </div>{/* end observatory-lens wrapper */}
 
       <MilestoneModal
         milestone={selectedMilestone}
         open={!!selectedMilestone}
         onClose={() => setSelectedMilestone(null)}
       />
-
 
       <UpgradePrompt
         open={showUpgrade}
