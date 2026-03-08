@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 import { TraceReplayPanel } from '@/components/TraceReplayPanel';
 import { SignalMergeMap } from '@/components/SignalMergeMap';
+import { EngineTelemetry } from '@/components/EngineTelemetry';
 
 const domainColors: Record<Domain, string> = {
   compute: 'hsl(192, 100%, 52%)',
