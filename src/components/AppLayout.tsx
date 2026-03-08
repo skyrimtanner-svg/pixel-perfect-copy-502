@@ -7,12 +7,16 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useMilestones } from '@/hooks/useMilestones';
+import { useNebulaPulse } from '@/hooks/useNebulaPulse';
 
 export default function AppLayout() {
   const mainRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const { signOut, isAdmin, profile } = useAuth();
   const navigate = useNavigate();
+  const { milestones } = useMilestones();
+  const { nebulaStyle } = useNebulaPulse(milestones);
   
   // Parallax transforms — background layers move slower than content
   // Reserved for future parallax layers
@@ -27,7 +31,7 @@ export default function AppLayout() {
       
       {/* ═══ PARALLAX NEBULA LAYERS ═══ */}
       {/* Layer 0: Static base nebula */}
-      <div className="fixed inset-0 z-0 nebula-bg" />
+      <div className="fixed inset-0 z-0 nebula-bg" style={nebulaStyle} />
       
       {/* Layer 1: Slow parallax starfield */}
       <motion.div 
