@@ -715,7 +715,8 @@
   }
 
   .shine-sweep::after,
-  .chrome-sweep::after {
+  .chrome-sweep::after,
+  .scan-line-header::after {
     display: none;
   }
 
