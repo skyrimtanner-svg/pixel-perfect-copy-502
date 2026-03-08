@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { NavItem } from '@/components/NavItem';
 import { ModeToggle } from '@/components/ModeToggle';
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
-import { Target, LineChart, BarChart3, Eye, LogOut, Shield } from 'lucide-react';
+import { Target, LineChart, BarChart3, Eye, LogOut, Shield, GraduationCap } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
