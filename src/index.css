@@ -559,6 +559,24 @@
   }
 }
 
+/* ═══════════ OBSERVATORY LENS — DEPTH-OF-FIELD ═══════════ */
+/* Applied to triage content when a milestone modal is focused */
+.observatory-lens-blur {
+  filter: blur(4px) brightness(0.88) saturate(0.7);
+  opacity: 0.55;
+  transition: filter 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+              opacity 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+  will-change: filter, opacity;
+}
+
+.observatory-lens-clear {
+  filter: none;
+  opacity: 1;
+  transition: filter 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+              opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
 /* ═══════════ 3D PERSPECTIVE ═══════════ */
 .perspective-1000 {
   perspective: 1000px;
@@ -718,6 +736,12 @@
   .chrome-sweep::after,
   .scan-line-header::after {
     display: none;
+  }
+
+  .observatory-lens-blur {
+    filter: none !important;
+    opacity: 1 !important;
+    transition: none !important;
   }
 
   /* Keep glass effects but remove blur for performance */
