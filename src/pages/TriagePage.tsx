@@ -6,6 +6,7 @@ import { MilestoneModal } from '@/components/MilestoneModal';
 // FreshSignalsBanner reserved for future scout integration
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { HorizonLab } from '@/components/HorizonLab';
+import { ScoutDirectivesPanel } from '@/components/ScoutDirectivesPanel';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
 import { useEntitlement } from '@/hooks/useEntitlement';
@@ -102,6 +103,9 @@ export default function TriagePage() {
 
       {/* Horizon Lab — shadow Bayesian evaluations */}
       <HorizonLab />
+
+      {/* Scout Directives — meta-programming config */}
+      <ScoutDirectivesPanel />
 
       {/* Triage Strip */}
       <TriageStrip milestones={milestones} />
