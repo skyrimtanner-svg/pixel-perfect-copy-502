@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, FlaskConical, Loader2 } from 'lucide-react';
+import { ChevronDown, FlaskConical, Loader2, Settings2 } from 'lucide-react';
 import { usePendingEvidence } from '@/hooks/usePendingEvidence';
 import { useAutoAccept } from '@/hooks/useAutoAccept';
 import { useMode } from '@/contexts/ModeContext';
+import { useDirectivesActive } from '@/hooks/useDirectivesActive';
 import { HorizonCard } from '@/components/horizon-lab/HorizonCard';
 
 const goldGradientStyle = {
