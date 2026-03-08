@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
-import { ChevronDown, ChevronRight, Activity, Clock, Zap, Database, GitBranch, Gauge } from 'lucide-react';
+import { ChevronDown, Activity, Clock, Zap, Database, GitBranch, Gauge } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface ScoutLogEntry {
