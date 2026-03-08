@@ -5,7 +5,7 @@ import { AnimatedProbabilityRing } from '@/components/AnimatedProbabilityRing';
 import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { glassPanelGold, glassPanel, glassPanelChrome, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
 const domainHsl: Record<string, string> = {
