@@ -112,7 +112,10 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
           <motion.div
-            className="w-full rounded-2xl p-5 relative overflow-hidden shine-sweep"
+            ref={cardRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="w-full rounded-2xl p-5 relative overflow-hidden shine-sweep specular-track"
             animate={{
               rotateY: isFlipped ? 3 : 0,
               rotateX: isFlipped ? -2 : 0,
