@@ -263,6 +263,12 @@ export default function TracesPage() {
           ))}
         </div>
       </motion.div>
+
+      {/* Trace Replay — step-by-step Bayesian computation */}
+      <TraceReplayPanel />
+
+      {/* Signal Merge Map — compound evidence visualization */}
+      <SignalMergeMap />
     </motion.div>
   );
 }
