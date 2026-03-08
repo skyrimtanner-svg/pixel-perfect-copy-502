@@ -222,7 +222,18 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
-        className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 relative"
+        className="max-w-3xl max-h-[85vh] overflow-y-auto p-0 relative specular-track"
+        onMouseMove={(e) => {
+          const el = e.currentTarget;
+          const rect = el.getBoundingClientRect();
+          el.style.setProperty('--specular-x', `${e.clientX - rect.left}px`);
+          el.style.setProperty('--specular-y', `${e.clientY - rect.top}px`);
+          el.style.setProperty('--specular-opacity', '1');
+          el.style.setProperty('--specular-radius', '350px');
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.setProperty('--specular-opacity', '0');
+        }}
         style={{
           ...glassPanelStrong,
           border: `1px solid ${isNegativeShift ? 'hsla(0, 72%, 55%, 0.3)' : 'hsla(220, 10%, 72%, 0.2)'}`,
