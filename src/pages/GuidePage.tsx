@@ -261,7 +261,7 @@ export default function GuidePage() {
 
             <div className="relative z-10 flex items-center gap-5">
               <div className="flex flex-col items-center gap-1">
-                <ProbabilityRing posterior={prior} size={52} />
+                <ProbabilityRing value={prior} size={52} />
                 <span className="text-[9px] font-mono text-muted-foreground">Prior</span>
               </div>
               <div className="flex-1 flex flex-col items-center gap-0.5">
