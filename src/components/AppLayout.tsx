@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { NavItem } from '@/components/NavItem';
 import { ModeToggle } from '@/components/ModeToggle';
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
-import { Target, LineChart, BarChart3, Eye, LogOut, Shield } from 'lucide-react';
+import { Target, LineChart, BarChart3, Eye, LogOut, Shield, GraduationCap } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -183,6 +183,7 @@ export default function AppLayout() {
             <NavItem to="/" icon={<Target className="w-4 h-4" />}>Triage</NavItem>
             <NavItem to="/traces" icon={<LineChart className="w-4 h-4" />}>Traces</NavItem>
             <NavItem to="/calibration" icon={<BarChart3 className="w-4 h-4" />}>Calibration</NavItem>
+            <NavItem to="/guide" icon={<GraduationCap className="w-4 h-4" />}>Guide</NavItem>
           </motion.nav>
 
           {/* ── Right controls ── */}
