@@ -645,6 +645,11 @@
     scroll-behavior: auto !important;
   }
 
+  .nebula-bg {
+    --nebula-pulse-scale: 0 !important;
+    --nebula-pulse-speed: 1 !important;
+  }
+
   .nebula-bg::before,
   .nebula-bg::after {
     animation: none !important;
