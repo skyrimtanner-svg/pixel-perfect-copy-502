@@ -104,6 +104,9 @@ export default function TriagePage() {
       {/* Horizon Lab — shadow Bayesian evaluations */}
       <HorizonLab />
 
+      {/* Scout Directives — meta-programming config */}
+      <ScoutDirectivesPanel />
+
       {/* Triage Strip */}
       <TriageStrip milestones={milestones} />
 
