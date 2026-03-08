@@ -50,7 +50,6 @@ function computeMetrics(logs: ScoutLogEntry[]): TelemetryMetrics {
     : 1;
 
   // Build timeline sparkline data (last 20 points)
-  const sorted = [...logs].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   const latencyTimeline = latencies.slice(-20).map((v, i) => ({ t: i, v }));
 
   // Throughput: items per run
