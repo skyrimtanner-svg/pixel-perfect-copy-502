@@ -65,6 +65,23 @@ export function HorizonLab() {
             {autoCount > 0 && (
               <span style={{ color: 'hsl(43, 96%, 56%)' }}> · {autoCount} auto-accepting</span>
             )}
+            {activeCount > 0 && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="inline-flex items-center gap-1 ml-1.5 px-1.5 py-0.5 rounded-full"
+                style={{
+                  background: 'hsla(268, 90%, 68%, 0.1)',
+                  border: '1px solid hsla(268, 90%, 68%, 0.25)',
+                  color: 'hsl(268, 90%, 68%)',
+                  fontSize: '9px',
+                }}
+                title={`Active directives: ${activeKeys.join(', ')}`}
+              >
+                <Settings2 size={8} />
+                {activeCount} directive{activeCount !== 1 ? 's' : ''} active
+              </motion.span>
+            )}
           </span>
         </div>
 
