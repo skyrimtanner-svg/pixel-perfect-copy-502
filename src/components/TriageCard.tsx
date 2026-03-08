@@ -60,6 +60,8 @@ const wonderDescriptions: Record<string, string> = {
 export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps) {
   const { isWonder } = useMode();
   const [isFlipped, setIsFlipped] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
   const delta = milestone.posterior - milestone.prior;
 
   const pulseIntensity = pulse ? Math.min(1, (Math.abs(pulse.deltaLogOdds) * 0.5 + pulse.composite * 0.5)) : 0;
