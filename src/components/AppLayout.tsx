@@ -7,6 +7,8 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useMilestones } from '@/hooks/useMilestones';
+import { useNebulaPulse } from '@/hooks/useNebulaPulse';
 
 export default function AppLayout() {
   const mainRef = useRef<HTMLDivElement>(null);
