@@ -183,6 +183,7 @@ export default function AppLayout() {
             <NavItem to="/" icon={<Target className="w-4 h-4" />}>Triage</NavItem>
             <NavItem to="/traces" icon={<LineChart className="w-4 h-4" />}>Traces</NavItem>
             <NavItem to="/calibration" icon={<BarChart3 className="w-4 h-4" />}>Calibration</NavItem>
+            <NavItem to="/guide" icon={<GraduationCap className="w-4 h-4" />}>Guide</NavItem>
           </motion.nav>
 
           {/* ── Right controls ── */}
