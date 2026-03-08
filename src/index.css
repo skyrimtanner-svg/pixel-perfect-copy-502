@@ -347,15 +347,31 @@
     radial-gradient(ellipse at 80% 40%, hsla(240, 50%, 10%, 0.06) 0%, transparent 45%);
 }
 
-/* ═══════════ BREATHING NEBULA LAYERS ═══════════ */
+/* ═══════════ BREATHING NEBULA LAYERS (DATA-REACTIVE) ═══════════ */
+/* --nebula-pulse-scale (0–1): controls amplitude. --nebula-pulse-speed (1–2.2): controls tempo */
 @keyframes nebula-breathe-1 {
-  0%, 100% { opacity: 0.1; transform: scale(1) translate(0, 0); }
-  33% { opacity: 0.16; transform: scale(1.04) translate(6px, -4px); }
-  66% { opacity: 0.12; transform: scale(1.02) translate(-3px, 2px); }
+  0%, 100% {
+    opacity: calc(0.10 + var(--nebula-pulse-scale, 0) * 0.14);
+    transform: scale(calc(1 + var(--nebula-pulse-scale, 0) * 0.06)) translate(0, 0);
+  }
+  33% {
+    opacity: calc(0.16 + var(--nebula-pulse-scale, 0) * 0.18);
+    transform: scale(calc(1.04 + var(--nebula-pulse-scale, 0) * 0.08)) translate(6px, -4px);
+  }
+  66% {
+    opacity: calc(0.12 + var(--nebula-pulse-scale, 0) * 0.10);
+    transform: scale(calc(1.02 + var(--nebula-pulse-scale, 0) * 0.04)) translate(-3px, 2px);
+  }
 }
 @keyframes nebula-breathe-2 {
-  0%, 100% { opacity: 0.08; transform: scale(1.01) translate(0, 0); }
-  50% { opacity: 0.14; transform: scale(1.05) translate(-8px, 5px); }
+  0%, 100% {
+    opacity: calc(0.08 + var(--nebula-pulse-scale, 0) * 0.10);
+    transform: scale(calc(1.01 + var(--nebula-pulse-scale, 0) * 0.04)) translate(0, 0);
+  }
+  50% {
+    opacity: calc(0.14 + var(--nebula-pulse-scale, 0) * 0.20);
+    transform: scale(calc(1.05 + var(--nebula-pulse-scale, 0) * 0.10)) translate(-8px, 5px);
+  }
 }
 
 .nebula-bg::before {
@@ -368,7 +384,7 @@
     radial-gradient(ellipse at 15% 80%, hsla(260, 45%, 16%, 0.14) 0%, transparent 50%),
     radial-gradient(ellipse at 85% 20%, hsla(240, 55%, 18%, 0.1) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 60%, hsla(270, 35%, 14%, 0.08) 0%, transparent 55%);
-  animation: nebula-breathe-1 20s ease-in-out infinite;
+  animation: nebula-breathe-1 calc(20s / var(--nebula-pulse-speed, 1)) ease-in-out infinite;
 }
 
 .nebula-bg::after {
@@ -381,7 +397,7 @@
     radial-gradient(ellipse at 70% 75%, hsla(250, 40%, 14%, 0.1) 0%, transparent 45%),
     radial-gradient(ellipse at 25% 25%, hsla(235, 50%, 12%, 0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 55% 10%, hsla(260, 35%, 10%, 0.06) 0%, transparent 40%);
-  animation: nebula-breathe-2 28s ease-in-out infinite;
+  animation: nebula-breathe-2 calc(28s / var(--nebula-pulse-speed, 1)) ease-in-out infinite;
 }
 
 /* ═══════════ FAINT STARFIELD ═══════════ */
