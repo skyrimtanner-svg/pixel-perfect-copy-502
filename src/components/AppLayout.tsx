@@ -31,7 +31,7 @@ export default function AppLayout() {
       
       {/* ═══ PARALLAX NEBULA LAYERS ═══ */}
       {/* Layer 0: Static base nebula */}
-      <div className="fixed inset-0 z-0 nebula-bg" />
+      <div className="fixed inset-0 z-0 nebula-bg" style={nebulaStyle} />
       
       {/* Layer 1: Slow parallax starfield */}
       <motion.div 
