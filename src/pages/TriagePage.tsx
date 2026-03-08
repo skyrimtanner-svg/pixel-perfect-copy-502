@@ -5,6 +5,7 @@ import { TriageCard } from '@/components/TriageCard';
 import { MilestoneModal } from '@/components/MilestoneModal';
 // FreshSignalsBanner reserved for future scout integration
 import { UpgradePrompt } from '@/components/UpgradePrompt';
+import { HorizonLab } from '@/components/HorizonLab';
 import { TriageStrip } from '@/components/TriageStrip';
 import { useMode } from '@/contexts/ModeContext';
 import { useEntitlement } from '@/hooks/useEntitlement';
@@ -98,6 +99,9 @@ export default function TriagePage() {
       <div className={isLensActive ? 'observatory-lens-blur' : 'observatory-lens-clear'}>
       {/* Beta Welcome Banner */}
       <BetaWelcomeBanner />
+
+      {/* Horizon Lab — shadow Bayesian evaluations */}
+      <HorizonLab />
 
       {/* Triage Strip */}
       <TriageStrip milestones={milestones} />
