@@ -85,6 +85,8 @@ export default function TriagePage() {
     );
   }
 
+  const isLensActive = !!selectedMilestone;
+
   return (
     <motion.div
       key={isWonder ? 'wonder' : 'analyst'}
@@ -92,6 +94,8 @@ export default function TriagePage() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Observatory Lens: blur triage content when modal is focused */}
+      <div className={isLensActive ? 'observatory-lens-blur' : 'observatory-lens-clear'}>
       {/* Beta Welcome Banner */}
       <BetaWelcomeBanner />
 
