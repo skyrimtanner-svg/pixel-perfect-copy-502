@@ -16,8 +16,7 @@ export default function AppLayout() {
   const { signOut, isAdmin, profile } = useAuth();
   const navigate = useNavigate();
   const { milestones } = useMilestones();
-  const { nebulaStyle, activityFactor } = useNebulaPulse(milestones);
-  const navigate = useNavigate();
+  const { nebulaStyle } = useNebulaPulse(milestones);
   
   // Parallax transforms — background layers move slower than content
   // Reserved for future parallax layers
