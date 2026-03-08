@@ -100,6 +100,9 @@ export default function TriagePage() {
       {/* Beta Welcome Banner */}
       <BetaWelcomeBanner />
 
+      {/* Horizon Lab — shadow Bayesian evaluations */}
+      <HorizonLab />
+
       {/* Triage Strip */}
       <TriageStrip milestones={milestones} />
 
