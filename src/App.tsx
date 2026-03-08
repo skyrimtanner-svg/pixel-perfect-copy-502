@@ -15,6 +15,7 @@ const TriagePage = lazy(() => import("@/pages/TriagePage"));
 const TracesPage = lazy(() => import("@/pages/TracesPage"));
 const CalibrationPage = lazy(() => import("@/pages/CalibrationPage"));
 const AdminAnalyticsPage = lazy(() => import("@/pages/AdminAnalyticsPage"));
+const GuidePage = lazy(() => import("@/pages/GuidePage"));
 const AuthPage = lazy(() => import("@/pages/AuthPage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
