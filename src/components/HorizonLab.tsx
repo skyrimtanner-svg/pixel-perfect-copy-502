@@ -20,6 +20,7 @@ export function HorizonLab() {
   const { countdowns, cancelAutoAccept, isAutoAccepting } = useAutoAccept(items, approve);
   const [expanded, setExpanded] = useState(true);
   const { isWonder } = useMode();
+  const { activeCount, activeKeys } = useDirectivesActive();
 
   if (!loading && items.length === 0) return null;
 
