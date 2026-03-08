@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, FlaskConical, Check, X, ArrowUpRight, ArrowDownRight, Minus, Loader2 } from 'lucide-react';
+import { ChevronDown, FlaskConical, Check, X, ArrowUpRight, ArrowDownRight, Minus, Loader2 } from 'lucide-react';
 import { usePendingEvidence, type PendingItem } from '@/hooks/usePendingEvidence';
 import { useMode } from '@/contexts/ModeContext';
 import { glassInner } from '@/lib/glass-styles';
