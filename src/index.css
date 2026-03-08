@@ -506,6 +506,59 @@
   stroke: url(#goldGradient);
 }
 
+/* ═══════════ HOLOGRAPHIC SCAN-LINE HEADER ═══════════ */
+/* Periodic horizontal light sweep across the sticky header */
+.scan-line-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-line-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 60;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsla(220, 14%, 88%, 0.03) 42%,
+    hsla(43, 96%, 56%, 0.06) 48%,
+    hsla(220, 16%, 95%, 0.12) 50%,
+    hsla(43, 96%, 56%, 0.06) 52%,
+    hsla(220, 14%, 88%, 0.03) 58%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: translateX(-120%);
+  will-change: transform, opacity;
+  animation: scan-sweep 14s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+  animation-delay: 3s;
+}
+
+@keyframes scan-sweep {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  4% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  96% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
 /* ═══════════ 3D PERSPECTIVE ═══════════ */
 .perspective-1000 {
   perspective: 1000px;

@@ -55,7 +55,7 @@ export default function AppLayout() {
 
       {/* ═══════ PREMIUM HEADER ═══════ */}
       <header
-        className="sticky top-0 z-50"
+        className="sticky top-0 z-50 scan-line-header"
         style={{
           background: 'linear-gradient(180deg, hsla(230, 22%, 7%, 0.97) 0%, hsla(230, 22%, 4%, 0.94) 100%)',
           backdropFilter: 'blur(40px) saturate(1.5)',
