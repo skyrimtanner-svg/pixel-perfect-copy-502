@@ -738,6 +738,12 @@
     display: none;
   }
 
+  .observatory-lens-blur {
+    filter: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+
   /* Keep glass effects but remove blur for performance */
   .glass,
   .glass-strong,
