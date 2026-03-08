@@ -2,6 +2,7 @@
  * LangGraph-style stateful multi-step reasoning graph for Evidence Scout.
  * Nodes: search → classify → score → queue
  * Features: in-run memory for milestone classification history, per-node tracing.
+ * Scout Directives: reads admin-configured scoring weights and auto-commit rules from DB.
  */
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -50,6 +51,105 @@ export interface ScoredEvidence {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SCOUT DIRECTIVES — parsed from DB markdown
+// ═══════════════════════════════════════════════════════════════
+
+interface ScoringWeights {
+  credibility: number;
+  recency: number;
+  consensus: number;
+  criteria_match: number;
+}
+
+interface AutoCommitConfig {
+  autoCommitThreshold: number;
+  pendingFloor: number;
+  blockContradictAutoCommit: boolean;
+}
+
+interface DomainPriority {
+  domain: string;
+  level: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+interface ParsedDirectives {
+  scoringWeights: ScoringWeights;
+  autoCommitConfig: AutoCommitConfig;
+  domainPriorities: DomainPriority[];
+  directiveVersions: Record<string, string>; // key -> updated_at for audit
+}
+
+const DEFAULT_WEIGHTS: ScoringWeights = { credibility: 0.25, recency: 0.25, consensus: 0.25, criteria_match: 0.25 };
+const DEFAULT_AUTO_COMMIT: AutoCommitConfig = { autoCommitThreshold: 0.75, pendingFloor: 0.35, blockContradictAutoCommit: true };
+
+function parseWeightsFromMarkdown(md: string): ScoringWeights {
+  const weights = { ...DEFAULT_WEIGHTS };
+  const lines = md.split('\n');
+  for (const line of lines) {
+    const match = line.match(/-\s*(credibility|recency|consensus|criteria_match)\s*:\s*([\d.]+)/i);
+    if (match) {
+      const key = match[1].toLowerCase() as keyof ScoringWeights;
+      const val = parseFloat(match[2]);
+      if (!isNaN(val) && val >= 0 && val <= 1) weights[key] = val;
+    }
+  }
+  // Normalize to sum to 1
+  const sum = weights.credibility + weights.recency + weights.consensus + weights.criteria_match;
+  if (sum > 0) {
+    weights.credibility /= sum;
+    weights.recency /= sum;
+    weights.consensus /= sum;
+    weights.criteria_match /= sum;
+  }
+  return weights;
+}
+
+function parseAutoCommitFromMarkdown(md: string): AutoCommitConfig {
+  const config = { ...DEFAULT_AUTO_COMMIT };
+  const lines = md.split('\n');
+  for (const line of lines) {
+    const autoMatch = line.match(/composite_score\s*>=?\s*([\d.]+)\s*:\s*auto[_-]?commit/i);
+    if (autoMatch) config.autoCommitThreshold = parseFloat(autoMatch[1]);
+    const floorMatch = line.match(/composite_score\s*([\d.]+)\s*-\s*([\d.]+)\s*:/i);
+    if (floorMatch) config.pendingFloor = parseFloat(floorMatch[1]);
+    if (/never\s+auto[_-]?commit.*contradict/i.test(line)) config.blockContradictAutoCommit = true;
+  }
+  return config;
+}
+
+function parseDomainPrioritiesFromMarkdown(md: string): DomainPriority[] {
+  const priorities: DomainPriority[] = [];
+  const lines = md.split('\n');
+  for (const line of lines) {
+    const match = line.match(/-\s*(compute|energy|biology|connectivity|manufacturing)\s*:\s*(HIGH|MEDIUM|LOW)/i);
+    if (match) {
+      priorities.push({ domain: match[1].toLowerCase(), level: match[2].toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW' });
+    }
+  }
+  return priorities;
+}
+
+async function loadDirectives(supabase: SupabaseClient): Promise<ParsedDirectives> {
+  const { data } = await supabase.from("scout_directives").select("key, value, updated_at");
+  const map = new Map((data || []).map((d: any) => [d.key, d]));
+  const versions: Record<string, string> = {};
+  (data || []).forEach((d: any) => { versions[d.key] = d.updated_at; });
+
+  return {
+    scoringWeights: map.has('scoring_weights')
+      ? parseWeightsFromMarkdown(map.get('scoring_weights').value)
+      : DEFAULT_WEIGHTS,
+    autoCommitConfig: map.has('auto_commit_rules')
+      ? parseAutoCommitFromMarkdown(map.get('auto_commit_rules').value)
+      : DEFAULT_AUTO_COMMIT,
+    domainPriorities: map.has('domain_priorities')
+      ? parseDomainPrioritiesFromMarkdown(map.get('domain_priorities').value)
+      : [],
+    directiveVersions: versions,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // GRAPH STATE — carries data between nodes
 // ═══════════════════════════════════════════════════════════════
 
@@ -71,7 +171,6 @@ export interface GraphState {
   highSignalItems: any[];
 
   // Memory: tracks previous classifications per milestone in this run
-  // Used by classify node to improve scoring on second-pass articles
   memory: Map<string, { totalSeen: number; avgComposite: number; directions: string[] }>;
 
   // Source summary for logging
@@ -80,6 +179,9 @@ export interface GraphState {
   // Stats
   aiCallsMade: number;
   aiCallsFailed: number;
+
+  // Directives (loaded from DB)
+  directives?: ParsedDirectives;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -150,6 +252,22 @@ function computeRecency(pubDate?: string): number {
 function computeDeltaLogOdds(direction: string, composite: number): number {
   const sign = direction === "supports" ? 1 : direction === "contradicts" ? -1 : 0.1;
   return sign * composite * 2;
+}
+
+/** Weighted composite using directive-configured weights */
+function computeWeightedComposite(
+  credibility: number,
+  recency: number,
+  consensus: number,
+  criteriaMatch: number,
+  weights: ScoringWeights,
+): number {
+  return (
+    credibility * weights.credibility +
+    recency * weights.recency +
+    consensus * weights.consensus +
+    criteriaMatch * weights.criteria_match
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -242,6 +360,21 @@ const DOMAIN_QUERIES: Record<string, string[]> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// NODE 0: LOAD DIRECTIVES — read admin config from DB
+// ═══════════════════════════════════════════════════════════════
+
+const loadDirectivesNode: NodeFn = async (state) => {
+  const directives = await loadDirectives(state.supabase);
+  await logToScout(state, "directives_loaded", {
+    weights: directives.scoringWeights,
+    autoCommit: directives.autoCommitConfig,
+    domainPriorities: directives.domainPriorities,
+    versions: directives.directiveVersions,
+  });
+  return { ...state, directives };
+};
+
+// ═══════════════════════════════════════════════════════════════
 // NODE 1: SEARCH — fetch articles from all sources
 // ═══════════════════════════════════════════════════════════════
 
@@ -317,7 +450,7 @@ const searchNode: NodeFn = async (state) => {
   const { data: existingEvidence } = await state.supabase.from("evidence").select("source");
   const existingSources = new Set((existingEvidence || []).map((e: any) => e.source));
 
-  // In-run dedup: prevent the same URL from being classified twice within one scout run
+  // In-run dedup
   const seenInRun = new Set<string>();
   const unique = articles.filter(a => {
     if (!a.link || a.link.length <= 5) return false;
@@ -328,12 +461,7 @@ const searchNode: NodeFn = async (state) => {
     return true;
   }).slice(0, 60);
 
-  return {
-    ...state,
-    articles,
-    uniqueArticles: unique,
-    sourceSummary,
-  };
+  return { ...state, articles, uniqueArticles: unique, sourceSummary };
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -375,7 +503,7 @@ RULES:
 Be SELECTIVE. Most articles are NOT relevant to most milestones.${memoryHint}`;
 
   const MAX_RETRIES = 2;
-  const RETRY_DELAYS = [1000, 2000]; // exponential backoff (1s, 2s)
+  const RETRY_DELAYS = [1000, 2000];
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -422,7 +550,6 @@ Be SELECTIVE. Most articles are NOT relevant to most milestones.${memoryHint}`;
 
       if (!resp.ok) {
         const body = await resp.text();
-        // Retry on rate limit (429) or server error (5xx)
         if ((resp.status === 429 || resp.status >= 500) && attempt < MAX_RETRIES) {
           await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt]));
           continue;
@@ -444,16 +571,15 @@ Be SELECTIVE. Most articles are NOT relevant to most milestones.${memoryHint}`;
   return null;
 }
 
-const MAX_AI_CALLS = 15; // Safe within 60s edge function timeout even with retries
-const PARALLEL_BATCH_SIZE = 5; // Concurrent AI calls per batch
-const BATCH_SPACING_MS = 200; // Delay between batches to avoid rate limiting
+const MAX_AI_CALLS = 15;
+const PARALLEL_BATCH_SIZE = 5;
+const BATCH_SPACING_MS = 200;
 
 const classifyNode: NodeFn = async (state) => {
   const classifications: GraphState["classifications"] = [];
   let aiCallsMade = 0;
   let aiCallsFailed = 0;
 
-  // Build all (article, milestone) pairs first, then process in parallel batches
   const pairs: { article: Article; milestone: Milestone }[] = [];
   for (const article of state.uniqueArticles) {
     const articleText = `${article.title} ${article.description}`.toLowerCase();
@@ -468,13 +594,11 @@ const classifyNode: NodeFn = async (state) => {
     }
   }
 
-  // Cap total pairs to avoid timeout
   const capped = pairs.slice(0, MAX_AI_CALLS);
   await logToScout(state, "classify_plan", { totalPairs: pairs.length, capped: capped.length });
 
-  // Process in parallel batches with spacing
   for (let i = 0; i < capped.length; i += PARALLEL_BATCH_SIZE) {
-    if (i > 0) await new Promise(r => setTimeout(r, BATCH_SPACING_MS)); // inter-batch spacing
+    if (i > 0) await new Promise(r => setTimeout(r, BATCH_SPACING_MS));
     const batch = capped.slice(i, i + PARALLEL_BATCH_SIZE);
     const results = await Promise.allSettled(
       batch.map(async ({ article, milestone }) => {
@@ -492,7 +616,6 @@ const classifyNode: NodeFn = async (state) => {
 
       classifications.push({ article, milestone, result });
 
-      // Update memory for this milestone
       const prev = state.memory.get(milestone.id) || { totalSeen: 0, avgComposite: 0, directions: [] };
       const newComposite = result.credibility * result.consensus * result.criteria_match;
       const newTotal = prev.totalSeen + 1;
@@ -509,33 +632,47 @@ const classifyNode: NodeFn = async (state) => {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NODE 3: SCORE — compute v3 composite scores
+// NODE 3: SCORE — compute weighted composite using directives
 // ═══════════════════════════════════════════════════════════════
 
 const scoreNode: NodeFn = async (state) => {
+  const weights = state.directives?.scoringWeights || DEFAULT_WEIGHTS;
+
   const scored: ScoredEvidence[] = state.classifications.map(({ article, milestone, result }) => {
     const publisherTier = getPublisherTier(article.link || article.source);
     const recency = computeRecency(article.pubDate);
-    const composite = result.credibility * recency * result.consensus * result.criteria_match;
+    const composite = computeWeightedComposite(
+      result.credibility, recency, result.consensus, result.criteria_match, weights
+    );
     const deltaLogOdds = computeDeltaLogOdds(result.direction, composite);
     return { article, milestone, classification: result, publisherTier, recency, composite, deltaLogOdds };
   });
+
+  await logToScout(state, "score_weights_applied", { weights, scoredCount: scored.length });
 
   return { ...state, scoredEvidence: scored };
 };
 
 // ═══════════════════════════════════════════════════════════════
-// NODE 4: AUTO-COMMIT — route high-confidence evidence directly
+// NODE 4: AUTO-COMMIT — route high-confidence evidence (directive-aware)
 // ═══════════════════════════════════════════════════════════════
 
-const AUTO_COMMIT_THRESHOLD = 0.75;
-
 const autoCommitNode: NodeFn = async (state) => {
+  const config = state.directives?.autoCommitConfig || DEFAULT_AUTO_COMMIT;
   let autoCommittedCount = 0;
   const committedMilestoneIds: string[] = [];
 
   for (const ev of state.scoredEvidence) {
-    if (ev.composite < AUTO_COMMIT_THRESHOLD) continue;
+    if (ev.composite < config.autoCommitThreshold) continue;
+    // Block auto-commit of contradicting evidence if directive says so
+    if (config.blockContradictAutoCommit && ev.classification.direction === 'contradicts') {
+      await logToScout(state, "auto_commit_blocked_contradict", {
+        milestone_id: ev.milestone.id,
+        composite: ev.composite,
+        direction: ev.classification.direction,
+      });
+      continue;
+    }
 
     try {
       const msApiUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/milestones-api/${ev.milestone.id}/evidence`;
@@ -572,7 +709,12 @@ const autoCommitNode: NodeFn = async (state) => {
     }
   }
 
-  await logToScout(state, "node_auto_commit", { count: autoCommittedCount, milestone_ids: committedMilestoneIds });
+  await logToScout(state, "node_auto_commit", {
+    count: autoCommittedCount,
+    milestone_ids: committedMilestoneIds,
+    threshold: config.autoCommitThreshold,
+    blockContradict: config.blockContradictAutoCommit,
+  });
 
   return { ...state, autoCommittedCount };
 };
@@ -582,10 +724,14 @@ const autoCommitNode: NodeFn = async (state) => {
 // ═══════════════════════════════════════════════════════════════
 
 const queueNode: NodeFn = async (state) => {
+  const config = state.directives?.autoCommitConfig || DEFAULT_AUTO_COMMIT;
   let queuedCount = 0;
 
   for (const ev of state.scoredEvidence) {
     if (ev.autoCommitted) continue;
+    // Skip items below the pending floor (discard as low-signal)
+    if (ev.composite < config.pendingFloor) continue;
+
     const row = {
       milestone_id: ev.milestone.id,
       source: ev.article.source,
@@ -684,6 +830,7 @@ const queueNode: NodeFn = async (state) => {
 // GRAPH RUNNER — executes nodes in sequence with tracing
 // ═══════════════════════════════════════════════════════════════
 
+const tracedLoadDirectives = traceNode("loadDirectives", loadDirectivesNode);
 const tracedSearch = traceNode("search", searchNode);
 const tracedClassify = traceNode("classify", classifyNode);
 const tracedScore = traceNode("score", scoreNode);
@@ -692,6 +839,7 @@ const tracedQueue = traceNode("queue", queueNode);
 
 export async function runGraph(initialState: GraphState): Promise<GraphState> {
   let state = initialState;
+  state = await tracedLoadDirectives(state);  // NEW: load directives first
   state = await tracedSearch(state);
   state = await tracedClassify(state);
   state = await tracedScore(state);

@@ -4,6 +4,8 @@ import { useMode } from '@/contexts/ModeContext';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { motion } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
+import { TraceReplayPanel } from '@/components/TraceReplayPanel';
+import { SignalMergeMap } from '@/components/SignalMergeMap';
 
 const domainColors: Record<Domain, string> = {
   compute: 'hsl(192, 100%, 52%)',
@@ -261,6 +263,12 @@ export default function TracesPage() {
           ))}
         </div>
       </motion.div>
+
+      {/* Trace Replay — step-by-step Bayesian computation */}
+      <TraceReplayPanel />
+
+      {/* Signal Merge Map — compound evidence visualization */}
+      <SignalMergeMap />
     </motion.div>
   );
 }
