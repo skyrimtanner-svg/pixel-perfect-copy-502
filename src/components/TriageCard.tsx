@@ -5,7 +5,7 @@ import { AnimatedProbabilityRing } from '@/components/AnimatedProbabilityRing';
 import { useMode } from '@/contexts/ModeContext';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownRight, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { glassPanelGold, glassPanel, glassPanelChrome, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
 const domainHsl: Record<string, string> = {
@@ -60,7 +60,24 @@ const wonderDescriptions: Record<string, string> = {
 export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps) {
   const { isWonder } = useMode();
   const [isFlipped, setIsFlipped] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
   const delta = milestone.posterior - milestone.prior;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      cardRef.current.style.setProperty('--specular-x', `${e.clientX - rect.left}px`);
+      cardRef.current.style.setProperty('--specular-y', `${e.clientY - rect.top}px`);
+      cardRef.current.style.setProperty('--specular-opacity', '1');
+    });
+  };
+  const handleMouseLeave = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    cardRef.current?.style.setProperty('--specular-opacity', '0');
+  };
 
   const pulseIntensity = pulse ? Math.min(1, (Math.abs(pulse.deltaLogOdds) * 0.5 + pulse.composite * 0.5)) : 0;
   const pulseColor = pulse?.direction === 'contradicts' ? '248, 113, 113' : '74, 222, 128'; 
@@ -95,7 +112,10 @@ export function TriageCard({ milestone, index, onClick, pulse }: TriageCardProps
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
           <motion.div
-            className="w-full rounded-2xl p-5 relative overflow-hidden shine-sweep"
+            ref={cardRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="w-full rounded-2xl p-5 relative overflow-hidden shine-sweep specular-track"
             animate={{
               rotateY: isFlipped ? 3 : 0,
               rotateX: isFlipped ? -2 : 0,
