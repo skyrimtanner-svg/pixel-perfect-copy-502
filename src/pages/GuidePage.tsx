@@ -278,7 +278,7 @@ export default function GuidePage() {
                 </span>
               </div>
               <div className="flex flex-col items-center gap-1">
-                <ProbabilityRing posterior={computation.posterior} size={52} />
+                <ProbabilityRing value={computation.posterior} size={52} />
                 <span className="text-[9px] font-mono text-muted-foreground">Posterior</span>
               </div>
             </div>
