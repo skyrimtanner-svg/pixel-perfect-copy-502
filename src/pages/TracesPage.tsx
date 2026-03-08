@@ -270,6 +270,9 @@ export default function TracesPage() {
 
       {/* Signal Merge Map — compound evidence visualization */}
       <SignalMergeMap />
+
+      {/* Engine Telemetry — admin-only diagnostic strip */}
+      <EngineTelemetry />
     </motion.div>
   );
 }
