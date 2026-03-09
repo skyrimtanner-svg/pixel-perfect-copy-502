@@ -66,7 +66,7 @@ const App = () => (
             <BrowserRouter>
               <Suspense fallback={<LoadingScreen />}>
                 <Routes>
-                  <Route path="/landing" element={<LandingPage />} />
+                  <Route path="/" element={<LandingPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -74,7 +74,7 @@ const App = () => (
 
                   <Route element={<ProtectedRoute />}>
                     <Route element={<AppLayout />}>
-                      <Route path="/" element={<TriagePage />} />
+                      <Route path="/triage" element={<TriagePage />} />
                       <Route path="/traces" element={<TracesPage />} />
                       <Route path="/calibration" element={<CalibrationPage />} />
                       <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />

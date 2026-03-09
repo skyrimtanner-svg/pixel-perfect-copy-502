@@ -180,7 +180,7 @@ export default function AppLayout() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           >
-            <NavItem to="/" icon={<Target className="w-4 h-4" />}>Triage</NavItem>
+            <NavItem to="/triage" icon={<Target className="w-4 h-4" />}>Triage</NavItem>
             <NavItem to="/traces" icon={<LineChart className="w-4 h-4" />}>Traces</NavItem>
             <NavItem to="/calibration" icon={<BarChart3 className="w-4 h-4" />}>Calibration</NavItem>
             <NavItem to="/guide" icon={<GraduationCap className="w-4 h-4" />}>Guide</NavItem>
