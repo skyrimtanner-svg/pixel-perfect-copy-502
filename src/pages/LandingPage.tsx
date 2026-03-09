@@ -124,17 +124,29 @@ export default function LandingPage() {
 
           <motion.form initial="hidden" animate="visible" variants={fadeUp} custom={3}
             className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto mb-6"
-            onSubmit={(e) => { e.preventDefault(); handleWaitlist(heroEmail); }}
+            onSubmit={(e) => { e.preventDefault(); handleWaitlist(heroEmail, setHeroEmail); }}
           >
             <Input
               type="email" placeholder="you@research.org" value={heroEmail}
               onChange={(e) => setHeroEmail(e.target.value)}
               className="h-12 bg-secondary border-border/60 text-foreground placeholder:text-muted-foreground"
+              disabled={loading}
             />
-            <Button type="submit" size="lg" className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-              Join Waitlist — 50% Off
+            <Button type="submit" size="lg" disabled={loading} className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+              {loading ? 'Joining...' : 'Join Waitlist — 50% Off'}
             </Button>
           </motion.form>
+
+          {result && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-4"
+            >
+              <CheckCircle className="w-4 h-4" />
+              {result.isExisting
+                ? `You're already on the list! Spot #${result.spotNumber}`
+                : `You're on the list! Spot #${result.spotNumber}`}
+            </motion.div>
+          )}
 
           <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={4}
             className="text-xs text-muted-foreground"
