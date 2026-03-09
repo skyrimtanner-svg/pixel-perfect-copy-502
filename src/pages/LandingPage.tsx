@@ -324,15 +324,16 @@ export default function LandingPage() {
             </motion.p>
             <motion.form variants={fadeUp} custom={2}
               className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto"
-              onSubmit={(e) => { e.preventDefault(); handleWaitlist(ctaEmail); }}
+              onSubmit={(e) => { e.preventDefault(); handleWaitlist(ctaEmail, setCtaEmail); }}
             >
               <Input
                 type="email" placeholder="you@research.org" value={ctaEmail}
                 onChange={(e) => setCtaEmail(e.target.value)}
                 className="h-12 bg-secondary border-border/60 text-foreground placeholder:text-muted-foreground"
+                disabled={loading}
               />
-              <Button type="submit" size="lg" className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-                Join Waitlist
+              <Button type="submit" size="lg" disabled={loading} className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                {loading ? 'Joining...' : 'Join Waitlist'}
               </Button>
             </motion.form>
           </motion.div>
