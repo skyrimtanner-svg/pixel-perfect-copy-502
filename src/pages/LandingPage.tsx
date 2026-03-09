@@ -4,6 +4,8 @@ import { Eye, X, CheckCircle, ArrowRight, Zap, Shield, Search, BarChart3, Mail, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -13,14 +15,49 @@ const fadeUp = {
   }),
 };
 
+type WaitlistResult = { spotNumber: number; isExisting: boolean } | null;
+
 export default function LandingPage() {
   const [heroEmail, setHeroEmail] = useState('');
   const [ctaEmail, setCtaEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<WaitlistResult>(null);
   const navigate = useNavigate();
 
-  const handleWaitlist = (email: string) => {
-    if (email) navigate(`/auth?email=${encodeURIComponent(email)}`);
-    else navigate('/auth');
+  const handleWaitlist = async (email: string, setEmail: (v: string) => void) => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast({ title: 'Please enter a valid email', variant: 'destructive' });
+      return;
+    }
+    setLoading(true);
+    try {
+      // Check if already on waitlist
+      const { data: existing } = await supabase
+        .from('waitlist')
+        .select('spot_number')
+        .eq('email', trimmed)
+        .maybeSingle();
+
+      if (existing) {
+        setResult({ spotNumber: existing.spot_number, isExisting: true });
+        toast({ title: `You're already on the list! Spot #${existing.spot_number}` });
+      } else {
+        const spotNumber = Math.floor(Math.random() * 401) + 100;
+        const { error } = await supabase
+          .from('waitlist')
+          .insert({ email: trimmed, spot_number: spotNumber });
+
+        if (error) throw error;
+        setResult({ spotNumber, isExisting: false });
+        setEmail('');
+        toast({ title: `You're on the list! Spot #${spotNumber}` });
+      }
+    } catch (err: any) {
+      toast({ title: 'Something went wrong', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -87,17 +124,29 @@ export default function LandingPage() {
 
           <motion.form initial="hidden" animate="visible" variants={fadeUp} custom={3}
             className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto mb-6"
-            onSubmit={(e) => { e.preventDefault(); handleWaitlist(heroEmail); }}
+            onSubmit={(e) => { e.preventDefault(); handleWaitlist(heroEmail, setHeroEmail); }}
           >
             <Input
               type="email" placeholder="you@research.org" value={heroEmail}
               onChange={(e) => setHeroEmail(e.target.value)}
               className="h-12 bg-secondary border-border/60 text-foreground placeholder:text-muted-foreground"
+              disabled={loading}
             />
-            <Button type="submit" size="lg" className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-              Join Waitlist — 50% Off
+            <Button type="submit" size="lg" disabled={loading} className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+              {loading ? 'Joining...' : 'Join Waitlist — 50% Off'}
             </Button>
           </motion.form>
+
+          {result && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-primary text-sm font-medium mb-4"
+            >
+              <CheckCircle className="w-4 h-4" />
+              {result.isExisting
+                ? `You're already on the list! Spot #${result.spotNumber}`
+                : `You're on the list! Spot #${result.spotNumber}`}
+            </motion.div>
+          )}
 
           <motion.p initial="hidden" animate="visible" variants={fadeUp} custom={4}
             className="text-xs text-muted-foreground"
@@ -275,15 +324,16 @@ export default function LandingPage() {
             </motion.p>
             <motion.form variants={fadeUp} custom={2}
               className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto"
-              onSubmit={(e) => { e.preventDefault(); handleWaitlist(ctaEmail); }}
+              onSubmit={(e) => { e.preventDefault(); handleWaitlist(ctaEmail, setCtaEmail); }}
             >
               <Input
                 type="email" placeholder="you@research.org" value={ctaEmail}
                 onChange={(e) => setCtaEmail(e.target.value)}
                 className="h-12 bg-secondary border-border/60 text-foreground placeholder:text-muted-foreground"
+                disabled={loading}
               />
-              <Button type="submit" size="lg" className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-                Join Waitlist
+              <Button type="submit" size="lg" disabled={loading} className="w-full sm:w-auto whitespace-nowrap h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                {loading ? 'Joining...' : 'Join Waitlist'}
               </Button>
             </motion.form>
           </motion.div>
