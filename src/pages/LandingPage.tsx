@@ -4,6 +4,8 @@ import { Eye, X, CheckCircle, ArrowRight, Zap, Shield, Search, BarChart3, Mail, 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -13,14 +15,49 @@ const fadeUp = {
   }),
 };
 
+type WaitlistResult = { spotNumber: number; isExisting: boolean } | null;
+
 export default function LandingPage() {
   const [heroEmail, setHeroEmail] = useState('');
   const [ctaEmail, setCtaEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<WaitlistResult>(null);
   const navigate = useNavigate();
 
-  const handleWaitlist = (email: string) => {
-    if (email) navigate(`/auth?email=${encodeURIComponent(email)}`);
-    else navigate('/auth');
+  const handleWaitlist = async (email: string, setEmail: (v: string) => void) => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast({ title: 'Please enter a valid email', variant: 'destructive' });
+      return;
+    }
+    setLoading(true);
+    try {
+      // Check if already on waitlist
+      const { data: existing } = await supabase
+        .from('waitlist')
+        .select('spot_number')
+        .eq('email', trimmed)
+        .maybeSingle();
+
+      if (existing) {
+        setResult({ spotNumber: existing.spot_number, isExisting: true });
+        toast({ title: `You're already on the list! Spot #${existing.spot_number}` });
+      } else {
+        const spotNumber = Math.floor(Math.random() * 401) + 100;
+        const { error } = await supabase
+          .from('waitlist')
+          .insert({ email: trimmed, spot_number: spotNumber });
+
+        if (error) throw error;
+        setResult({ spotNumber, isExisting: false });
+        setEmail('');
+        toast({ title: `You're on the list! Spot #${spotNumber}` });
+      }
+    } catch (err: any) {
+      toast({ title: 'Something went wrong', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
