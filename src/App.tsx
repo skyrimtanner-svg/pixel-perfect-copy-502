@@ -21,6 +21,7 @@ const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const VerifyPage = lazy(() => import("@/pages/VerifyPage"));
+const LandingPage = lazy(() => import("@/pages/LandingPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,7 @@ const App = () => (
             <BrowserRouter>
               <Suspense fallback={<LoadingScreen />}>
                 <Routes>
+                  <Route path="/landing" element={<LandingPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
