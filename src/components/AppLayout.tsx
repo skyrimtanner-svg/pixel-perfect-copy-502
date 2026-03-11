@@ -81,7 +81,7 @@ export default function AppLayout() {
         <div className="max-w-[1600px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           {/* ── Logo group ── */}
           <motion.div
-            className="flex items-center gap-3.5"
+            className="flex items-center gap-2 sm:gap-3.5"
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
