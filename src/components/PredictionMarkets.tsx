@@ -26,11 +26,6 @@ export function PredictionMarkets({ milestoneId, posterior }: PredictionMarketsP
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('prediction-markets', {
-        body: null,
-        headers: { 'Content-Type': 'application/json' },
-      });
-
       // Use query param approach via direct fetch
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
