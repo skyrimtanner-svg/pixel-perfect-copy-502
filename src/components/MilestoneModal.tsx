@@ -9,6 +9,7 @@ import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
 import { LPMemoExport } from '@/components/LPMemoExport';
 import { SocraticLensTab } from '@/components/SocraticLensTab';
+import { PredictionMarkets } from '@/components/PredictionMarkets';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
