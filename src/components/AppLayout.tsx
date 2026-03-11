@@ -122,10 +122,10 @@ export default function AppLayout() {
               />
             </div>
 
-            {/* Wordmark */}
+            {/* Wordmark — hide "Observatory" on mobile */}
             <div className="flex items-baseline">
               <span
-                className="font-display font-bold text-[24px] tracking-tight relative"
+                className="font-display font-bold text-[20px] sm:text-[24px] tracking-tight relative"
                 style={{
                   background: 'linear-gradient(135deg, hsl(38, 88%, 32%) 0%, hsl(43, 96%, 48%) 15%, hsl(48, 100%, 72%) 35%, hsl(50, 100%, 88%) 50%, hsl(48, 100%, 72%) 65%, hsl(43, 96%, 55%) 80%, hsl(38, 88%, 36%) 100%)',
                   backgroundSize: '200% 100%',
@@ -145,7 +145,7 @@ export default function AppLayout() {
               </span>
 
               <span
-                className="mx-2 w-1.5 h-1.5 rounded-full inline-block relative top-[-1px]"
+                className="hidden sm:inline-block mx-2 w-1.5 h-1.5 rounded-full relative top-[-1px]"
                 style={{
                   background: 'radial-gradient(circle at 35% 35%, hsl(48, 100%, 82%), hsl(43, 96%, 56%))',
                   boxShadow: '0 0 8px hsla(43, 96%, 56%, 0.6), 0 0 3px hsla(190, 100%, 50%, 0.3)',
@@ -153,7 +153,7 @@ export default function AppLayout() {
               />
 
               <span
-                className="font-display font-medium text-[11px] tracking-[0.18em] uppercase"
+                className="hidden sm:inline font-display font-medium text-[11px] tracking-[0.18em] uppercase"
                 style={{
                   background: 'linear-gradient(135deg, hsl(220, 10%, 48%) 0%, hsl(220, 12%, 76%) 25%, hsl(220, 16%, 94%) 50%, hsl(220, 14%, 88%) 60%, hsl(220, 10%, 70%) 80%, hsl(220, 10%, 52%) 100%)',
                   backgroundSize: '200% 100%',
