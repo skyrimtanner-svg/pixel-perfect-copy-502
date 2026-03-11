@@ -78,7 +78,7 @@ export default function AppLayout() {
           }}
         />
 
-        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           {/* ── Logo group ── */}
           <motion.div
             className="flex items-center gap-3.5"
