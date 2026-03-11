@@ -119,6 +119,16 @@ export default function AdminAnalyticsPage() {
     fetchPending();
     fetchLogs();
 
+    // Fetch waitlist
+    const fetchWaitlist = async () => {
+      const { data } = await supabase
+        .from('waitlist')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (data) setWaitlistEntries(data);
+    };
+    fetchWaitlist();
+
     // Fetch evidence inflow + source distribution
     const fetchInflow = async () => {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
