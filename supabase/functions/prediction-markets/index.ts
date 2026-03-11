@@ -30,21 +30,31 @@ interface MarketData {
 
 async function fetchMetaculus(questionId: number): Promise<MarketData | null> {
   try {
-    const res = await fetch(`https://www.metaculus.com/api2/questions/${questionId}/`, {
+    const res = await fetch(`https://www.metaculus.com/api/questions/${questionId}/`, {
       headers: { 'Accept': 'application/json' },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.log(`Metaculus API returned ${res.status} for question ${questionId}`);
+      return null;
+    }
     const data = await res.json();
+
+    // Handle both old and new API response formats
+    const probability = data.community_prediction?.full?.q2
+      ?? data.question?.aggregations?.recency_weighted?.latest?.centers?.[0]
+      ?? data.forecasts?.latest_cp
+      ?? null;
 
     return {
       source: 'metaculus',
-      question: data.title || '',
-      probability: data.community_prediction?.full?.q2 ?? null,
+      question: data.title || data.question?.title || '',
+      probability,
       url: `https://www.metaculus.com/questions/${questionId}/`,
-      lastUpdated: data.last_activity_time || new Date().toISOString(),
-      participantCount: data.number_of_forecasters || 0,
+      lastUpdated: data.last_activity_time || data.modified_at || new Date().toISOString(),
+      participantCount: data.number_of_forecasters || data.forecasts_count || 0,
     };
-  } catch {
+  } catch (err) {
+    console.error(`Metaculus fetch error for ${questionId}:`, err);
     return null;
   }
 }
