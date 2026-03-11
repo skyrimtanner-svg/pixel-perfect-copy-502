@@ -366,10 +366,48 @@ export default function AdminAnalyticsPage() {
                   );
                 })}
               </div>
-            </>
-          )}
-        </>
-      )}
-    </motion.div>
-  );
-}
+             </>
+           )}
+
+           {/* ─── WAITLIST TAB ─── */}
+           {activeTab === 'waitlist' && (
+             <div className="rounded-xl overflow-hidden" style={{ ...glassPanel }}>
+               <div className="p-4 flex items-center gap-2" style={{ borderBottom: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
+                 <Mail className="w-4 h-4" style={{ color: 'hsl(192, 95%, 50%)' }} />
+                 <span className="text-xs font-mono uppercase tracking-wider" style={{ color: 'hsl(192, 95%, 50%)' }}>
+                   Waitlist Signups — {waitlistEntries.length} total
+                 </span>
+               </div>
+               {waitlistEntries.length === 0 ? (
+                 <div className="p-8 text-center text-muted-foreground text-sm">No waitlist signups yet.</div>
+               ) : (
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-sm">
+                     <thead>
+                       <tr className="text-left text-[10px] font-mono uppercase tracking-wider text-muted-foreground" style={{ borderBottom: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
+                         <th className="px-4 py-3">Email</th>
+                         <th className="px-4 py-3">Spot #</th>
+                         <th className="px-4 py-3">Source</th>
+                         <th className="px-4 py-3">Signed Up</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {waitlistEntries.map((entry) => (
+                         <tr key={entry.id} className="hover:bg-white/[0.02] transition-colors" style={{ borderBottom: '1px solid hsla(220, 12%, 70%, 0.05)' }}>
+                           <td className="px-4 py-3 font-mono text-foreground">{entry.email}</td>
+                           <td className="px-4 py-3 font-mono" style={{ color: 'hsl(192, 95%, 50%)' }}>#{entry.spot_number}</td>
+                           <td className="px-4 py-3 text-muted-foreground">{entry.source}</td>
+                           <td className="px-4 py-3 text-muted-foreground">{new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               )}
+             </div>
+           )}
+         </>
+       )}
+     </motion.div>
+   );
+ }
