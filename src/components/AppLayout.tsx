@@ -170,7 +170,7 @@ export default function AppLayout() {
 
           {/* ── Navigation ── */}
           <motion.nav
-            className="flex items-center gap-0.5 p-1 rounded-xl"
+            className="flex items-center gap-0.5 p-0.5 sm:p-1 rounded-xl overflow-x-auto"
             style={{
               background: 'hsla(230, 22%, 8%, 0.5)',
               border: '1px solid hsla(220, 10%, 72%, 0.08)',
@@ -182,8 +182,8 @@ export default function AppLayout() {
           >
             <NavItem to="/triage" icon={<Target className="w-4 h-4" />}>Triage</NavItem>
             <NavItem to="/traces" icon={<LineChart className="w-4 h-4" />}>Traces</NavItem>
-            <NavItem to="/calibration" icon={<BarChart3 className="w-4 h-4" />}>Calibration</NavItem>
-            <NavItem to="/guide" icon={<GraduationCap className="w-4 h-4" />}>Guide</NavItem>
+            <NavItem to="/calibration" icon={<BarChart3 className="w-4 h-4" />}><span className="hidden sm:inline">Calibration</span><span className="sm:hidden">Cal</span></NavItem>
+            <NavItem to="/guide" icon={<GraduationCap className="w-4 h-4" />}><span className="hidden sm:inline">Guide</span><span className="sm:hidden">?</span></NavItem>
           </motion.nav>
 
           {/* ── Right controls ── */}
