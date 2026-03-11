@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useMilestones } from '@/hooks/useMilestones';
 import { useNebulaPulse } from '@/hooks/useNebulaPulse';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function AppLayout() {
   const mainRef = useRef<HTMLDivElement>(null);
