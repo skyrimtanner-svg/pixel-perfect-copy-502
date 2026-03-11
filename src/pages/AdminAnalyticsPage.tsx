@@ -49,7 +49,8 @@ export default function AdminAnalyticsPage() {
   const [pendingEvidence, setPendingEvidence] = useState<PendingEvidence[]>([]);
   const [_scoutLogs, setScoutLogs] = useState<ScoutLog[]>([]);
   const [scoutRunning, setScoutRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs'>('metrics');
+  const [activeTab, setActiveTab] = useState<'metrics' | 'queue' | 'logs' | 'waitlist'>('metrics');
+  const [waitlistEntries, setWaitlistEntries] = useState<{ id: string; email: string; spot_number: number; source: string; created_at: string }[]>([]);
   const [_evidenceInflow, setEvidenceInflow] = useState<{ date: string; supports: number; contradicts: number; ambiguous: number; total: number; sources: Record<string, number> }[]>([]);
   const [_sourceDistribution, setSourceDistribution] = useState<{ name: string; value: number }[]>([]);
   const [_domainPortfolio, setDomainPortfolio] = useState<{ name: string; avgPosterior: number; count: number }[]>([]);
