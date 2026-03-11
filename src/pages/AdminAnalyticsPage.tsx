@@ -314,7 +314,7 @@ export default function AdminAnalyticsPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 p-1 rounded-lg" style={{ background: 'hsla(232, 26%, 8%, 0.5)', border: '1px solid hsla(220, 12%, 70%, 0.08)' }}>
-        {(['metrics', 'queue', 'logs'] as const).map(tab => (
+        {(['metrics', 'queue', 'logs', 'waitlist'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
