@@ -601,6 +601,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               ))
             )}
           </TabsContent>
+
+          <TabsContent value="markets">
+            <PredictionMarkets milestoneId={milestone.id} posterior={currentPosterior} />
+          </TabsContent>
           
           {ledgerHash && (
             <div className="mt-3 flex items-center justify-center">
