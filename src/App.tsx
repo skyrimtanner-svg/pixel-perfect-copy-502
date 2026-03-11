@@ -22,6 +22,7 @@ const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const VerifyPage = lazy(() => import("@/pages/VerifyPage"));
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
+const InstallPage = lazy(() => import("@/pages/InstallPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
