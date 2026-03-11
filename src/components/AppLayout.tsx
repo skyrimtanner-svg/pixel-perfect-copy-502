@@ -232,7 +232,7 @@ export default function AppLayout() {
       </header>
 
       {/* ═══ CONTENT — floats above nebula with z-index ═══ */}
-      <main ref={mainRef} className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6 relative z-10">
+      <main ref={mainRef} className="flex-1 max-w-[1600px] mx-auto w-full px-3 sm:px-6 py-4 sm:py-6 relative z-10">
         <Outlet />
         <OnboardingTutorial />
       </main>
