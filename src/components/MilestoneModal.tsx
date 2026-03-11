@@ -603,7 +603,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
           </TabsContent>
 
           <TabsContent value="markets">
-            <PredictionMarkets milestoneId={milestone.id} posterior={currentPosterior} />
+            <PredictionMarkets milestoneId={milestone.id} posterior={displayPosterior} />
           </TabsContent>
           
           {ledgerHash && (
