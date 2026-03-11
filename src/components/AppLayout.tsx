@@ -204,7 +204,7 @@ export default function AppLayout() {
             )}
             <ModeToggle />
             {profile && (
-              <span className="text-[9px] font-mono text-muted-foreground/60 tracking-wider uppercase px-2 py-1 rounded" style={{
+              <span className="hidden sm:inline text-[9px] font-mono text-muted-foreground/60 tracking-wider uppercase px-2 py-1 rounded" style={{
                 background: 'hsla(232, 26%, 8%, 0.5)',
                 border: '1px solid hsla(43, 96%, 56%, 0.15)',
                 color: 'hsl(43, 96%, 56%)',
