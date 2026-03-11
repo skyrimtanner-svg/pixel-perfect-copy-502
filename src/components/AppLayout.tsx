@@ -88,7 +88,7 @@ export default function AppLayout() {
           >
             {/* Logo icon */}
             <div
-              className="relative w-10 h-10 rounded-xl flex items-center justify-center"
+              className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center"
               style={{
                 background: 'linear-gradient(145deg, hsla(43, 96%, 56%, 0.14), hsla(230, 22%, 8%, 0.9), hsla(190, 100%, 50%, 0.08))',
                 border: '1px solid hsla(43, 96%, 56%, 0.3)',
