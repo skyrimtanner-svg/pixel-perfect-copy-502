@@ -324,9 +324,9 @@ export default function AdminAnalyticsPage() {
               color: activeTab === tab ? 'hsl(43, 96%, 56%)' : 'hsl(220, 12%, 55%)',
               border: activeTab === tab ? '1px solid hsla(43, 96%, 56%, 0.2)' : '1px solid transparent',
             }}
-          >
-            {tab === 'queue' ? `Queue (${pendingEvidence.length})` : tab}
-          </button>
+            >
+             {tab === 'queue' ? `Queue (${pendingEvidence.length})` : tab === 'waitlist' ? `Waitlist (${waitlistEntries.length})` : tab}
+           </button>
         ))}
       </div>
 
