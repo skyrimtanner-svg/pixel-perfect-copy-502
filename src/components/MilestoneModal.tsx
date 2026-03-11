@@ -408,6 +408,9 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             <TabsTrigger value="evidence" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">
               Evidence ({liveData?.evidence?.length ?? milestone.evidence.length})
             </TabsTrigger>
+            <TabsTrigger value="markets" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">
+              Markets
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
