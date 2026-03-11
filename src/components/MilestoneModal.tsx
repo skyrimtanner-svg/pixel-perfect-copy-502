@@ -398,7 +398,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="p-6 pt-4 relative z-10">
-          <TabsList className="mb-4 rounded-xl p-1 relative overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
+          <TabsList className="mb-4 rounded-xl p-1 relative overflow-x-auto flex w-full" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
             <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl pointer-events-none" style={specularReflection} />
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">Overview</TabsTrigger>
             <TabsTrigger value="why" className="data-[state=active]:bg-gold/10 data-[state=active]:text-gold-solid rounded-lg text-xs relative z-10">Why It Changed</TabsTrigger>
