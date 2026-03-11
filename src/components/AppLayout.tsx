@@ -18,6 +18,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { milestones } = useMilestones();
   const { nebulaStyle } = useNebulaPulse(milestones);
+  usePushNotifications();
   
   // Parallax transforms — background layers move slower than content
   // Reserved for future parallax layers
