@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useMilestones } from '@/hooks/useMilestones';
 import { useNebulaPulse } from '@/hooks/useNebulaPulse';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function AppLayout() {
   const mainRef = useRef<HTMLDivElement>(null);
@@ -17,6 +18,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { milestones } = useMilestones();
   const { nebulaStyle } = useNebulaPulse(milestones);
+  usePushNotifications();
   
   // Parallax transforms — background layers move slower than content
   // Reserved for future parallax layers
@@ -78,17 +80,17 @@ export default function AppLayout() {
           }}
         />
 
-        <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           {/* ── Logo group ── */}
           <motion.div
-            className="flex items-center gap-3.5"
+            className="flex items-center gap-2 sm:gap-3.5"
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             {/* Logo icon */}
             <div
-              className="relative w-10 h-10 rounded-xl flex items-center justify-center"
+              className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center"
               style={{
                 background: 'linear-gradient(145deg, hsla(43, 96%, 56%, 0.14), hsla(230, 22%, 8%, 0.9), hsla(190, 100%, 50%, 0.08))',
                 border: '1px solid hsla(43, 96%, 56%, 0.3)',
@@ -122,10 +124,10 @@ export default function AppLayout() {
               />
             </div>
 
-            {/* Wordmark */}
+            {/* Wordmark — hide "Observatory" on mobile */}
             <div className="flex items-baseline">
               <span
-                className="font-display font-bold text-[24px] tracking-tight relative"
+                className="font-display font-bold text-[20px] sm:text-[24px] tracking-tight relative"
                 style={{
                   background: 'linear-gradient(135deg, hsl(38, 88%, 32%) 0%, hsl(43, 96%, 48%) 15%, hsl(48, 100%, 72%) 35%, hsl(50, 100%, 88%) 50%, hsl(48, 100%, 72%) 65%, hsl(43, 96%, 55%) 80%, hsl(38, 88%, 36%) 100%)',
                   backgroundSize: '200% 100%',
@@ -145,7 +147,7 @@ export default function AppLayout() {
               </span>
 
               <span
-                className="mx-2 w-1.5 h-1.5 rounded-full inline-block relative top-[-1px]"
+                className="hidden sm:inline-block mx-2 w-1.5 h-1.5 rounded-full relative top-[-1px]"
                 style={{
                   background: 'radial-gradient(circle at 35% 35%, hsl(48, 100%, 82%), hsl(43, 96%, 56%))',
                   boxShadow: '0 0 8px hsla(43, 96%, 56%, 0.6), 0 0 3px hsla(190, 100%, 50%, 0.3)',
@@ -153,7 +155,7 @@ export default function AppLayout() {
               />
 
               <span
-                className="font-display font-medium text-[11px] tracking-[0.18em] uppercase"
+                className="hidden sm:inline font-display font-medium text-[11px] tracking-[0.18em] uppercase"
                 style={{
                   background: 'linear-gradient(135deg, hsl(220, 10%, 48%) 0%, hsl(220, 12%, 76%) 25%, hsl(220, 16%, 94%) 50%, hsl(220, 14%, 88%) 60%, hsl(220, 10%, 70%) 80%, hsl(220, 10%, 52%) 100%)',
                   backgroundSize: '200% 100%',
@@ -170,7 +172,7 @@ export default function AppLayout() {
 
           {/* ── Navigation ── */}
           <motion.nav
-            className="flex items-center gap-0.5 p-1 rounded-xl"
+            className="flex items-center gap-0.5 p-0.5 sm:p-1 rounded-xl overflow-x-auto"
             style={{
               background: 'hsla(230, 22%, 8%, 0.5)',
               border: '1px solid hsla(220, 10%, 72%, 0.08)',
@@ -182,8 +184,8 @@ export default function AppLayout() {
           >
             <NavItem to="/triage" icon={<Target className="w-4 h-4" />}>Triage</NavItem>
             <NavItem to="/traces" icon={<LineChart className="w-4 h-4" />}>Traces</NavItem>
-            <NavItem to="/calibration" icon={<BarChart3 className="w-4 h-4" />}>Calibration</NavItem>
-            <NavItem to="/guide" icon={<GraduationCap className="w-4 h-4" />}>Guide</NavItem>
+            <NavItem to="/calibration" icon={<BarChart3 className="w-4 h-4" />}><span className="hidden sm:inline">Calibration</span><span className="sm:hidden">Cal</span></NavItem>
+            <NavItem to="/guide" icon={<GraduationCap className="w-4 h-4" />}><span className="hidden sm:inline">Guide</span><span className="sm:hidden">?</span></NavItem>
           </motion.nav>
 
           {/* ── Right controls ── */}
@@ -204,7 +206,7 @@ export default function AppLayout() {
             )}
             <ModeToggle />
             {profile && (
-              <span className="text-[9px] font-mono text-muted-foreground/60 tracking-wider uppercase px-2 py-1 rounded" style={{
+              <span className="hidden sm:inline text-[9px] font-mono text-muted-foreground/60 tracking-wider uppercase px-2 py-1 rounded" style={{
                 background: 'hsla(232, 26%, 8%, 0.5)',
                 border: '1px solid hsla(43, 96%, 56%, 0.15)',
                 color: 'hsl(43, 96%, 56%)',
@@ -232,7 +234,7 @@ export default function AppLayout() {
       </header>
 
       {/* ═══ CONTENT — floats above nebula with z-index ═══ */}
-      <main ref={mainRef} className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6 relative z-10">
+      <main ref={mainRef} className="flex-1 max-w-[1600px] mx-auto w-full px-3 sm:px-6 py-4 sm:py-6 relative z-10">
         <Outlet />
         <OnboardingTutorial />
       </main>

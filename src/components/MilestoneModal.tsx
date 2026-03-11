@@ -9,6 +9,7 @@ import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
 import { LPMemoExport } from '@/components/LPMemoExport';
 import { SocraticLensTab } from '@/components/SocraticLensTab';
+import { PredictionMarkets } from '@/components/PredictionMarkets';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
@@ -397,7 +398,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="p-6 pt-4 relative z-10">
-          <TabsList className="mb-4 rounded-xl p-1 relative overflow-hidden" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
+          <TabsList className="mb-4 rounded-xl p-1 relative overflow-x-auto flex w-full" style={{ ...glassInner, border: '1px solid hsla(220, 12%, 70%, 0.12)' }}>
             <div className="absolute top-0 left-0 right-0 h-[50%] rounded-t-xl pointer-events-none" style={specularReflection} />
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">Overview</TabsTrigger>
             <TabsTrigger value="why" className="data-[state=active]:bg-gold/10 data-[state=active]:text-gold-solid rounded-lg text-xs relative z-10">Why It Changed</TabsTrigger>
@@ -406,6 +407,9 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
             </TabsTrigger>
             <TabsTrigger value="evidence" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">
               Evidence ({liveData?.evidence?.length ?? milestone.evidence.length})
+            </TabsTrigger>
+            <TabsTrigger value="markets" className="data-[state=active]:bg-primary/12 data-[state=active]:text-primary rounded-lg text-xs relative z-10">
+              Markets
             </TabsTrigger>
           </TabsList>
 
@@ -596,6 +600,10 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                 <EvidenceRow key={ev.id} ev={ev} />
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="markets">
+            <PredictionMarkets milestoneId={milestone.id} posterior={displayPosterior} />
           </TabsContent>
           
           {ledgerHash && (
