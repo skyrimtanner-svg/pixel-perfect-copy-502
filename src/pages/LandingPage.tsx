@@ -24,6 +24,11 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<WaitlistResult>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) navigate('/triage', { replace: true });
+  }, [user, navigate]);
 
   const handleWaitlist = async (email: string, setEmail: (v: string) => void) => {
     const trimmed = email.trim().toLowerCase();
