@@ -29,7 +29,7 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate('/', { replace: true });
+      navigate('/triage', { replace: true });
     }
   }, [authLoading, user, navigate]);
 
