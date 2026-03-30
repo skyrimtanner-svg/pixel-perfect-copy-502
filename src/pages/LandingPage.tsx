@@ -32,23 +32,18 @@ export default function LandingPage() {
     }
     setLoading(true);
     try {
-      // Check if already on waitlist
-      const { data: existing } = await supabase
+      const spotNumber = Math.floor(Math.random() * 401) + 100;
+      const { error } = await supabase
         .from('waitlist')
-        .select('spot_number')
-        .eq('email', trimmed)
-        .maybeSingle();
+        .insert({ email: trimmed, spot_number: spotNumber });
 
-      if (existing) {
-        setResult({ spotNumber: existing.spot_number, isExisting: true });
-        toast({ title: `You're already on the list! Spot #${existing.spot_number}` });
+      if (error && error.code === '23505') {
+        // Duplicate email — already on waitlist
+        setResult({ spotNumber: 0, isExisting: true });
+        toast({ title: "You're already on the list!" });
+      } else if (error) {
+        throw error;
       } else {
-        const spotNumber = Math.floor(Math.random() * 401) + 100;
-        const { error } = await supabase
-          .from('waitlist')
-          .insert({ email: trimmed, spot_number: spotNumber });
-
-        if (error) throw error;
         setResult({ spotNumber, isExisting: false });
         setEmail('');
         toast({ title: `You're on the list! Spot #${spotNumber}` });
