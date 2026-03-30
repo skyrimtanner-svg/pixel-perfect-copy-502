@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Eye, X, CheckCircle, ArrowRight, Zap, Shield, Search, BarChart3, Mail, Twitter, Github, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,11 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<WaitlistResult>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) navigate('/triage', { replace: true });
+  }, [user, navigate]);
 
   const handleWaitlist = async (email: string, setEmail: (v: string) => void) => {
     const trimmed = email.trim().toLowerCase();
