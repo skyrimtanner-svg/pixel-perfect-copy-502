@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Eye, Lock, Loader2, CheckCircle } from 'lucide-react';
@@ -16,25 +16,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Listen for PASSWORD_RECOVERY event from the URL hash token
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsRecovery(true);
-      }
-    });
-
-    // Also check the URL hash for type=recovery
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
-      setIsRecovery(true);
-    }
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,23 +44,6 @@ export default function ResetPasswordPage() {
     }
     setLoading(false);
   };
-
-  if (!isRecovery && !success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center nebula-bg stars-bg relative">
-        <div className="constellation-particles" />
-        <motion.div
-          className="w-full max-w-md mx-4 rounded-2xl p-8 relative z-10 text-center"
-          style={glassPanelStrong}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <p className="text-muted-foreground text-sm">Loading recovery session…</p>
-          <Loader2 className="w-5 h-5 animate-spin mx-auto mt-3" style={{ color: 'hsl(43, 96%, 56%)' }} />
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center nebula-bg stars-bg relative">
