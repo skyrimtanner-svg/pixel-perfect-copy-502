@@ -6,6 +6,7 @@ import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
 import { AnimatedProbabilityRing } from '@/components/AnimatedProbabilityRing';
 import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
 import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
+import { ExplainabilityPanel } from '@/components/ExplainabilityPanel';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
 import { LPMemoExport } from '@/components/LPMemoExport';
 import { SocraticLensTab } from '@/components/SocraticLensTab';
@@ -523,6 +524,13 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                   domainColor={isNegativeShift ? 'hsl(0, 72%, 55%)' : domainHsl[milestone.domain] || 'hsl(var(--primary))'}
                   isNegativeShift={isNegativeShift}
                   previousValue={livePosterior}
+                />
+                <ExplainabilityPanel
+                  prior={liveData.bayes.prior}
+                  posterior={liveData.bayes.posterior}
+                  deltaLogOdds={liveData.bayes.delta_log_odds}
+                  contributions={liveData.bayes.contributions}
+                  evidence={liveData.evidence}
                 />
                 <InteractiveWaterfall
                   prior={liveData.bayes.prior}

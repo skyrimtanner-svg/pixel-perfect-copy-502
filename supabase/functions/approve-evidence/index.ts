@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, pending_id, pending_ids } = body;
+    const { action, pending_id, pending_ids, bulk_reject_validated } = body;
 
     // ─── BATCH OPERATIONS ───
     if (pending_ids && Array.isArray(pending_ids) && pending_ids.length > 0) {
@@ -83,11 +83,29 @@ Deno.serve(async (req) => {
             continue;
           }
 
+          // ── Server-side eligibility re-validation for bulk reject ──
+          if (action === "reject" && bulk_reject_validated) {
+            const ageDays = (Date.now() - new Date(pending.created_at).getTime()) / (1000 * 60 * 60 * 24);
+            const effectiveScore = pending.decayed_score ?? pending.composite_score;
+
+            // Must still meet bulk reject criteria
+            if (effectiveScore >= 0.40 || ageDays <= 7 || pending.publisher_tier < 3) {
+              results.push({ id: pid, success: false, error: "No longer eligible for bulk reject: score/age/tier changed" });
+              continue;
+            }
+            if (pending.queue_reason === "stale_high_value_review" ||
+                pending.queue_reason === "forced_human_review_contradiction_pressure") {
+              results.push({ id: pid, success: false, error: "No longer eligible: flagged for manual review" });
+              continue;
+            }
+          }
+
           if (action === "reject") {
             await supabase.from("pending_evidence").update({
               status: "rejected",
               reviewed_at: new Date().toISOString(),
               reviewed_by: userId,
+              queue_reason: bulk_reject_validated ? "manual_bulk_reject" : (pending.queue_reason || "manual_reject"),
             }).eq("id", pid);
             results.push({ id: pid, success: true });
             continue;
