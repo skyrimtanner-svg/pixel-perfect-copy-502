@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Scale, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { glassInner, specularReflection } from '@/lib/glass-styles';
-import type { EvidenceItem, Contribution, BayesBundle } from '@/hooks/useMilestoneAPI';
+import type { EvidenceItem, BayesBundle } from '@/hooks/useMilestoneAPI';
 
 const goldGradientStyle = {
   background: 'linear-gradient(135deg, hsl(38, 88%, 34%), hsl(43, 96%, 54%), hsl(48, 100%, 74%), hsl(50, 100%, 86%), hsl(48, 100%, 70%), hsl(43, 96%, 52%))',

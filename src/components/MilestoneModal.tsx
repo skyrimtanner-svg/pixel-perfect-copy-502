@@ -538,6 +538,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                    onNegativeShift={handleNegativeShift}
                    onCommitNegativeEvidence={handleCommitNegativeEvidence}
                 />
+                <ExplainabilityPanel bayes={liveData.bayes} evidence={liveData.evidence} />
               </>
             ) : (
               <>
