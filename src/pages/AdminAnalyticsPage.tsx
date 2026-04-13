@@ -119,7 +119,7 @@ export default function AdminAnalyticsPage() {
       .from('pending_evidence')
       .select('*')
       .eq('status', 'pending')
-      .order('composite_score', { ascending: false });
+      .order('created_at', { ascending: false });
     if (data) {
       setPendingEvidence(data as PendingEvidence[]);
       // Fetch milestone names
