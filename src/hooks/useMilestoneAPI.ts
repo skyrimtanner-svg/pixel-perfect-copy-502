@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface ContributionMeta {
   type: string;
@@ -97,10 +98,12 @@ export function useMilestoneAPI() {
     setLoading(true);
     setWhatIfResult(null);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/milestones-api/${id}?include=bayes,evidence,calibration`;
       const res = await fetch(url, {
         headers: {
           'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
           'Content-Type': 'application/json',
         },
       });
@@ -119,11 +122,13 @@ export function useMilestoneAPI() {
   const runWhatIf = useCallback(async (id: string, excludeIds: string[]) => {
     setWhatIfLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/milestones-api/${id}/whatif`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ exclude_evidence_ids: excludeIds }),
