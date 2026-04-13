@@ -374,7 +374,7 @@ export default function AdminAnalyticsPage() {
   const handleSingleAction = async (id: string, action: 'approve' | 'reject') => {
     setProcessingAction(id);
     try {
-      const { data, error } = await supabase.functions.invoke('approve-evidence', {
+      const { error } = await supabase.functions.invoke('approve-evidence', {
         body: { action, pending_id: id },
       });
       if (error) throw error;
