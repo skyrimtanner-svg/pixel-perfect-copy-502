@@ -525,6 +525,13 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                   isNegativeShift={isNegativeShift}
                   previousValue={livePosterior}
                 />
+                <ExplainabilityPanel
+                  prior={liveData.bayes.prior}
+                  posterior={liveData.bayes.posterior}
+                  deltaLogOdds={liveData.bayes.delta_log_odds}
+                  contributions={liveData.bayes.contributions}
+                  evidence={liveData.evidence}
+                />
                 <InteractiveWaterfall
                   prior={liveData.bayes.prior}
                   contributions={liveData.bayes.contributions}
