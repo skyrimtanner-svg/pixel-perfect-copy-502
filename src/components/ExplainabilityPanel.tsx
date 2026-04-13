@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, ArrowDownRight, Bot, User, Shield, AlertTriangle, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { glassInner, specularReflection } from '@/lib/glass-styles';
 import { Contribution, EvidenceItem } from '@/hooks/useMilestoneAPI';
 
