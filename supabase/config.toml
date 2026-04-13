@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.approve-evidence]
 verify_jwt = false
+
+[functions.evidence-decay]
+verify_jwt = false
