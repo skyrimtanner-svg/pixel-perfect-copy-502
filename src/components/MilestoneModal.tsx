@@ -6,6 +6,7 @@ import { DomainBadge, StatusBadge, ArchetypeBadge } from '@/components/Badges';
 import { AnimatedProbabilityRing } from '@/components/AnimatedProbabilityRing';
 import { InteractiveWaterfall } from '@/components/InteractiveWaterfall';
 import { WhyItChangedHeader } from '@/components/WhyItChangedHeader';
+import { ExplainabilityPanel } from '@/components/ExplainabilityPanel';
 import { WhyItChangedSkeleton } from '@/components/WhyItChangedSkeleton';
 import { LPMemoExport } from '@/components/LPMemoExport';
 import { SocraticLensTab } from '@/components/SocraticLensTab';
