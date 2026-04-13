@@ -397,7 +397,7 @@ export default function AdminAnalyticsPage() {
     setProcessingAction('bulk');
     try {
       const { data, error } = await supabase.functions.invoke('approve-evidence', {
-        body: { action: 'reject', pending_ids: ids },
+        body: { action: 'reject', pending_ids: ids, bulk_reject_validated: true },
       });
       if (error) throw error;
       toast.success(`Bulk rejected ${data?.rejected || 0} items`);
