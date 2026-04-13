@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Milestone } from '@/data/milestones';
@@ -16,7 +17,7 @@ import { useMilestoneAPI } from '@/hooks/useMilestoneAPI';
 import { useMode } from '@/contexts/ModeContext';
 import { useEntitlement } from '@/hooks/useEntitlement';
 import { useHysteresis } from '@/hooks/useHysteresis';
-import { ArrowUpRight, ArrowDownRight, Loader2, AlertTriangle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Loader2, AlertTriangle, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { glassPanelStrong, glassInner, specularReflection, goldChromeLine } from '@/lib/glass-styles';
 
@@ -178,11 +179,13 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
     if (!milestone) return;
     setCommitInProgress(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/milestones-api/${milestone.id}/evidence`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Authorization': `Bearer ${session?.access_token ?? ''}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -542,6 +545,15 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
               </>
             ) : (
               <>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3" style={{
+                  ...glassInner,
+                  border: '1px solid hsla(220, 10%, 72%, 0.15)',
+                }}>
+                  <Info className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {!detail && !loading ? 'Live Bayesian trace unavailable — showing static fallback' : 'No Bayesian evidence trail for this milestone'}
+                  </span>
+                </div>
                 <WhyItChangedHeader
                   posterior={milestone.posterior}
                   prior={milestone.prior}
@@ -584,6 +596,38 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                    onNegativeShift={handleNegativeShift}
                    onCommitNegativeEvidence={handleCommitNegativeEvidence}
                 />
+                {milestone.evidence.length > 0 && (
+                  <ExplainabilityPanel
+                    bayes={{
+                      prior: milestone.prior,
+                      posterior: milestone.posterior,
+                      log_odds: 0,
+                      delta_log_odds: milestone.delta_log_odds,
+                      contributions: milestone.evidence.map(ev => ({
+                        evidence_id: ev.id,
+                        evidence_meta: {
+                          type: ev.type, credibility: ev.credibility, recency: ev.recency,
+                          decay: ev.recency, consensus: ev.consensus, direction: ev.direction,
+                          criteria_match: ev.criteria_match,
+                        },
+                        composite: ev.composite,
+                        delta_log_odds: ev.delta_log_odds,
+                      })),
+                      latent: { mu: 0, sigma: 1 },
+                      signal_dominance: {
+                        confirmCount: 0, confirmScore: 0, falsifyCount: 0, falsifyScore: 0,
+                        ratioCount: 0, ratioScore: 0, dominanceFlagCount: false, dominanceFlagScore: false,
+                      },
+                    }}
+                    evidence={milestone.evidence.map(ev => ({
+                      id: ev.id, milestone_id: milestone.id, source: ev.source,
+                      type: ev.type, direction: ev.direction, credibility: ev.credibility,
+                      recency: ev.recency, consensus: ev.consensus, criteria_match: ev.criteria_match,
+                      composite: ev.composite, delta_log_odds: ev.delta_log_odds,
+                      date: ev.date, summary: ev.summary,
+                    }))}
+                  />
+                )}
               </>
             )}
               </motion.div>
