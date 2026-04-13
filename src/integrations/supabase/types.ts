@@ -288,14 +288,18 @@ export type Database = {
         Row: {
           composite_score: number
           consensus: number
+          contradiction_pressure: number | null
           created_at: string
           credibility: number
           criteria_match: number
+          decay_applied_at: string | null
+          decayed_score: number | null
           direction: string
           evidence_type: string
           id: string
           milestone_id: string
           publisher_tier: number
+          queue_reason: string | null
           raw_snippet: string | null
           recency: number
           reviewed_at: string | null
@@ -309,14 +313,18 @@ export type Database = {
         Insert: {
           composite_score?: number
           consensus?: number
+          contradiction_pressure?: number | null
           created_at?: string
           credibility?: number
           criteria_match?: number
+          decay_applied_at?: string | null
+          decayed_score?: number | null
           direction?: string
           evidence_type?: string
           id?: string
           milestone_id: string
           publisher_tier?: number
+          queue_reason?: string | null
           raw_snippet?: string | null
           recency?: number
           reviewed_at?: string | null
@@ -330,14 +338,18 @@ export type Database = {
         Update: {
           composite_score?: number
           consensus?: number
+          contradiction_pressure?: number | null
           created_at?: string
           credibility?: number
           criteria_match?: number
+          decay_applied_at?: string | null
+          decayed_score?: number | null
           direction?: string
           evidence_type?: string
           id?: string
           milestone_id?: string
           publisher_tier?: number
+          queue_reason?: string | null
           raw_snippet?: string | null
           recency?: number
           reviewed_at?: string | null
