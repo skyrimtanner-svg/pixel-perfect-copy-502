@@ -38,7 +38,9 @@ export default function LandingPage() {
     }
     setLoading(true);
     try {
-      const spotNumber = Math.floor(Math.random() * 401) + 100;
+      const { data: nextSpot, error: spotError } = await supabase.rpc('get_next_waitlist_spot');
+      if (spotError) throw spotError;
+      const spotNumber = nextSpot ?? 1;
       const { error } = await supabase
         .from('waitlist')
         .insert({ email: trimmed, spot_number: spotNumber });
