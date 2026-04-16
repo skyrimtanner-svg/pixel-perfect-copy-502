@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.evidence-decay]
 verify_jwt = false
+
+[functions.verify-integrity]
+verify_jwt = false
