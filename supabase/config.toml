@@ -19,4 +19,4 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.verify-integrity]
-verify_jwt = false
+verify_jwt = true
