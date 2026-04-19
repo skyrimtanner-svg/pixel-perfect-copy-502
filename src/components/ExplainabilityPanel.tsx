@@ -252,6 +252,9 @@ export function ExplainabilityPanel({ bayes, evidence, milestoneId }: Explainabi
           {ambiguous.length} ambiguous signal{ambiguous.length > 1 ? 's' : ''} contributed minimal force ({ambiguous.reduce((s, d) => s + Math.abs(d.delta_log_odds), 0).toFixed(2)} LO total)
         </div>
       )}
+
+      {/* Decision Provenance — recent trust_ledger snapshots */}
+      {resolvedMilestoneId && <DecisionProvenance milestoneId={resolvedMilestoneId} />}
     </motion.div>
   );
 }
