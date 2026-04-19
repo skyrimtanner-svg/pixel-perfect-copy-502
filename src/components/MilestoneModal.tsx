@@ -541,7 +541,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                    onNegativeShift={handleNegativeShift}
                    onCommitNegativeEvidence={handleCommitNegativeEvidence}
                 />
-                <ExplainabilityPanel bayes={liveData.bayes} evidence={liveData.evidence} />
+                <ExplainabilityPanel bayes={liveData.bayes} evidence={liveData.evidence} milestoneId={milestone.id} />
               </>
             ) : (
               <>
@@ -626,6 +626,7 @@ export function MilestoneModal({ milestone, open, onClose }: MilestoneModalProps
                       composite: ev.composite, delta_log_odds: ev.delta_log_odds,
                       date: ev.date, summary: ev.summary,
                     }))}
+                    milestoneId={milestone.id}
                   />
                 )}
               </>

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Scale, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { glassInner, specularReflection } from '@/lib/glass-styles';
+import { DecisionProvenance } from '@/components/DecisionProvenance';
 import type { EvidenceItem, BayesBundle } from '@/hooks/useMilestoneAPI';
 
 const goldGradientStyle = {
@@ -14,6 +15,7 @@ const goldGradientStyle = {
 interface ExplainabilityPanelProps {
   bayes: BayesBundle;
   evidence: EvidenceItem[];
+  milestoneId?: string;
 }
 
 interface DriverItem {
@@ -77,8 +79,9 @@ function DriverRow({ item, rank }: { item: DriverItem; rank: number }) {
   );
 }
 
-export function ExplainabilityPanel({ bayes, evidence }: ExplainabilityPanelProps) {
+export function ExplainabilityPanel({ bayes, evidence, milestoneId }: ExplainabilityPanelProps) {
   const { prior, posterior, delta_log_odds, contributions } = bayes;
+  const resolvedMilestoneId = milestoneId ?? evidence[0]?.milestone_id;
   const deltaPP = (posterior - prior) * 100;
   const isPositive = deltaPP >= 0;
 
@@ -249,6 +252,9 @@ export function ExplainabilityPanel({ bayes, evidence }: ExplainabilityPanelProp
           {ambiguous.length} ambiguous signal{ambiguous.length > 1 ? 's' : ''} contributed minimal force ({ambiguous.reduce((s, d) => s + Math.abs(d.delta_log_odds), 0).toFixed(2)} LO total)
         </div>
       )}
+
+      {/* Decision Provenance — recent trust_ledger snapshots */}
+      {resolvedMilestoneId && <DecisionProvenance milestoneId={resolvedMilestoneId} />}
     </motion.div>
   );
 }
