@@ -66,8 +66,8 @@ export default function AuthPage() {
     setLoading(true);
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters.');
       setLoading(false);
       return;
     }
@@ -88,8 +88,8 @@ export default function AuthPage() {
     setLoading(true);
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters.');
       setLoading(false);
       return;
     }
@@ -235,7 +235,7 @@ export default function AuthPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={12}
                         maxLength={128}
                         placeholder="••••••••"
                         className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
@@ -256,7 +256,7 @@ export default function AuthPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={12}
                         maxLength={128}
                         placeholder="••••••••"
                         className="w-full pl-10 pr-4 py-3 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"

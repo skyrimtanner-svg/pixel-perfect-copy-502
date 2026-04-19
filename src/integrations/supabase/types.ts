@@ -38,6 +38,24 @@ export type Database = {
         }
         Relationships: []
       }
+      app_config: {
+        Row: {
+          admin_email: string
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          admin_email: string
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          admin_email?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       beta_invites: {
         Row: {
           accepted_at: string | null
