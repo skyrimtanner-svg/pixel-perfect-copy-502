@@ -104,11 +104,15 @@ describe('DemoObservatoryPage (E2E-style)', () => {
 
   it('renders evidence rows and what-if toggle changes simulated posterior', async () => {
     renderDemo();
-    const card = await waitFor(() => document.querySelector('[data-agent-id="triage-card-agi"] button')!);
+    const card = await waitFor(() => {
+      const el = document.querySelector('[data-agent-id="triage-card-agi"] button') as HTMLElement | null;
+      if (!el) throw new Error('no card');
+      return el;
+    });
     fireEvent.click(card);
 
     await waitFor(() => {
-      expect(document.querySelector('[data-agent-id="evidence-row-ev1"]')).toBeInTheDocument();
+      if (!document.querySelector('[data-agent-id="evidence-row-ev1"]')) throw new Error('no row');
     });
 
     const before = document.querySelector('[data-agent-id="whatif-simulated-posterior"]')?.textContent;
@@ -124,7 +128,11 @@ describe('DemoObservatoryPage (E2E-style)', () => {
 
   it('displays trust ledger panel with hash or empty state', async () => {
     renderDemo();
-    const card = await waitFor(() => document.querySelector('[data-agent-id="triage-card-agi"] button')!);
+    const card = await waitFor(() => {
+      const el = document.querySelector('[data-agent-id="triage-card-agi"] button') as HTMLElement | null;
+      if (!el) throw new Error('no card');
+      return el;
+    });
     fireEvent.click(card);
     await waitFor(() => {
       const panel = document.querySelector('[data-agent-id="trust-ledger-panel"]');
