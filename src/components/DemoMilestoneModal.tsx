@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { usePublicMilestoneDetail, type PublicEvidence } from '@/hooks/usePublicMilestoneDetail';
 import { WaterfallChart } from '@/components/WaterfallChart';
 import { motion } from 'framer-motion';
