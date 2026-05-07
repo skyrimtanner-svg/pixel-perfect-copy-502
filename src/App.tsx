@@ -23,6 +23,8 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const VerifyPage = lazy(() => import("@/pages/VerifyPage"));
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const InstallPage = lazy(() => import("@/pages/InstallPage"));
+const DemoObservatoryPage = lazy(() => import("@/pages/DemoObservatoryPage"));
+const AgentReadmePage = lazy(() => import("@/pages/AgentReadmePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
