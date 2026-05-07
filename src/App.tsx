@@ -70,6 +70,8 @@ const App = () => (
               <Suspense fallback={<LoadingScreen />}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
+                  <Route path="/demo" element={<DemoObservatoryPage />} />
+                  <Route path="/agent-readme" element={<AgentReadmePage />} />
                   <Route path="/install" element={<InstallPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
