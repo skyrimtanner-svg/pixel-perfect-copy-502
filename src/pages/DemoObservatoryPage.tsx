@@ -68,11 +68,7 @@ export default function DemoObservatoryPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {ordered.slice(0, 12).map((m, i) => (
-                <div
-                  key={m.id}
-                  data-agent-id={`triage-card-${m.id}`}
-                  {...(m.id === 'agi' ? { 'data-agent-id': 'triage-card-agi' } : {})}
-                >
+                <div key={m.id} data-agent-id={`triage-card-${m.id}`}>
                   <div data-agent-id={m.id === 'agi' ? 'open-milestone-agi' : undefined}>
                     <TriageCard
                       milestone={m}
