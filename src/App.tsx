@@ -23,6 +23,8 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const VerifyPage = lazy(() => import("@/pages/VerifyPage"));
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const InstallPage = lazy(() => import("@/pages/InstallPage"));
+const DemoObservatoryPage = lazy(() => import("@/pages/DemoObservatoryPage"));
+const AgentReadmePage = lazy(() => import("@/pages/AgentReadmePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +70,8 @@ const App = () => (
               <Suspense fallback={<LoadingScreen />}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
+                  <Route path="/demo" element={<DemoObservatoryPage />} />
+                  <Route path="/agent-readme" element={<AgentReadmePage />} />
                   <Route path="/install" element={<InstallPage />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
