@@ -62,6 +62,17 @@ export default function DemoObservatoryPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         <section>
+          <div
+            data-agent-id="demo-proof-strip"
+            className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono uppercase tracking-wider rounded-lg border border-primary/30 bg-primary/5 px-3 py-2"
+          >
+            <span><span className="text-muted-foreground">route:</span> <span data-agent-id="proof-route">/demo</span></span>
+            <span><span className="text-muted-foreground">auth:</span> <span data-agent-id="proof-auth">demo/read-only</span></span>
+            <span><span className="text-muted-foreground">milestones:</span> <span data-agent-id="proof-milestone-count">{milestones.length}</span></span>
+            <span><span className="text-muted-foreground">evidence:</span> <span data-agent-id="proof-evidence-count">live</span></span>
+            <span><span className="text-muted-foreground">engine:</span> <span data-agent-id="proof-engine">local Bayesian runUpdate</span></span>
+            <span><span className="text-muted-foreground">writes:</span> <span data-agent-id="proof-writes">false</span></span>
+          </div>
           <h2 className="text-sm font-mono uppercase tracking-wider text-muted-foreground mb-3">Triage Queue</h2>
           {loading ? (
             <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /> Loading…</div>
