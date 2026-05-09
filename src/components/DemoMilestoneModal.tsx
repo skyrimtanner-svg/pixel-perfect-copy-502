@@ -39,6 +39,22 @@ export function DemoMilestoneModal({ milestoneId, open, onClose, onPosteriorSimu
         data-agent-id="milestone-modal"
         className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-border/50"
       >
+        <DialogHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <DialogTitle className="text-2xl font-bold">
+                {bundle ? bundle.milestone.title : loading ? 'Loading milestone…' : error ? 'Milestone unavailable' : 'Milestone'}
+              </DialogTitle>
+              <DialogDescription className="text-xs font-mono uppercase tracking-wider mt-1">
+                {bundle
+                  ? `${bundle.milestone.domain} · ${bundle.milestone.tier} · target ${bundle.milestone.year}`
+                  : loading ? 'Fetching public Bayesian state…' : error ? `Failed to read ${error.table}` : 'Read-only public view'}
+              </DialogDescription>
+            </div>
+            <Badge variant="outline" className="font-mono">DEMO · READ-ONLY</Badge>
+          </div>
+        </DialogHeader>
+
         {loading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -54,17 +70,6 @@ export function DemoMilestoneModal({ milestoneId, open, onClose, onPosteriorSimu
         )}
         {bundle && (
           <>
-            <DialogHeader>
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <DialogTitle className="text-2xl font-bold">{bundle.milestone.title}</DialogTitle>
-                  <DialogDescription className="text-xs font-mono uppercase tracking-wider mt-1">
-                    {bundle.milestone.domain} · {bundle.milestone.tier} · target {bundle.milestone.year}
-                  </DialogDescription>
-                </div>
-                <Badge variant="outline" className="font-mono">DEMO · READ-ONLY</Badge>
-              </div>
-            </DialogHeader>
 
             {/* Posterior triplet */}
             <div className="grid grid-cols-3 gap-3 my-4">
