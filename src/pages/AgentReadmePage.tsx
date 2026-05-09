@@ -43,14 +43,19 @@ export default function AgentReadmePage() {
           </ul>
         </Section>
 
-        <Section title="Admin-only actions (require sign-in)">
-          <ul className="list-disc list-inside space-y-1">
+        <section className="rounded-xl border-2 border-amber-600/50 bg-amber-950/20 backdrop-blur-md p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <h2 className="text-sm font-mono uppercase tracking-wider text-amber-400">Admin-only actions</h2>
+            <Badge variant="outline" className="font-mono text-[9px] border-amber-600/50 text-amber-400">REQUIRES SIGN-IN · NOT AVAILABLE IN DEMO</Badge>
+          </div>
+          <p className="text-xs text-amber-200/70 mb-2">These actions are blocked for public demo users by RLS and route guards.</p>
+          <ul className="list-disc list-inside space-y-1 text-sm text-foreground/90">
             <li>Approve / reject pending evidence.</li>
             <li>Trigger scout runs, recalculate-all, evidence decay.</li>
             <li>Read pending_evidence and scout_logs.</li>
             <li>Edit scout directives or beta invites.</li>
           </ul>
-        </Section>
+        </section>
 
         <Section title="Successful functionality check">
           <ol className="list-decimal list-inside space-y-1">
